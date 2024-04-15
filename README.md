@@ -52,4 +52,4 @@ To visualize the results, follow these steps:
 
 5. The notebook will display the following results
 
-![3D trajectory of Alanine Dipeptide](alanine.mp4)
+![3D trajectory of Alanine Dipeptide](alanine.gif)
