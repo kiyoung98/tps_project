@@ -32,7 +32,7 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
     bash scripts/eval.sh
     ```
 
-# Viewing Results
+## Results
 
 To visualize the results, follow these steps:
 
