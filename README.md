@@ -14,9 +14,13 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
     conda activate tps_gflow
     ```
 
-3. Install the required packages using the following commands:
+3. Install the openmm packages using the following commands:
     ```
     conda install -c conda-forge openmmtools
+    ```
+
+4. Install another packages using the following commands:
+    ```
     pip install tqdm wandb mdtraj matplotlib
     ```
 
