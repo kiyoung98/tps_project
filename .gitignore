@@ -1,4 +1,5 @@
 wandb
-results
+**/*.h5
+**/*.png
 **/__pycache__/
 **/.ipynb_checkpoints/

@@ -16,8 +16,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--device', default='cuda', type=str)
-parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
+parser.add_argument('--project', default='alanine_train', type=str)
 
 # Policy Config
 parser.add_argument('--bias', action='store_true', help='Use bias in last layer')
@@ -49,11 +49,6 @@ args = parser.parse_args()
 
 if args.wandb:
     wandb.init(project=args.project, config=args)
-
-args.save_file = f'./results/{args.project}/{str(args.seed)}'
-
-if not os.path.exists(args.save_file):
-    os.makedirs(args.save_file)
 
 torch.manual_seed(args.seed)
 

@@ -9,8 +9,6 @@ class BaseDynamics(ABC):
     def __init__(self, args, state):
         super().__init__()
         self.device = args.device
-        self.save_file = args.save_file
-        self.position_file = f"{args.save_file}/{state}"
         self.start_file = f'./data/{args.molecule}/{state}.pdb'
 
         self.temperature = args.temperature * unit.kelvin

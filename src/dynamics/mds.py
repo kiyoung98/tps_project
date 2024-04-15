@@ -8,7 +8,6 @@ class MDs:
         self.state = state
         self.device = args.device
         self.molecule = args.molecule
-        self.save_file = args.save_file
         self.num_samples = args.num_samples
 
         self.mds = self._init_mds()

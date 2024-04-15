@@ -14,8 +14,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--device', default='cuda', type=str)
-parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
+parser.add_argument('--project', default='alanine_eval', type=str)
 
 # Policy Config
 parser.add_argument('--bias', action='store_true', help='Use bias in last layer')
@@ -34,9 +34,8 @@ parser.add_argument('--collision_rate', default=1., type=float, help='Collision 
 
 args = parser.parse_args()
 
-args.save_file = f'./results/{args.project}/{str(args.seed)}'
-
-wandb.init(project='alanine_eval', name=f'{args.project}_{str(args.seed)}', config=args)
+if args.wandb:
+    wandb.init(project=args.project, config=args)
 
 if __name__ == '__main__':
     info = getattr(dynamics, args.molecule.title())(args, args.end_state)
@@ -45,7 +44,7 @@ if __name__ == '__main__':
     logger = Logger(args, info)
 
     policy = getattr(proxy, args.molecule.title())(args, info)
-    policy.load_state_dict(torch.load(f'{args.save_file}/policy.pt'))
+    policy.load_state_dict(torch.load(f'results/{args.molecule}/policy.pt'))
 
     positions = torch.zeros((args.num_samples, args.num_steps+1, info.num_particles, 3), device=args.device)
     potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
@@ -57,6 +56,7 @@ if __name__ == '__main__':
 
     target_position = info.position.unsqueeze(0).unsqueeze(0)
 
+    print('Sampling:')
     for s in tqdm(range(args.num_steps)):
         bias = args.bias_scale * policy(position.unsqueeze(1), target_position).squeeze().detach()
         mds.step(bias)

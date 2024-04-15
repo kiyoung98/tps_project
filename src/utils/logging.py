@@ -7,7 +7,6 @@ class Logger():
     def __init__(self, args, md_info):
         self.wandb = args.wandb
         self.molecule = args.molecule
-        self.save_file = args.save_file
         self.start_file = md_info.start_file
 
     def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials):
@@ -31,10 +30,10 @@ class Logger():
                     step=rollout
                 )
 
-        torch.save(policy.state_dict(), f'{self.save_file}/policy.pt')
+        torch.save(policy.state_dict(), f'results/{self.molecule}/policy.pt')
     
     def plot(self, positions, target_position, potentials, **kwargs):
-        plot_potentials(self.save_file, potentials)
-        plot_3D_trajectories(self.save_file, self.start_file, positions)
+        plot_potentials(self.molecule, potentials)
+        plot_3D_trajectories(self.molecule, self.start_file, positions)
         if self.molecule == 'alanine':
-            plot_paths(self.save_file, positions, target_position)
+            plot_paths(self.molecule, positions, target_position)
