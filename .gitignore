@@ -1,4 +1,5 @@
 wandb
+notebooks
 **/*.h5
 **/*.png
 **/__pycache__/
