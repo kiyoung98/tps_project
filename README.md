@@ -1,6 +1,6 @@
 # GFlowNet for Transition Path Sampling
 
-This repository is dedicated to Transition Path Sampling (TPS) using GFlowNet.
+The goal of this project is to solve Transition Path Sampling (TPS) using GFlowNet.
 
 ## Installation
 
@@ -18,3 +18,16 @@ This repository is dedicated to Transition Path Sampling (TPS) using GFlowNet.
     ```
     conda install -c conda-forge openmmtools openmm
     pip install wandb tqdm matplotlib mdtraj
+    ```
+
+## Usage
+
+- **Training**: Run the following command to start training:
+    ```
+    bash scripts/train.sh
+    ```
+
+- **Evaluation**: Run the following command to perform evaluation:
+    ```
+    bash scripts/eval.sh
+    ```

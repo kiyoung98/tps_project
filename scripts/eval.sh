@@ -1,1 +1,1 @@
-python src/eval.py --seed 0 --project alanine --force
+python src/eval.py --seed 0 --project alanine --force --wandb
