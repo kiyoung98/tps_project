@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--device', default='cuda', type=str)
-parser.add_argument('--project', default='test', type=str)
+parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
 
 # Policy Config

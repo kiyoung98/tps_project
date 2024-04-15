@@ -1,1 +1,1 @@
-python src/train.py --seed 0 --project alanine --force --wandb
+python src/train.py
