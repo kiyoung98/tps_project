@@ -31,3 +31,25 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
     ```
     bash scripts/eval.sh
     ```
+
+# Viewing Results
+
+To visualize the results, follow these steps:
+
+1. Navigate to the `notebooks` directory:
+    ```
+    cd notebooks
+    ```
+
+2. Launch Jupyter Notebook:
+    ```
+    jupyter notebook
+    ```
+
+3. In the Jupyter Notebook interface, open the `view.ipynb` file.
+
+4. Execute the cells in the notebook.
+
+5. The notebook will display the following results obtained using GFlowNet.
+
+![3D trajectory of Alanine Dipeptide](alanine.mov)
