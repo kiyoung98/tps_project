@@ -1,5 +1,4 @@
 import torch
-import random
 import numpy as np
 import openmm.unit as unit
 from abc import abstractmethod, ABC
