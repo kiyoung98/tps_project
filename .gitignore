@@ -1,6 +1,5 @@
-wandb
-notebooks
+wandb/
+notebooks/
 **/*.h5
 **/*.png
 **/__pycache__/
-**/.ipynb_checkpoints/
