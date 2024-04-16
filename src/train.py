@@ -35,14 +35,14 @@ parser.add_argument('--temperature', default=300., type=float, help='Temperature
 parser.add_argument('--collision_rate', default=1., type=float, help='Collision Rate (ps) of the langevin integrator')
 
 # Training Config
-parser.add_argument('--learning_rate', default=1e-4, type=float)
-parser.add_argument('--start_temperature', default=600., type=float, help='Start of temperature schedule in annealing')
+parser.add_argument('--learning_rate', default=1e-3, type=float)
+parser.add_argument('--start_temperature', default=1200., type=float, help='Start of temperature schedule in annealing')
 parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
 parser.add_argument('--hindsight', action='store_true', help='Use hindsight replay proposed by https://arxiv.org/abs/1707.01495')
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_sample', default=2000, type=int, help='Number of training per sampling in a rollout')
 parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
-parser.add_argument('--terminal_std', default=0.1, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--terminal_std', default=0.01, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
