@@ -42,7 +42,7 @@ class GFlowNet:
             
             positions[:, s+1] = position
             potentials[:, s+1] = potential
-            actions[:, s] = self.f_scale * bias / self.masses.view(1, -1, 1) + noise
+            actions[:, s] = bias / self.masses.view(1, -1, 1) + noise / self.f_scale
         mds.reset()
 
         log = {
@@ -66,7 +66,7 @@ class GFlowNet:
             target_position = last_position
 
         biases = args.bias_scale * self.policy(intermediate_positions, target_position)
-        actions = self.f_scale * biases / self.masses.view(1, -1, 1)
+        actions = biases / self.masses.view(1, -1, 1)
         
         last_dist_matrix = get_dist_matrix(last_position)
         target_dist_matrix = get_dist_matrix(target_position)
@@ -75,7 +75,9 @@ class GFlowNet:
         log_forward = get_log_normal((actions-target_actions)/self.std.view(1, -1, 1)).mean((1, 2, 3))
         log_reward = get_log_normal(target_actions/self.std.view(1, -1, 1)).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
         
-        loss = torch.mean((log_z+log_forward-log_reward)**2)
+        # print(log_forward.mean(), get_log_normal(target_actions/self.std.view(1, -1, 1)).mean(), get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean())
+        
+        loss = torch.mean((log_z+args.terminal_std*(log_forward-log_reward))**2)
         
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.parameters(), args.max_grad_norm)
