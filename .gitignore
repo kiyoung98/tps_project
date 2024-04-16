@@ -1,5 +1,6 @@
 wandb/
 notebooks/
+results/
 **/*.h5
 **/*.png
 **/__pycache__/
