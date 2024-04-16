@@ -120,7 +120,7 @@ def plot_paths(molecule, positions, target_position):
         xs = np.arange(-np.pi, np.pi + .1, .1)
         ys = np.arange(-np.pi, np.pi + .1, .1)
         x, y = np.meshgrid(xs, ys)
-        inp = torch.tensor(numpy.array([x, y])).view(2, -1).T
+        inp = torch.tensor(np.array([x, y])).view(2, -1).T
 
         z = potential.potential(inp)
         z = z.view(y.shape[0], y.shape[1])
