@@ -17,6 +17,8 @@ parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--project', default='alanine_train', type=str)
+parser.add_argument('--type', default='train', type=str)
+parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 
 # Policy Config
 parser.add_argument('--bias', action='store_true', help='Use bias in last layer')
@@ -42,12 +44,17 @@ parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of ro
 parser.add_argument('--trains_per_sample', default=2000, type=int, help='Number of training per sampling in a rollout')
 parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--terminal_std', default=0.1, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--log_z_scale', default=0.1, type=float, help='Scale of log z to balance learning rate')
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
 
 if args.wandb:
-    wandb.init(project=args.project, config=args)
+    wandb.init(
+        project=args.project,
+        config=args,
+        entity="postech-ml-tsp"
+    )
 
 torch.manual_seed(args.seed)
 

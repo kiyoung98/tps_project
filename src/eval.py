@@ -1,3 +1,4 @@
+import os
 import wandb
 import torch
 import argparse
@@ -16,6 +17,9 @@ parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--project', default='alanine_eval', type=str)
+parser.add_argument('--type', default='eval', type=str)
+parser.add_argument('--date', default='', type=str, help="Date of the training, uses the most recent if not provided")
+parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 
 # Policy Config
 parser.add_argument('--bias', action='store_true', help='Use bias in last layer')
@@ -45,6 +49,16 @@ if __name__ == '__main__':
 
     policy = getattr(proxy, args.molecule.title())(args, info)
     policy.load_state_dict(torch.load(f'results/{args.molecule}/policy.pt'))
+    # if args.date == '':
+    #     directory = f"results/{args.molecule}"
+    #     folders = [os.path.join(directory, d) for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
+    #     folders.sort(key=lambda x: os.path.getctime(x), reverse=True)
+    #     if folders:
+    #         args.date = os.path.basename(folders[0])
+    #         logger.info(f"Using the most recent training date: {args.date}")
+    #     else:
+    #         raise ValueError(f"No folders found in {args.moleulce} directory")
+    policy.load_state_dict(torch.load(f'results/{args.molecule}/{args.date}/policy.pt'))
 
     positions = torch.zeros((args.num_samples, args.num_steps+1, info.num_particles, 3), device=args.device)
     potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
@@ -72,6 +86,7 @@ if __name__ == '__main__':
         'last_position': position, 
         'target_position': target_position, 
         'potentials': potentials,
+        'date': {args.date}
     }
 
     logger.log(None, policy, args.start_state, args.end_state, 0, **log)
