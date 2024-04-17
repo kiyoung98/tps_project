@@ -11,7 +11,7 @@ class Alanine(BaseDynamics):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField('amber99sbildn.xml')
+        forcefield = app.ForceField('amber99sbildn.xml', 'tip3p.xml')
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,

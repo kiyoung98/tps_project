@@ -75,7 +75,7 @@ class GFlowNet:
         log_forward = get_log_normal((actions-target_actions)/self.std.view(1, -1, 1)).mean((1, 2, 3))
         log_reward = get_log_normal(target_actions/self.std.view(1, -1, 1)).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
         
-        loss = torch.mean(args.log_z_scale*log_z+args.terminal_std*(log_forward-log_reward))**2
+        loss = torch.mean(log_z+log_forward-log_reward)**2
         
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.parameters(), args.max_grad_norm)
