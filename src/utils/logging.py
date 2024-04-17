@@ -62,13 +62,13 @@ class Logger():
 
         if self.logger:
             self.logger.info(f'\nRollout: {rollout}')
-            self.logger.info(f"{start_state}_to_{end_state}/expected_pairwise_distance (pm): expected_pairwise_distance(last_position, target_position)")
-            self.logger.info(f"{start_state}_to_{end_state}/log_z: policy.get_log_z(start_position, target_position).item()")
+            self.logger.info(f"{start_state}_to_{end_state}/expected_pairwise_distance (pm): {expected_pairwise_distance(last_position, target_position)}")
+            self.logger.info(f"{start_state}_to_{end_state}/log_z: {policy.get_log_z(start_position, target_position).item()}")
             self.logger.info(f"Loss: {loss}")
             
             if rollout % 10 == 0 and self.molecule == 'alanine':
-                self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): target_hit_percentage(last_position, target_position)")
-                self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): energy_transition_point(last_position, target_position, potentials)")
+                self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): {target_hit_percentage(last_position, target_position)}")
+                self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): {energy_transition_point(last_position, target_position, potentials)}")
         
         torch.save(policy.state_dict(), f'results/{self.molecule}/{self.date}/policy.pt')
     
