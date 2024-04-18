@@ -17,7 +17,7 @@ parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
-parser.add_argument('--project', default='alanine_train', type=str)
+parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--type', default='train', type=str)
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 

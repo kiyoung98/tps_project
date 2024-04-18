@@ -138,7 +138,7 @@ class Chignolin(nn.Module):
         if not self.force:
             pos.requires_grad = True
            
-        pos_ = self.linear(pos)
+        pos_ = self.linear(pos.view(*pos.shape[:-2], -1))
         out = self.mlp(pos_)
 
         if not self.force:
@@ -185,7 +185,7 @@ class Poly(nn.Module):
         if not self.force:
             pos.requires_grad = True
            
-        pos_ = self.linear(pos)
+        pos_ = self.linear(pos.view(*pos.shape[:-2], -1))
         out = self.mlp(pos_)
 
         if not self.force:
