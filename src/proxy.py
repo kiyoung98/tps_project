@@ -25,7 +25,7 @@ class Alanine(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, self.output_dim, bias=args.bias)
+            nn.Linear(128, self.output_dim, bias=False)
         )
 
         if self.goal_conditioned:
@@ -58,7 +58,7 @@ class Alanine(nn.Module):
             out = self.mlp(pos_)
 
         if not self.force:
-            force = - self.input_dim / 6 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 6 controls bias scale to fit the case where force is true
+            force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
             if self.goal_conditioned:
                 out = out.view(-1, self.num_particles, 3)
@@ -127,7 +127,7 @@ class Chignolin(nn.Module):
             nn.ReLU(),
             nn.Linear(1024, 512),
             nn.ReLU(),
-            nn.Linear(512, self.output_dim, bias=args.bias)
+            nn.Linear(512, self.output_dim, bias=False)
         )
 
         self.log_z = nn.Parameter(torch.tensor(0.))
@@ -174,7 +174,7 @@ class Poly(nn.Module):
             nn.ReLU(),
             nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Linear(256, self.output_dim, bias=args.bias)
+            nn.Linear(256, self.output_dim, bias=False)
         )
 
         self.log_z = nn.Parameter(torch.tensor(0.))

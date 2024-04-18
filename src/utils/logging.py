@@ -76,8 +76,8 @@ class Logger():
         self.logger.info(f"[Plot] potentials")
         plot_potentials(self.molecule, potentials, date)
         
-        self.logger.info(f"[Plot] trajectories")
-        plot_3D_trajectories(self.molecule, self.start_file, positions, date)
+        self.logger.info(f"[Plot] 3D view")
+        plot_3D_view(self.molecule, self.start_file, positions, date)
         
         if self.molecule == 'alanine':
             self.logger.info(f"[Plot] paths")

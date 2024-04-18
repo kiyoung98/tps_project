@@ -14,9 +14,20 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
     conda activate tps_gflow
     ```
 
-3. Install the openmm packages using the following commands:
+3. Install the openmmtools for Molecular Dynamics (MD) simulation using the following commands:
     ```
     conda install -c conda-forge openmmtools
+    ```
+
+3. Install the openmmforcefields for forcefields of large proteins using the following commands:
+    ```
+    git clone https://github.com/openmm/openmmforcefields.git
+    ```
+    ```
+    cd openmmforcefields
+    ```
+    ```
+    pip install -e .
     ```
 
 4. Install another packages using the following commands:

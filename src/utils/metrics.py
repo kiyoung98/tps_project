@@ -7,8 +7,8 @@ def expected_pairwise_distance(position, target_position):
     dist_matrix = get_dist_matrix(position)
     target_dist_matrix = get_dist_matrix(target_position)
     
-    epd = torch.mean((dist_matrix-target_dist_matrix)**2).item() # (nm)
-    return 1000*epd # (pm)
+    epd = torch.mean((dist_matrix-target_dist_matrix)**2).item()
+    return 1000*epd
 
 
 def target_hit_percentage(position, target_position):

@@ -151,7 +151,7 @@ def plot_paths(molecule, positions, target_position, date):
         plt.xlabel('phi')
         plt.ylabel('psi')
         plt.show()
-        plt.savefig(f'results/{molecule}/{date}/paths/path_{i}.png')
+        plt.savefig(f'results/{molecule}/{date}/paths_{i}.png')
         plt.clf()
         plt.close()    
 
@@ -163,11 +163,11 @@ def plot_potentials(molecule, potentials, date):
         plt.xlabel('Time (fs)')
         plt.ylabel('Potential Energy (kJ/mol)')
         plt.show()
-        plt.savefig(f'results/{molecule}/{date}/potential/potential_{i}.png')
+        plt.savefig(f'results/{molecule}/{date}/potential_{i}.png')
         plt.clf()
         plt.close()
 
-def plot_3D_trajectories(molecule, start_file, positions, date):
+def plot_3D_view(molecule, start_file, positions, date):
     positions = positions.detach().cpu().numpy()
     for i in range(positions.shape[0]):
         for j in range(positions.shape[1]):
@@ -179,4 +179,4 @@ def plot_3D_trajectories(molecule, start_file, positions, date):
                 trajs = traj
             else:
                 trajs = trajs.join(traj)
-        trajs.save(f'results/{molecule}/{date}/trajectory/3D_trajectory_{i}.h5')
+        trajs.save(f'results/{molecule}/{date}/3D_view_{i}.h5')

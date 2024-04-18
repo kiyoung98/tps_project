@@ -2,6 +2,7 @@ import wandb
 import torch
 import random
 import argparse
+import numpy as np
 from tqdm import tqdm
 
 from flow import GFlowNet
@@ -21,7 +22,6 @@ parser.add_argument('--type', default='train', type=str)
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 
 # Policy Config
-parser.add_argument('--bias', action='store_true', help='Use bias in last layer')
 parser.add_argument('--force', action='store_true', help='Model force otherwise potential')
 parser.add_argument('--goal_conditioned', action='store_true', help='Receive target position')
 
@@ -30,15 +30,13 @@ parser.add_argument('--start_states', default='c5', type=str)
 parser.add_argument('--end_states', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
-parser.add_argument('--bias_scale', default=1000., type=float, help='Scale of bias which is the output of policy')
-parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
-parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
-parser.add_argument('--collision_rate', default=1., type=float, help='Collision Rate (ps) of the langevin integrator')
+parser.add_argument('--temperature', default=0., type=float, help='In training, we set 0(K) since we use external noise')
 
 # Training Config
 parser.add_argument('--learning_rate', default=1e-3, type=float)
-parser.add_argument('--start_temperature', default=2000., type=float, help='Start of temperature schedule in annealing')
-parser.add_argument('--end_temperature', default=1000., type=float, help='End of temperature schedule in annealing')
+parser.add_argument('--std', default=0.1, type=float, help='std of target policy')
+parser.add_argument('--start_std', default=0.2, type=float, help='Start std of annealing schedule used in behavior policy')
+parser.add_argument('--end_std', default=0.1, type=float, help='End std of annealing schedule used in behavior policy')
 parser.add_argument('--hindsight', action='store_true', help='Use hindsight replay proposed by https://arxiv.org/abs/1707.01495')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_sample', default=2000, type=int, help='Number of training per sampling in a rollout')
@@ -73,23 +71,24 @@ if __name__ == '__main__':
         mds_dict[state] = MDs(args, state)
 
     for state in end_states:
-        target_position_dict[state] = getattr(dynamics, args.molecule.title())(args, state).position
+        target_position = getattr(dynamics, args.molecule.title())(args, state).position
+        target_position_dict[state] = torch.tensor(target_position, dtype=torch.float, device=args.device)
 
     buffer = [] # TODO: Dataset 객체로 바꾸기
-    annealing_schedule = torch.linspace(args.start_temperature, args.end_temperature, args.num_rollouts, device=args.device)
+    annealing_schedule = torch.linspace(args.start_std, args.end_std, args.num_rollouts, device=args.device)
 
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
-        temperature = annealing_schedule[rollout]
+        std = annealing_schedule[rollout]
 
         print('Sampling:')
         start_state = random.choice(start_states)
         end_state = random.choice(end_states)
 
         mds = mds_dict[start_state]         
-        target_position = target_position_dict[end_state]
+        target_position = target_position_dict[end_state].unsqueeze(0).unsqueeze(0)
         
-        data, log = flow.sample(args, mds, target_position, temperature)
+        data, log = flow.sample(args, mds, target_position, std)
 
         buffer.append(data)
         if len(buffer) > args.buffer_size:

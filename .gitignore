@@ -1,6 +1,7 @@
 wandb/
 notebooks/
 results/
+openmmforcefields/
 **/*.h5
 **/*.png
 **/__pycache__/

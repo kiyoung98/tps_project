@@ -22,7 +22,6 @@ parser.add_argument('--date', default='', type=str, help="Date of the training, 
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 
 # Policy Config
-parser.add_argument('--bias', action='store_true', help='Use bias in last layer')
 parser.add_argument('--force', action='store_true', help='Model force otherwise potential')
 parser.add_argument('--goal_conditioned', action='store_true', help='Receive target position')
 
@@ -31,10 +30,7 @@ parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
-parser.add_argument('--bias_scale', default=1000., type=float, help='Scale of bias which is the output of policy')
-parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
-parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
-parser.add_argument('--collision_rate', default=1., type=float, help='Collision Rate (ps) of the langevin integrator')
+parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator')
 
 args = parser.parse_args()
 
@@ -44,11 +40,11 @@ if args.wandb:
 if __name__ == '__main__':
     info = getattr(dynamics, args.molecule.title())(args, args.end_state)
     mds = MDs(args, args.start_state)
+    target_position = torch.tensor(info.position, dtype=torch.float, device=args.device).unsqueeze(0).unsqueeze(0)
 
     logger = Logger(args, info)
 
     policy = getattr(proxy, args.molecule.title())(args, info)
-    policy.load_state_dict(torch.load(f'results/{args.molecule}/policy.pt'))
     # if args.date == '':
     #     directory = f"results/{args.molecule}"
     #     folders = [os.path.join(directory, d) for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
@@ -63,19 +59,17 @@ if __name__ == '__main__':
     positions = torch.zeros((args.num_samples, args.num_steps+1, info.num_particles, 3), device=args.device)
     potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
 
-    position, _, _, potential = mds.report()
+    position, potential = mds.report()
     
     positions[:, 0] = position
     potentials[:, 0] = potential
 
-    target_position = info.position.unsqueeze(0).unsqueeze(0)
-
     print('Sampling:')
     for s in tqdm(range(args.num_steps)):
-        bias = args.bias_scale * policy(position.unsqueeze(1), target_position).squeeze().detach()
+        bias = policy(position.unsqueeze(1), target_position).squeeze().detach()
         mds.step(bias)
 
-        position, _, _, potential = mds.report()
+        position, potential = mds.report()
         
         positions[:, s+1] = position
         potentials[:, s+1] = potential
@@ -86,7 +80,7 @@ if __name__ == '__main__':
         'last_position': position, 
         'target_position': target_position, 
         'potentials': potentials,
-        'date': {args.date}
+        'date': args.date
     }
 
     logger.log(None, policy, args.start_state, args.end_state, 0, **log)
