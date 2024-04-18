@@ -34,7 +34,7 @@ class FlowNetAgent:
 
         mds.reset()
 
-        self.replay.push((positions, actions, start_position, last_position, target_position))
+        self.replay.push((positions, actions, noises, start_position, last_position, target_position))
 
         log = {
             'positions': positions, 
@@ -49,7 +49,7 @@ class FlowNetAgent:
     def train(self, args):
         policy_optimizers = torch.optim.SGD(self.policy.parameters(), lr=args.learning_rate)
 
-        positions, actions, start_position, last_position, target_position = self.replay.sample()
+        positions, actions, noises, start_position, last_position, target_position = self.replay.sample()
 
         if args.hindsight and random.random() < 0.5: target_position = last_position
 
@@ -57,12 +57,17 @@ class FlowNetAgent:
         
         last_dist_matrix = get_dist_matrix(last_position)
         target_dist_matrix = get_dist_matrix(target_position)
-
-        log_z = self.policy.get_log_z(start_position, target_position)
-        log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
-        log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
         
-        loss = torch.mean((log_z+log_forward-log_reward)**2)
+        if args.loss == 'tb':
+            log_z = self.policy.get_log_z(start_position, target_position)
+            log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
+            log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+            loss = torch.mean((log_z+log_forward-log_reward)**2)
+        elif args.loss == 'pice':
+            costs = get_log_normal(noises/args.std).mean((1, 2, 3)) - get_log_normal(actions/args.std).mean((1, 2, 3)) - get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+            importances = torch.softmax(-100*costs, 0)
+            match = - get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
+            loss = torch.sum(importances*match)
         
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.parameters(), args.max_grad_norm)

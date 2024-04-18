@@ -32,6 +32,7 @@ parser.add_argument('--num_samples', default=16, type=int, help='Number of paths
 parser.add_argument('--temperature', default=0., type=float, help='In training, must set 0(K) since we use external noise')
 
 # Training Config
+parser.add_argument('--loss', default='tb', type=str)
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--std', default=0.1, type=float, help='std of target policy')
 parser.add_argument('--start_std', default=0.2, type=float, help='Start std of annealing schedule used in behavior policy')
