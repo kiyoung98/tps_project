@@ -2,10 +2,9 @@ import wandb
 import torch
 import random
 import argparse
-import numpy as np
 from tqdm import tqdm
 
-from flow import GFlowNet
+from flow import FlowNetAgent
 from dynamics.mds import MDs
 from dynamics import dynamics
 from utils.logging import Logger
@@ -59,10 +58,9 @@ if __name__ == '__main__':
     start_states = args.start_states.split(',')
     end_states = args.end_states.split(',')
 
-    md_info = getattr(dynamics, args.molecule.title())(args, start_states[0])
-
-    flow = GFlowNet(args, md_info)
-    logger = Logger(args, md_info)
+    md = getattr(dynamics, args.molecule.title())(args, start_states[0])
+    agent = FlowNetAgent(args, md)
+    logger = Logger(args, md)
 
     mds_dict = {}
     target_position_dict = {}
@@ -74,7 +72,6 @@ if __name__ == '__main__':
         target_position = getattr(dynamics, args.molecule.title())(args, state).position
         target_position_dict[state] = torch.tensor(target_position, dtype=torch.float, device=args.device)
 
-    buffer = [] # TODO: Dataset 객체로 바꾸기
     annealing_schedule = torch.linspace(args.start_std, args.end_std, args.num_rollouts, device=args.device)
 
     for rollout in range(args.num_rollouts):
@@ -88,19 +85,13 @@ if __name__ == '__main__':
         mds = mds_dict[start_state]         
         target_position = target_position_dict[end_state].unsqueeze(0).unsqueeze(0)
         
-        data, log = flow.sample(args, mds, target_position, std)
-
-        buffer.append(data)
-        if len(buffer) > args.buffer_size:
-            buffer.pop(0)
+        log = agent.sample(args, mds, target_position, std)
 
         print('Training:')
         loss = 0
         for _ in tqdm(range(args.trains_per_sample)):
-            idx = random.randrange(len(buffer))
-            data = buffer[idx]
-            loss += flow.train(args, data)
+            loss += agent.train(args)
         
         loss = loss / args.trains_per_sample
 
-        logger.log(loss, flow.policy, start_state, end_state, rollout, **log)
+        logger.log(loss, agent.policy, start_state, end_state, rollout, **log)

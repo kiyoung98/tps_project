@@ -38,13 +38,13 @@ if args.wandb:
     wandb.init(project=args.project, config=args)
 
 if __name__ == '__main__':
-    info = getattr(dynamics, args.molecule.title())(args, args.end_state)
+    md = getattr(dynamics, args.molecule.title())(args, args.end_state)
     mds = MDs(args, args.start_state)
-    target_position = torch.tensor(info.position, dtype=torch.float, device=args.device).unsqueeze(0).unsqueeze(0)
+    target_position = torch.tensor(md.position, dtype=torch.float, device=args.device).unsqueeze(0).unsqueeze(0)
 
-    logger = Logger(args, info)
+    logger = Logger(args, md)
 
-    policy = getattr(proxy, args.molecule.title())(args, info)
+    policy = getattr(proxy, args.molecule.title())(args, md)
     # if args.date == '':
     #     directory = f"results/{args.molecule}"
     #     folders = [os.path.join(directory, d) for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     #         raise ValueError(f"No folders found in {args.moleulce} directory")
     policy.load_state_dict(torch.load(f'results/{args.molecule}/{args.date}/policy.pt'))
 
-    positions = torch.zeros((args.num_samples, args.num_steps+1, info.num_particles, 3), device=args.device)
+    positions = torch.zeros((args.num_samples, args.num_steps+1, md.num_particles, 3), device=args.device)
     potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
 
     position, potential = mds.report()
