@@ -1,7 +1,6 @@
 import torch
 import random
 from tqdm import tqdm
-from collections import deque
 
 import proxy
 from utils.utils import get_log_normal, get_dist_matrix
@@ -29,10 +28,11 @@ class FlowNetAgent:
             actions[:, s] = action
 
             mds.step(action)
-        mds.reset()
         
         start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
         last_position = mds.report()[0].unsqueeze(1)
+
+        mds.reset()
 
         self.replay.push((positions, actions, start_position, last_position, target_position))
 
@@ -48,8 +48,10 @@ class FlowNetAgent:
 
     def train(self, args):
         policy_optimizers = torch.optim.SGD(self.policy.parameters(), lr=args.learning_rate)
-        
-        positions, actions, start_position, last_position, target_position = zip(self.replay.sample())
+
+        positions, actions, start_position, last_position, target_position = self.replay.sample()
+
+        if args.hindsight and random.random() < 0.5: target_position = last_position
 
         biases = self.policy(positions, target_position)
         
@@ -67,22 +69,22 @@ class FlowNetAgent:
         
         policy_optimizers.step()
         policy_optimizers.zero_grad()
-        return loss.item()
+        return loss
     
 
 class ReplayBuffer:
     def __init__(self, args):
-        self.batch_size = args.batch_size
-        self.buffer = deque(maxlen=args.buffer_size)
+        self.buffer = []
+        self.buffer_size = args.buffer_size
 
     def push(self, data):
-        positions, actions, start_position, last_position, target_position = data
-        for i in range(positions.shape[0]):
-            self.buffer.append((positions[i], actions[i], start_position, last_position[i], target_position))
+        self.buffer.append(data)
+        if len(self.buffer) > self.buffer_size:
+            self.buffer.pop(0)
 
     def sample(self):
-        batch_size = len(self) if len(self) < self.batch_size else self.batch_size
-        return random.sample(self.buffer, batch_size)
+        idx = random.randrange(len(self))
+        return self.buffer[idx]
 
     def __len__(self):
         return len(self.buffer)

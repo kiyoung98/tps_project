@@ -56,28 +56,26 @@ if __name__ == '__main__':
     #         raise ValueError(f"No folders found in {args.moleulce} directory")
     policy.load_state_dict(torch.load(f'results/{args.molecule}/{args.date}/policy.pt'))
 
-    positions = torch.zeros((args.num_samples, args.num_steps+1, md.num_particles, 3), device=args.device)
-    potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
-
-    position, potential = mds.report()
-    
-    positions[:, 0] = position
-    potentials[:, 0] = potential
+    positions = torch.zeros((args.num_samples, args.num_steps, md.num_particles, 3), device=args.device)
+    potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
 
     print('Sampling:')
     for s in tqdm(range(args.num_steps)):
-        bias = policy(position.unsqueeze(1), target_position).squeeze().detach()
-        mds.step(bias)
-
         position, potential = mds.report()
         
-        positions[:, s+1] = position
-        potentials[:, s+1] = potential
+        positions[:, s] = position
+        potentials[:, s] = potential
+        bias = policy(position.unsqueeze(1), target_position).squeeze().detach()
+
+        mds.step(bias)
+
+    start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
+    last_position = mds.report()[0].unsqueeze(1)
 
     log = {
         'positions': positions, 
-        'start_position': positions[:1, :1],
-        'last_position': position, 
+        'start_position': start_position,
+        'last_position': last_position, 
         'target_position': target_position, 
         'potentials': potentials,
         'date': args.date
