@@ -1,4 +1,3 @@
-import os
 import wandb
 import torch
 import argparse
