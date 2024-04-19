@@ -50,7 +50,7 @@ if args.wandb:
     wandb.init(
         project=args.project,
         config=args,
-        # entity="postech-ml-tsp"
+        entity="postech-ml-tsp"
     )
 
 torch.manual_seed(args.seed)
@@ -66,15 +66,19 @@ if __name__ == '__main__':
     mds_dict = {}
     target_position_dict = {}
 
+    logger.info(f"Starting MD at {args.start_states}")
     for state in start_states:
         mds_dict[state] = MDs(args, state)
 
+    logger.info(f"Getting attributes for {args.end_states}")
     for state in end_states:
         target_position = getattr(dynamics, args.molecule.title())(args, state).position
         target_position_dict[state] = torch.tensor(target_position, dtype=torch.float, device=args.device)
 
     annealing_schedule = torch.linspace(args.start_std, args.end_std, args.num_rollouts, device=args.device)
 
+    logger.info("")
+    logger.info(f"Starting training for {args.num_rollouts} rollouts")
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
         std = annealing_schedule[rollout]
@@ -96,3 +100,7 @@ if __name__ == '__main__':
         loss = loss / args.trains_per_rollout
 
         logger.log(loss, agent.policy, start_state, end_state, rollout, **log)
+    
+    logger.info("")
+    logger.info(f"Training finished for {args.num_rollouts} rollouts..!")
+    
