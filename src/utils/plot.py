@@ -104,7 +104,7 @@ def plot_paths_alanine(positions, target_position):
     plt.show()
     return fig
 
-def plot_paths(molecule, positions, target_position, date):
+def plot_paths(molecule, positions, target_position, dir_path):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
 
@@ -151,11 +151,11 @@ def plot_paths(molecule, positions, target_position, date):
         plt.xlabel('phi')
         plt.ylabel('psi')
         plt.show()
-        plt.savefig(f'results/{molecule}/{date}/paths_{i}.png')
+        plt.savefig(f'{dir_path}/paths_{i}.png')
         plt.clf()
         plt.close()    
 
-def plot_potentials(molecule, potentials, date):
+def plot_potentials(molecule, potentials, dir_path):
     potentials = potentials.detach().cpu().numpy()
     for i in range(potentials.shape[0]):
         plt.figure(figsize=(20, 5))
@@ -163,11 +163,11 @@ def plot_potentials(molecule, potentials, date):
         plt.xlabel('Time (fs)')
         plt.ylabel('Potential Energy (kJ/mol)')
         plt.show()
-        plt.savefig(f'results/{molecule}/{date}/potential_{i}.png')
+        plt.savefig(f'{dir_path}/potential_{i}.png')
         plt.clf()
         plt.close()
 
-def plot_3D_view(molecule, start_file, positions, date):
+def plot_3D_view(molecule, start_file, positions, dir_path):
     positions = positions.detach().cpu().numpy()
     for i in range(positions.shape[0]):
         for j in range(positions.shape[1]):
@@ -179,4 +179,4 @@ def plot_3D_view(molecule, start_file, positions, date):
                 trajs = traj
             else:
                 trajs = trajs.join(traj)
-        trajs.save(f'results/{molecule}/{date}/3D_view_{i}.h5')
+        trajs.save(f'{dir_path}/3D_view_{i}.h5')

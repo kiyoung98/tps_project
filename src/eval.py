@@ -53,7 +53,7 @@ if __name__ == '__main__':
     #         logger.info(f"Using the most recent training date: {args.date}")
     #     else:
     #         raise ValueError(f"No folders found in {args.moleulce} directory")
-    policy.load_state_dict(torch.load(f'results/{args.molecule}/{args.date}/policy.pt'))
+    policy.load_state_dict(torch.load(f'results/{args.molecule}/train/{args.seed}/policy.pt'))
 
     positions = torch.zeros((args.num_samples, args.num_steps, md.num_particles, 3), device=args.device)
     potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
