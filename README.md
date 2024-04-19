@@ -29,7 +29,9 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
     ```
     pip install -e .
     ```
-
+    ```
+    cd ..
+    ```
 4. Install another packages using the following commands:
     ```
     pip install tqdm wandb mdtraj matplotlib
