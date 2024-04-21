@@ -50,7 +50,7 @@ if args.wandb:
     wandb.init(
         project=args.project,
         config=args,
-        entity="postech-ml-tsp"
+        entity="eddy26"
     )
 
 torch.manual_seed(args.seed)

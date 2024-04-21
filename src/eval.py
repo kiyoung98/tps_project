@@ -30,6 +30,8 @@ parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator')
+parser.add_argument('--hindsight', action='store_true', help='Use hindsight replay proposed by https://arxiv.org/abs/1707.01495')
+
 
 args = parser.parse_args()
 
@@ -77,7 +79,8 @@ if __name__ == '__main__':
         'last_position': last_position, 
         'target_position': target_position, 
         'potentials': potentials,
-        'date': args.date
+        'date': args.date,
+        'seed': args.seed
     }
 
     logger.log(None, policy, args.start_state, args.end_state, 0, **log)

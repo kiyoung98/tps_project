@@ -24,10 +24,9 @@ class Logger():
         
         # Set up system logging    
         if args.logger:
-            folder_path = self.dir
-            if not os.path.exists(folder_path):
-                os.makedirs(folder_path)
-            log_file_name = folder_path + f"/{self.type}.log"
+            if not os.path.exists(self.dir):
+                os.makedirs(self.dir)
+            log_file_name = self.dir + f"/{self.type}.log"
             # logging.basicConfig(file_mode="w")
             self.logger = logging.getLogger("tps")
             self.logger.setLevel(logging.INFO)
@@ -57,7 +56,7 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, date=None):
+    def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, date=None, seed=0):
         if self.wandb:
             wandb.log(
                 {

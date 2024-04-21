@@ -4,6 +4,7 @@ import mdtraj as md
 import matplotlib.pyplot as plt
 
 from .utils import compute_dihedral
+from tqdm import tqdm
 
 class AlaninePotential():
     def __init__(self):
@@ -169,10 +170,9 @@ def plot_potentials(molecule, potentials, dir_path):
 
 def plot_3D_view(molecule, start_file, positions, dir_path):
     positions = positions.detach().cpu().numpy()
-    for i in range(positions.shape[0]):
+    for i in tqdm(range(positions.shape[0])):
         for j in range(positions.shape[1]):
             traj = md.load_pdb(start_file)
-            
             traj.xyz = positions[i, j]
             
             if j == 0:
