@@ -16,7 +16,6 @@ class BaseDynamics(ABC):
         self.position = self.simulation.context.getState(getPositions=True).getPositions().value_in_unit(unit.nanometer)
         self.reset()
 
-        
     @abstractmethod
     def setup(self):
         pass
