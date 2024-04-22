@@ -33,7 +33,7 @@ parser.add_argument('--temperature', default=0., type=float, help='In training, 
 
 # Training Config
 parser.add_argument('--loss', default='tb', type=str)
-parser.add_argument('--learning_rate', default=1e-4, type=float)
+parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--std', default=0.1, type=float, help='std of target policy')
 parser.add_argument('--start_std', default=0.2, type=float, help='Start std of annealing schedule used in behavior policy')
 parser.add_argument('--end_std', default=0.1, type=float, help='End std of annealing schedule used in behavior policy')
