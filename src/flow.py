@@ -34,7 +34,7 @@ class FlowNetAgent:
 
         mds.reset()
 
-        self.replay.push((positions, actions, noises, start_position, last_position, target_position))
+        self.replay.add((positions, actions, noises, start_position, last_position, target_position))
 
         log = {
             'positions': positions, 
@@ -65,7 +65,7 @@ class FlowNetAgent:
             loss = torch.mean((log_z+log_forward-log_reward)**2)
         elif args.loss == 'pice':
             costs = get_log_normal(noises/args.std).mean((1, 2, 3)) - get_log_normal(actions/args.std).mean((1, 2, 3)) - get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
-            importances = torch.softmax(-100*costs, 0)
+            importances = torch.softmax(-costs, 0)
             match = - get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
             loss = torch.sum(importances*match)
         
@@ -82,7 +82,7 @@ class ReplayBuffer:
         self.buffer = []
         self.buffer_size = args.buffer_size
 
-    def push(self, data):
+    def add(self, data):
         self.buffer.append(data)
         if len(self.buffer) > self.buffer_size:
             self.buffer.pop(0)

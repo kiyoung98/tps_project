@@ -12,6 +12,7 @@ from .metrics import *
 class Logger():
     def __init__(self, args, md_info):
         self.wandb = args.wandb
+        self.project = args.project
         self.molecule = args.molecule
         self.start_file = md_info.start_file
         
@@ -20,7 +21,7 @@ class Logger():
         kst = pytz.timezone('Asia/Seoul')
         self.date = datetime.datetime.now(tz=kst).strftime("%Y%m%d-%H%M%S")
         
-        self.dir = f'results/{self.molecule}/{self.type}/{self.seed}'
+        self.dir = f'results/{self.molecule}/{self.project}/{self.type}/{self.seed}'
         
         # Set up system logging    
         if args.logger:
