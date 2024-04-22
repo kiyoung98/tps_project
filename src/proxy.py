@@ -14,29 +14,29 @@ class Alanine(nn.Module):
         self.input_dim = md_info.num_particles*3
         self.output_dim = md_info.num_particles*3 if self.force else 1
 
-        self.linear = nn.Linear(self.input_dim, 128)
+        self.linear = nn.Linear(self.input_dim, 256)
 
         self.mlp = nn.Sequential(
             nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.Linear(256, 512),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(512, 512),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Linear(128, self.output_dim, bias=False)
+            nn.Linear(256, self.output_dim, bias=False)
         )
 
         if self.hindsight or self.goal_conditioned:
-            self.goal_linear = nn.Linear(self.input_dim, 128, bias=False)
+            self.goal_linear = nn.Linear(self.input_dim, 256, bias=False)
 
             self.log_z_mlp = nn.Sequential(
                 nn.ReLU(),
-                nn.Linear(128, 128),
+                nn.Linear(256, 256),
                 nn.ReLU(),
-                nn.Linear(128, 1),
+                nn.Linear(256, 1),
             )
         else:
             self.log_z = nn.Parameter(torch.tensor(0.))
@@ -72,10 +72,9 @@ class Alanine(nn.Module):
         return force
 
     def get_log_z(self, start, goal):
-        if self.hindsight:
-            if self.goal_conditioned:
-                start = self.canonicalize(start)[0]
-                goal = self.canonicalize(goal)[0]
+        if self.goal_conditioned or self.hindsight:
+            start = self.canonicalize(start)[0]
+            goal = self.canonicalize(goal)[0]
             
             start = self.linear(start.view(*start.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
