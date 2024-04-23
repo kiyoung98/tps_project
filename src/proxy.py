@@ -48,9 +48,8 @@ class Alanine(nn.Module):
             pos.requires_grad = True
            
         if self.hindsight or self.goal_conditioned:
-            if self.goal_conditioned:
-                pos_, rot_inv = self.canonicalize(pos)
-                goal = self.canonicalize(goal)[0]
+            pos_, rot_inv = self.canonicalize(pos)
+            goal = self.canonicalize(goal)[0]
             
             pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
@@ -62,7 +61,7 @@ class Alanine(nn.Module):
         if not self.force:
             force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
-            if self.goal_conditioned:
+            if self.hindsight or self.goal_conditioned:
                 out = out.view(-1, self.num_particles, 3)
                 rot_inv = rot_inv.view(-1, 3, 3)
                 force = torch.bmm(out, rot_inv).view(*pos.shape)
@@ -72,10 +71,9 @@ class Alanine(nn.Module):
         return force
 
     def get_log_z(self, start, goal):
-        if self.goal_conditioned or self.hindsight:
-            if self.goal_conditioned:
-                start = self.canonicalize(start)[0]
-                goal = self.canonicalize(goal)[0]
+        if self.hindsight or self.goal_conditioned:
+            start = self.canonicalize(start)[0]
+            goal = self.canonicalize(goal)[0]
             
             start = self.linear(start.view(*start.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
