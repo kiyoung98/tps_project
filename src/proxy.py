@@ -47,7 +47,7 @@ class Alanine(nn.Module):
             pos.requires_grad = True
            
         if self.goal_conditioned:            
-            pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
+            pos_ = self.linear(pos.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             out = self.mlp(pos_+goal)
         else:
@@ -116,7 +116,7 @@ class Chignolin(nn.Module):
             pos.requires_grad = True
            
         if self.goal_conditioned:            
-            pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
+            pos_ = self.linear(pos.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             out = self.mlp(pos_+goal)
         else:
@@ -185,7 +185,7 @@ class Poly(nn.Module):
             pos.requires_grad = True
            
         if self.goal_conditioned:            
-            pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
+            pos_ = self.linear(pos.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             out = self.mlp(pos_+goal)
         else:
