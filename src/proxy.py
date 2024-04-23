@@ -7,7 +7,6 @@ class Alanine(nn.Module):
         super().__init__()
         
         self.force = args.force
-        self.hindsight = args.hindsight
         self.goal_conditioned = args.goal_conditioned
 
         self.num_particles = md_info.num_particles
@@ -29,7 +28,7 @@ class Alanine(nn.Module):
             nn.Linear(128, self.output_dim, bias=False)
         )
 
-        if self.hindsight or self.goal_conditioned:
+        if self.goal_conditioned:
             self.goal_linear = nn.Linear(self.input_dim, 128, bias=False)
 
             self.log_z_mlp = nn.Sequential(
@@ -47,10 +46,7 @@ class Alanine(nn.Module):
         if not self.force:
             pos.requires_grad = True
            
-        if self.hindsight or self.goal_conditioned:
-            pos_, rot_inv = self.canonicalize(pos)
-            goal = self.canonicalize(goal)[0]
-            
+        if self.goal_conditioned:            
             pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             out = self.mlp(pos_+goal)
@@ -61,20 +57,12 @@ class Alanine(nn.Module):
         if not self.force:
             force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
-            if self.hindsight or self.goal_conditioned:
-                out = out.view(-1, self.num_particles, 3)
-                rot_inv = rot_inv.view(-1, 3, 3)
-                force = torch.bmm(out, rot_inv).view(*pos.shape)
-            else:
-                force = out.view(*pos.shape)
+            force = out.view(*pos.shape)
                 
         return force
 
     def get_log_z(self, start, goal):
-        if self.hindsight or self.goal_conditioned:
-            start = self.canonicalize(start)[0]
-            goal = self.canonicalize(goal)[0]
-            
+        if self.goal_conditioned:            
             start = self.linear(start.view(*start.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             log_z = self.log_z_mlp(start+goal)
@@ -82,36 +70,12 @@ class Alanine(nn.Module):
             log_z = self.log_z
         return log_z
     
-    def canonicalize(self, pos):        
-        N = pos[:, :, 6].detach()
-        CA = pos[:, :, 8].detach()
-        C = pos[:, :, 14].detach()
-        
-        pos_ = pos - CA.unsqueeze(-2)
-
-        x = N - CA
-        y = C - CA
-        z = torch.cross(x, y)
-        y = y / torch.norm(y, dim=-1, keepdim=True)
-        z = z / torch.norm(z, dim=-1, keepdim=True)
-        x = torch.cross(y, z)
-
-        rot = torch.stack([x, y, z], -1)
-        rot_inv = torch.stack([x, y, z], -2)
-
-        pos_ = pos_.view(-1, self.num_particles, 3)
-        rot = rot.view(-1, 3, 3)
-
-        pos_ = torch.bmm(pos_, rot).view(*pos.shape)
-        return pos_, rot_inv
-
 
 class Chignolin(nn.Module):
     def __init__(self, args, md_info):
         super().__init__()
         
         self.force = args.force
-        self.hindsight = args.hindsight
         self.goal_conditioned = args.goal_conditioned
 
         self.num_particles = md_info.num_particles
@@ -133,7 +97,7 @@ class Chignolin(nn.Module):
             nn.Linear(512, self.output_dim, bias=False)
         )
 
-        if self.hindsight or self.goal_conditioned:
+        if self.goal_conditioned:
             self.goal_linear = nn.Linear(self.input_dim, 512, bias=False)
 
             self.log_z_mlp = nn.Sequential(
@@ -151,11 +115,7 @@ class Chignolin(nn.Module):
         if not self.force:
             pos.requires_grad = True
            
-        if self.hindsight:
-            if self.goal_conditioned:
-                pos_, rot_inv = self.canonicalize(pos)
-                goal = self.canonicalize(goal)[0]
-            
+        if self.goal_conditioned:            
             pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             out = self.mlp(pos_+goal)
@@ -164,23 +124,14 @@ class Chignolin(nn.Module):
             out = self.mlp(pos_)
 
         if not self.force:
-            force = - self.input_dim / 6 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
+            force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
-            if self.goal_conditioned:
-                out = out.view(-1, self.num_particles, 3)
-                rot_inv = rot_inv.view(-1, 3, 3)
-                force = torch.bmm(out, rot_inv).view(*pos.shape)
-            else:
-                force = out.view(*pos.shape)
+            force = out.view(*pos.shape)
                 
         return force
 
     def get_log_z(self, start, goal):
-        if self.hindsight:
-            if self.goal_conditioned:
-                start = self.canonicalize(start)[0]
-                goal = self.canonicalize(goal)[0]
-            
+        if self.goal_conditioned:            
             start = self.linear(start.view(*start.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             log_z = self.log_z_mlp(start+goal)
@@ -188,36 +139,12 @@ class Chignolin(nn.Module):
             log_z = self.log_z
         return log_z
     
-    def canonicalize(self, pos):        
-        N = pos[:, :, 6].detach()
-        CA = pos[:, :, 8].detach()
-        C = pos[:, :, 14].detach()
-        
-        pos_ = pos - CA.unsqueeze(-2)
-
-        x = N - CA
-        y = C - CA
-        z = torch.cross(x, y)
-        y = y / torch.norm(y, dim=-1, keepdim=True)
-        z = z / torch.norm(z, dim=-1, keepdim=True)
-        x = torch.cross(y, z)
-
-        rot = torch.stack([x, y, z], -1)
-        rot_inv = torch.stack([x, y, z], -2)
-
-        pos_ = pos_.view(-1, self.num_particles, 3)
-        rot = rot.view(-1, 3, 3)
-
-        pos_ = torch.bmm(pos_, rot).view(*pos.shape)
-        return pos_, rot_inv
-    
 
 class Poly(nn.Module):
     def __init__(self, args, md_info):
         super().__init__()
         
         self.force = args.force
-        self.hindsight = args.hindsight
         self.goal_conditioned = args.goal_conditioned
 
         self.num_particles = md_info.num_particles
@@ -239,7 +166,7 @@ class Poly(nn.Module):
             nn.Linear(256, self.output_dim, bias=False)
         )
 
-        if self.hindsight or self.goal_conditioned:
+        if self.goal_conditioned:
             self.goal_linear = nn.Linear(self.input_dim, 256, bias=False)
 
             self.log_z_mlp = nn.Sequential(
@@ -257,11 +184,7 @@ class Poly(nn.Module):
         if not self.force:
             pos.requires_grad = True
            
-        if self.hindsight:
-            if self.goal_conditioned:
-                pos_, rot_inv = self.canonicalize(pos)
-                goal = self.canonicalize(goal)[0]
-            
+        if self.goal_conditioned:            
             pos_ = self.linear(pos_.view(*pos.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             out = self.mlp(pos_+goal)
@@ -272,47 +195,15 @@ class Poly(nn.Module):
         if not self.force:
             force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
-            if self.goal_conditioned:
-                out = out.view(-1, self.num_particles, 3)
-                rot_inv = rot_inv.view(-1, 3, 3)
-                force = torch.bmm(out, rot_inv).view(*pos.shape)
-            else:
-                force = out.view(*pos.shape)
+            force = out.view(*pos.shape)
                 
         return force
 
     def get_log_z(self, start, goal):
-        if self.hindsight:
-            if self.goal_conditioned:
-                start = self.canonicalize(start)[0]
-                goal = self.canonicalize(goal)[0]
-            
+        if self.goal_conditioned:            
             start = self.linear(start.view(*start.shape[:-2], -1))
             goal = self.goal_linear(goal.view(*goal.shape[:-2], -1))
             log_z = self.log_z_mlp(start+goal)
         else:
             log_z = self.log_z
         return log_z
-    
-    def canonicalize(self, pos):        
-        N = pos[:, :, 6].detach()
-        CA = pos[:, :, 8].detach()
-        C = pos[:, :, 14].detach()
-        
-        pos_ = pos - CA.unsqueeze(-2)
-
-        x = N - CA
-        y = C - CA
-        z = torch.cross(x, y)
-        y = y / torch.norm(y, dim=-1, keepdim=True)
-        z = z / torch.norm(z, dim=-1, keepdim=True)
-        x = torch.cross(y, z)
-
-        rot = torch.stack([x, y, z], -1)
-        rot_inv = torch.stack([x, y, z], -2)
-
-        pos_ = pos_.view(-1, self.num_particles, 3)
-        rot = rot.view(-1, 3, 3)
-
-        pos_ = torch.bmm(pos_, rot).view(*pos.shape)
-        return pos_, rot_inv
