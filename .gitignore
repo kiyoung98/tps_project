@@ -8,3 +8,7 @@ openmmforcefields/
 
 **hyun**
 .vscode
+cluster/
+img/
+*.png
+*.gif
