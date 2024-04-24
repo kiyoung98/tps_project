@@ -40,7 +40,7 @@ parser.add_argument('--end_std', default=0.1, type=float, help='End std of annea
 parser.add_argument('--hindsight', action='store_true', help='Use hindsight replay proposed by https://arxiv.org/abs/1707.01495')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--buffer_size', default=500, type=int, help='Size of buffer which stores sampled paths')
+parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--terminal_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
