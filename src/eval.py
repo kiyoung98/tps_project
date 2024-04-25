@@ -6,6 +6,7 @@ import proxy
 
 from tqdm import tqdm
 from dynamics.mds import MDs
+from flow import FlowNetAgent
 from dynamics import dynamics
 from utils.logging import Logger
 
@@ -30,9 +31,10 @@ parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
-parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator')
-parser.add_argument('--hindsight', action='store_true', help='Use hindsight replay proposed by https://arxiv.org/abs/1707.01495')
-
+parser.add_argument('--bias_scale', default=1000., type=float, help='Scale of bias which is the output of policy')
+parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
+parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
+parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')
 
 args = parser.parse_args()
 
@@ -41,53 +43,29 @@ if args.wandb:
 
 if __name__ == '__main__':
     md = getattr(dynamics, args.molecule.title())(args, args.end_state)
+
+    agent = FlowNetAgent(args, md)
+    logger = Logger(args, md)
+
     mds = MDs(args, args.start_state)
     target_position = torch.tensor(md.position, dtype=torch.float, device=args.device).unsqueeze(0).unsqueeze(0)
 
-    logger = Logger(args, md)
-
-    # Import policy model
-    policy = getattr(proxy, args.molecule.title())(args, md)
     train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/{args.seed}"
     filename = "policy.pt"
     policy_file = f"{train_log_dir}/{filename}"
     if os.path.exists(policy_file):
-        policy.load_state_dict(torch.load(policy_file))
+        agent.policy.load_state_dict(torch.load(policy_file))
     else:
         raise FileNotFoundError("Policy checkpoint not found")
     
     # Sampling and obtain results for evaluation (positions, potentials)
-    positions = torch.zeros((args.num_samples, args.num_steps, md.num_particles, 3), device=args.device)
-    potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
-    pbar = tqdm(
-        range(args.num_steps),
-        total=args.num_steps,
-        desc="Sampling using trainend policy..."
-    )
-    for s in pbar:
-        position, potential = mds.report()
-        
-        positions[:, s] = position
-        potentials[:, s] = potential
-        bias = policy(position.unsqueeze(1), target_position).squeeze().detach()
 
-        mds.step(bias)
-
-    start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
-    last_position = mds.report()[0].unsqueeze(1)
+    log = agent.sample(args, mds, target_position, args.temperature)
 
     logger.info(f"Sampling done..!")
     
     logger.info(f"Evaluating results...")
-    log = {
-        'positions': positions, 
-        'start_position': start_position,
-        'last_position': last_position, 
-        'target_position': target_position, 
-        'potentials': potentials,
-        'log_reward': 0,
-        'terminal_reward': 0,
-    }
-    logger.log(None, policy, args.start_state, args.end_state, 0, **log)
+
+    logger.log(None, agent.policy, args.start_state, args.end_state, 0, **log)
     logger.plot(**log)
     logger.info(f"Evaluation done..!")

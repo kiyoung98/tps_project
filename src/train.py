@@ -2,13 +2,11 @@ import wandb
 import torch
 import random
 import argparse
-from tqdm import tqdm
 
 from flow import FlowNetAgent
 from dynamics.mds import MDs
 from dynamics import dynamics
 from utils.logging import Logger
-from tqdm.contrib.logging import logging_redirect_tqdm
 
 parser = argparse.ArgumentParser()
 
@@ -21,7 +19,7 @@ parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--type', default='train', type=str)
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 parser.add_argument('--date', type=str, help='Date of the training')
-parser.add_argument('--freq_rollout_save', default=100, type=int, help='Frequency of saving in  rollouts')
+parser.add_argument('--save_freq', default=10, type=int, help='Frequency of saving in rollouts')
 
 # Policy Config
 parser.add_argument('--force', action='store_true', help='Model force otherwise potential')
@@ -42,7 +40,7 @@ parser.add_argument('--loss', default='tb', type=str)
 parser.add_argument('--learning_rate', default=1e-4, type=float)
 parser.add_argument('--start_temperature', default=1500., type=float, help='Start of temperature schedule in annealing')
 parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
-parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
+parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--terminal_std', default=0.2, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')

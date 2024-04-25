@@ -37,10 +37,10 @@ class Logger():
         self.type = args.type
         if self.type == "train":
             self.num_rollouts = args.num_rollouts
-            self.freq_rollout_save = args.freq_rollout_save
+            self.save_freq = args.save_freq
             self.num_samples = args.num_samples
         else:
-            self.freq_rollout_save = 1
+            self.save_freq = 1
             
         self.seed = args.seed
         if not hasattr(args, 'date'):
@@ -95,8 +95,8 @@ class Logger():
     def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, terminal_log_reward, log_reward):
         # In case of training logger
         if self.type == "train":
-            # Save policy at freq_rollout_save and last rollout
-            if rollout % self.freq_rollout_save == 0:
+            # Save policy at save_freq and last rollout
+            if rollout % self.save_freq == 0:
                 torch.save(policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             if rollout == self.num_rollouts - 1 :
@@ -142,6 +142,7 @@ class Logger():
                             f'{start_state}_to_{end_state}/target_hit_percentage (%)': target_hit_percentage(last_position, target_position),
                             f'{start_state}_to_{end_state}/energy_transition_point (kJ/mol)': energy_transition_point(last_position, target_position, potentials),
                             f'{start_state}_to_{end_state}/paths': wandb.Image(plot_paths_alanine(positions, target_position)),
+                            f'{start_state}_to_{end_state}/potentials': wandb.Image(fig_potential),
                         }, 
                         step=rollout
                     )

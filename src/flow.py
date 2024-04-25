@@ -17,7 +17,6 @@ class FlowNetAgent:
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
     def sample(self, args, mds, target_position, temperature):
-
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
