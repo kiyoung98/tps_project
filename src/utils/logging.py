@@ -103,7 +103,7 @@ class Logger():
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             
             # Log potential by trajectory index, with termianl reward, log reward
-            if rollout % 10 == 0:
+            if rollout % self.save_freq == 0:
                 self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
                 fig_potential = plot_potentials2(
                     self.dir+"/potential",
@@ -124,7 +124,7 @@ class Logger():
                 },
                 step=rollout
             )
-            if rollout%10==0 and self.molecule == 'alanine':
+            if rollout % self.save_freq==0 and self.molecule == 'alanine':
                 if self.type == "train":
                     fig_potential = f"{self.dir}/potential/potential_rollout{rollout}.png"
                     wandb.log(
@@ -156,7 +156,7 @@ class Logger():
             if self.type == "train":
                 self.logger.info(f"Loss: {loss}")
             
-            if rollout % 10 == 0 and self.molecule == 'alanine':
+            if rollout % self.save_freq == 0 and self.molecule == 'alanine':
                 self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): {target_hit_percentage(last_position, target_position)}")
                 self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): {energy_transition_point(last_position, target_position, potentials)}")
     

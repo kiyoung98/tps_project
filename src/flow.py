@@ -81,7 +81,7 @@ class FlowNetAgent:
         
         if args.loss == 'tb':
             log_z = self.policy.get_log_z(start_position, target_position)
-            log_forward = get_log_normal((biases-actions)/self.std).mean((1, 2, 3))
+            log_forward = get_log_normal((biases-actions)/self.std.view(1, -1, 1)).mean((1, 2, 3))
             loss = torch.mean((log_z+log_forward-log_reward)**2)
         
         loss.backward()
