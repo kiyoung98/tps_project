@@ -34,7 +34,11 @@ class FlowNetAgent:
 
         mds.reset()
 
-        self.replay.add((positions, actions, noises, start_position, last_position, target_position))
+        last_dist_matrix = get_dist_matrix(last_position)
+        target_dist_matrix = get_dist_matrix(target_position)
+        log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+
+        self.replay.add((positions, actions, noises, start_position, last_position, target_position, log_reward))
 
         log = {
             'positions': positions, 
@@ -42,6 +46,7 @@ class FlowNetAgent:
             'last_position': last_position, 
             'target_position': target_position, 
             'potentials': potentials,
+            'log_reward': log_reward,
         }
         return log
 
@@ -49,9 +54,9 @@ class FlowNetAgent:
     def train(self, args):
         policy_optimizers = torch.optim.SGD(self.policy.parameters(), lr=args.learning_rate)
 
-        positions, actions, noises, start_position, last_position, target_position = self.replay.sample()
+        positions, actions, noises, start_position, last_position, target_position, log_reward = self.replay.sample()
 
-        if args.hindsight and random.random() < 0.5: target_position = last_position
+        # if args.hindsight and random.random() < 0.5: target_position = last_position
 
         biases = self.policy(positions, target_position)
         
@@ -61,7 +66,7 @@ class FlowNetAgent:
         if args.loss == 'tb':
             log_z = self.policy.get_log_z(start_position, target_position)
             log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
-            log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+            # log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
             loss = torch.mean((log_z+log_forward-log_reward)**2)
         elif args.loss == 'pice':
             costs = get_log_normal(noises/args.std).mean((1, 2, 3)) - get_log_normal(actions/args.std).mean((1, 2, 3)) - get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
