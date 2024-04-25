@@ -8,6 +8,7 @@ from flow import FlowNetAgent
 from dynamics.mds import MDs
 from dynamics import dynamics
 from utils.logging import Logger
+from tqdm.contrib.logging import logging_redirect_tqdm
 
 parser = argparse.ArgumentParser()
 
@@ -96,8 +97,9 @@ if __name__ == '__main__':
 
         print('Training:')
         loss = 0
-        for _ in tqdm(range(args.trains_per_rollout)):
-            loss += agent.train(args)
+        with logging_redirect_tqdm():
+            for _ in tqdm(range(args.trains_per_rollout)):
+                loss += agent.train(args)
         
         loss = loss / args.trains_per_rollout
 

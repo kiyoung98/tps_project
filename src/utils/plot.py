@@ -196,7 +196,7 @@ def plot_potentials2(dir_path, name, values, terminal_reward, log_reward):
     for i in range(values.shape[0]):
         plt.figure(figsize=(20, 5))
         for j in range(values.shape[1]):
-            plt.plot(values[i][j], label=f"Terminal reward {terminal_reward[i][j]:.5f}, log reward {log_reward[i][j]:.5f}")
+            plt.plot(values[i][j], label=f"Rollout {i}: terminal reward {terminal_reward[i][j]:.4f}, log reward {log_reward[i][j]:.4f}")
         plt.xlabel('Training iterations')
         plt.ylabel(name)
         plt.legend()
