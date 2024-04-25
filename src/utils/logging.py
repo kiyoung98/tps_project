@@ -92,7 +92,7 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, terminal_reward, log_reward):
+    def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, terminal_log_reward, log_reward):
         # In case of training logger
         if self.type == "train":
             # Save policy at freq_rollout_save and last rollout
@@ -109,7 +109,7 @@ class Logger():
                     self.dir+"/potential",
                     rollout,
                     potentials,
-                    terminal_reward,
+                    terminal_log_reward,
                     log_reward
                 )
                 self.logger.info(f"Plotting Done.!!")

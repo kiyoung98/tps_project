@@ -191,12 +191,12 @@ def plot_values(dir_path, name, values):
         plt.clf()
         plt.close()
         
-def plot_potentials2(dir_path, rollout, values, terminal_reward, log_reward):
+def plot_potentials2(dir_path, rollout, values, terminal_log_reward, log_reward):
     values = values.detach().cpu().numpy()
     # for i in range(values.shape[0]):
     fig = plt.figure(figsize=(20, 5))
     for traj_idx in range(values.shape[0]):
-        plt.plot(values[traj_idx], label=f"Sample {traj_idx}: terminal reward {terminal_reward[traj_idx]:.4f}, log reward {log_reward[traj_idx]:.4f}")
+        plt.plot(values[traj_idx], label=f"Sample {traj_idx}: terminal reward {terminal_log_reward[traj_idx]:.4f}, log reward {log_reward[traj_idx]:.4f}")
     plt.xlabel('Trajectory length')
     plt.ylabel("potential")
     plt.legend()
