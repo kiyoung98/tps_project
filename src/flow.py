@@ -36,7 +36,8 @@ class FlowNetAgent:
 
         last_dist_matrix = get_dist_matrix(last_position)
         target_dist_matrix = get_dist_matrix(target_position)
-        log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+        terminal_reward = get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+        log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + terminal_reward
 
         self.replay.add((positions, actions, noises, start_position, last_position, target_position, log_reward))
 
@@ -46,6 +47,7 @@ class FlowNetAgent:
             'last_position': last_position, 
             'target_position': target_position, 
             'potentials': potentials,
+            'terminal_reward': terminal_reward,
             'log_reward': log_reward,
         }
         return log

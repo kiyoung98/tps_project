@@ -1,9 +1,10 @@
+import os
 import wandb
 import torch
 import argparse
-from tqdm import tqdm
-
 import proxy
+
+from tqdm import tqdm
 from dynamics.mds import MDs
 from dynamics import dynamics
 from utils.logging import Logger
@@ -17,7 +18,7 @@ parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--project', default='alanine_eval', type=str)
 parser.add_argument('--type', default='eval', type=str)
-parser.add_argument('--date', default='', type=str, help="Date of the training, uses the most recent if not provided")
+parser.add_argument('--date', default='', type=str, help="Date of the training")
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 
 # Policy Config
@@ -45,23 +46,25 @@ if __name__ == '__main__':
 
     logger = Logger(args, md)
 
+    # Import policy model
     policy = getattr(proxy, args.molecule.title())(args, md)
-    # if args.date == '':
-    #     directory = f"results/{args.molecule}"
-    #     folders = [os.path.join(directory, d) for d in os.listdir(directory) if os.path.isdir(os.path.join(directory, d))]
-    #     folders.sort(key=lambda x: os.path.getctime(x), reverse=True)
-    #     if folders:
-    #         args.date = os.path.basename(folders[0])
-    #         logger.info(f"Using the most recent training date: {args.date}")
-    #     else:
-    #         raise ValueError(f"No folders found in {args.moleulce} directory")
-    policy.load_state_dict(torch.load(f'results/{args.molecule}/{args.project}/train/{args.seed}/policy.pt'))
-
+    train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/{args.seed}"
+    filename = "policy.pt"
+    policy_file = f"{train_log_dir}/{filename}"
+    if os.path.exists(policy_file):
+        policy.load_state_dict(torch.load(policy_file))
+    else:
+        raise FileNotFoundError("Policy checkpoint not found")
+    
+    # Sampling and obtain results for evaluation (positions, potentials)
     positions = torch.zeros((args.num_samples, args.num_steps, md.num_particles, 3), device=args.device)
     potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
-
-    print('Sampling:')
-    for s in tqdm(range(args.num_steps)):
+    pbar = tqdm(
+        range(args.num_steps),
+        total=args.num_steps,
+        desc="Sampling using trainend policy..."
+    )
+    for s in pbar:
         position, potential = mds.report()
         
         positions[:, s] = position
@@ -73,15 +76,18 @@ if __name__ == '__main__':
     start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
     last_position = mds.report()[0].unsqueeze(1)
 
+    logger.info(f"Sampling done..!")
+    
+    logger.info(f"Evaluating results...")
     log = {
         'positions': positions, 
         'start_position': start_position,
         'last_position': last_position, 
         'target_position': target_position, 
         'potentials': potentials,
-        'date': args.date,
-        'seed': args.seed
+        'log_reward': 0,
+        'terminal_reward': 0,
     }
-
     logger.log(None, policy, args.start_state, args.end_state, 0, **log)
     logger.plot(**log)
+    logger.info(f"Evaluation done..!")

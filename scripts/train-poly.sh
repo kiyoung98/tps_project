@@ -1,10 +1,12 @@
+current_date=$(date +"%m%d-%H%M")
+
 for seed in {0..7}; do
   echo ">>" Training poly for $seed
   CUDA_VISIBLE_DEVICES=$seed python src/train.py\
     --seed $seed \
     --wandb \
     --molecule poly \
-    --project poly \
+    --project $current_date \
     --start_states pp2 \
     --end_states pp1 \
     --num_samples 2 \

@@ -105,7 +105,7 @@ def plot_paths_alanine(positions, target_position):
     plt.show()
     return fig
 
-def plot_paths(molecule, positions, target_position, dir_path):
+def plot_paths(dir_path, positions, target_position):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
 
@@ -156,19 +156,18 @@ def plot_paths(molecule, positions, target_position, dir_path):
         plt.clf()
         plt.close()    
 
-def plot_potentials(molecule, potentials, dir_path):
+def plot_potentials(dir_path, potentials):
     potentials = potentials.detach().cpu().numpy()
     for i in range(potentials.shape[0]):
         plt.figure(figsize=(20, 5))
         plt.plot(potentials[i])
         plt.xlabel('Time (fs)')
         plt.ylabel('Potential Energy (kJ/mol)')
-        plt.show()
         plt.savefig(f'{dir_path}/potential_{i}.png')
         plt.clf()
         plt.close()
 
-def plot_3D_view(molecule, start_file, positions, dir_path):
+def plot_3D_view(dir_path, start_file, positions):
     positions = positions.detach().cpu().numpy()
     for i in tqdm(range(positions.shape[0])):
         for j in range(positions.shape[1]):
@@ -180,3 +179,27 @@ def plot_3D_view(molecule, start_file, positions, dir_path):
             else:
                 trajs = trajs.join(traj)
         trajs.save(f'{dir_path}/3D_view_{i}.h5')
+        
+def plot_values(dir_path, name, values):
+    values = values.detach().cpu().numpy()
+    for i in range(values.shape[0]):
+        plt.figure(figsize=(20, 5))
+        plt.plot(values[i])
+        plt.xlabel('Rollout')
+        plt.ylabel(name)
+        plt.savefig(f'{dir_path}/{name}_{i}.png')
+        plt.clf()
+        plt.close()
+        
+def plot_potentials2(dir_path, name, values, terminal_reward, log_reward):
+    values = values.detach().cpu().numpy()
+    for i in range(values.shape[0]):
+        plt.figure(figsize=(20, 5))
+        for j in range(values.shape[1]):
+            plt.plot(values[i][j], label=f"Terminal reward {terminal_reward[i][j]:.5f}, log reward {log_reward[i][j]:.5f}")
+        plt.xlabel('Training iterations')
+        plt.ylabel(name)
+        plt.legend()
+        plt.savefig(f'{dir_path}/{name}_rollout{i}.png')
+        plt.clf()
+        plt.close()

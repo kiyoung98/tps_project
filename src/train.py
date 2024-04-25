@@ -19,6 +19,8 @@ parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--type', default='train', type=str)
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
+parser.add_argument('--date', type=str, help='Date of the training')
+parser.add_argument('--freq_rollout_save', default=100, type=int, help='Frequency of saving in  rollouts')
 
 # Policy Config
 parser.add_argument('--force', action='store_true', help='Model force otherwise potential')
