@@ -55,7 +55,7 @@ class Alanine(nn.Module):
             out = self.mlp(pos_)
 
         if not self.force:
-            force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
+            force = - self.input_dim * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
             force = out.view(*pos.shape)
                 
@@ -124,7 +124,7 @@ class Chignolin(nn.Module):
             out = self.mlp(pos_)
 
         if not self.force:
-            force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
+            force = - self.input_dim * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
             force = out.view(*pos.shape)
                 
@@ -193,7 +193,7 @@ class Poly(nn.Module):
             out = self.mlp(pos_)
 
         if not self.force:
-            force = - self.input_dim / 3 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
+            force = - self.input_dim * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0] # 3 controls bias scale to fit the case where force is true
         else:
             force = out.view(*pos.shape)
                 
