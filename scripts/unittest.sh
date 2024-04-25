@@ -1,3 +1,4 @@
+export TZ=Asia/Seoul
 current_date=$(date +"%m%d-%H%M%S")
 
 echo ">>" Unit test for poly
@@ -14,7 +15,7 @@ do
     --end_states pp1 \
     --num_samples 4 \
     --trains_per_rollout 100 \
-    --num_rollouts 10 \
+    --num_rollouts 32 \
     --num_steps 100 \
     --start_std 0.1 \
     --end_std 0.05 \

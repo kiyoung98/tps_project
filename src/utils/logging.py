@@ -147,18 +147,27 @@ class Logger():
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             
             # Log potential, termianl reward, log reward in training
-            self.potentials.append(potentials)
-            self.terminal_reward.append(terminal_reward)
-            self.log_reward.append(log_reward)
-            if rollout == self.num_rollouts - 1 :
+            # self.potentials.append(potentials)
+            # self.terminal_reward.append(terminal_reward)
+            # self.log_reward.append(log_reward)
+            if rollout % 10 == 0:
+                # self.potentials = torch.stack(self.potentials, dim=1)
+                # self.terminal_reward = torch.stack(self.terminal_reward, dim=1)
+                # self.log_reward = torch.stack(self.log_reward, dim=1)
                 self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
-                self.potentials = torch.stack(self.potentials, dim=1)
-                self.terminal_reward = torch.stack(self.terminal_reward, dim=1)
-                self.log_reward = torch.stack(self.log_reward, dim=1)
-                # plot_values(self.dir+"/terminal_reward", "terminal_reward", self.terminal_reward)
-                # plot_values(self.dir+"/log_reward", "log_reward", self.log_reward)
-                plot_potentials2(self.dir+"/potential", "potential", self.potentials, self.terminal_reward, self.log_reward)
+                plot_potentials2(
+                    self.dir+"/potential",
+                    rollout,
+                    "potential",
+                    potentials,
+                    terminal_reward,
+                    log_reward
+                )
+                
                 self.logger.info(f"Plotting Done.!!")
+                self.potentials = []
+                self.terminal_reward = []
+                self.log_reward = []
     
     def plot(self, positions, target_position, potentials, **kwargs):
         self.logger.info(f"[Plot] Plotting potentials")

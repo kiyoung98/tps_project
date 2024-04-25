@@ -97,9 +97,8 @@ if __name__ == '__main__':
 
         print('Training:')
         loss = 0
-        with logging_redirect_tqdm():
-            for _ in tqdm(range(args.trains_per_rollout)):
-                loss += agent.train(args)
+        for _ in range(args.trains_per_rollout):
+            loss += agent.train(args)
         
         loss = loss / args.trains_per_rollout
 
