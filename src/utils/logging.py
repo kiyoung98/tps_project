@@ -87,56 +87,12 @@ class Logger():
             self.logger.info(f"Date: {log_date}")
             self.logger.info(f"Logging {self.type} {self.molecule}, seed {self.seed}")
             self.logger.info("")
-        
-        self.potentials = []
-        self.terminal_reward = []
-        self.log_reward = []
 
     def info(self, message):
         if self.logger:
             self.logger.info(message)
     
     def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, terminal_reward, log_reward):
-        # Log to wandb
-        if self.wandb:
-            wandb.log(
-                {
-                    f'{start_state}_to_{end_state}/expected_pairwise_distance (pm)': expected_pairwise_distance(last_position, target_position),
-                    f'{start_state}_to_{end_state}/log_z': policy.get_log_z(start_position, target_position).item(), 
-                    # f'{start_state}_to_{end_state}/potentials': potentials,
-                    # f'{start_state}_to_{end_state}/terminal_reward': terminal_reward,
-                    # f'{start_state}_to_{end_state}/log_reward': log_reward,
-                    'loss': loss,
-                },
-                step=rollout
-            )
-            
-            if rollout%10==0 and self.molecule == 'alanine':
-                wandb.log(
-                    {
-                        f'{start_state}_to_{end_state}/target_hit_percentage (%)': target_hit_percentage(last_position, target_position),
-                        f'{start_state}_to_{end_state}/energy_transition_point (kJ/mol)': energy_transition_point(last_position, target_position, potentials),
-                        f'{start_state}_to_{end_state}/paths': wandb.Image(plot_paths_alanine(positions, target_position)),
-                    }, 
-                    step=rollout
-                )
-
-        # Log to system log
-        if self.logger:
-            self.logger.info("")
-            self.logger.info(f'Rollout: {rollout}')
-            self.logger.info(f"{start_state}_to_{end_state}/expected_pairwise_distance (pm): {expected_pairwise_distance(last_position, target_position)}")
-            self.logger.info(f"{start_state}_to_{end_state}/log_z: {policy.get_log_z(start_position, target_position).item()}")
-            # self.logger.info(f"{start_state}_to_{end_state}/potentials': {potentials}")
-            # self.logger.info(f"{start_state}_to_{end_state}/terminal_reward': {terminal_reward}")
-            # self.logger.info(f"{start_state}_to_{end_state}/log_reward': {log_reward}")
-            if self.type == "train":
-                self.logger.info(f"Loss: {loss}")
-            
-            if rollout % 10 == 0 and self.molecule == 'alanine':
-                self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): {target_hit_percentage(last_position, target_position)}")
-                self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): {energy_transition_point(last_position, target_position, potentials)}")
-        
         # In case of training logger
         if self.type == "train":
             # Save policy at freq_rollout_save and last rollout
@@ -146,19 +102,62 @@ class Logger():
             if rollout == self.num_rollouts - 1 :
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             
-            # Log potential, termianl reward, log reward in training
-            self.potentials.append(potentials)
-            self.terminal_reward.append(terminal_reward)
-            self.log_reward.append(log_reward)
-            if rollout == self.num_rollouts - 1 :
+            # Log potential by trajectory index, with termianl reward, log reward
+            if rollout % 10 == 0:
                 self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
-                self.potentials = torch.stack(self.potentials, dim=1)
-                self.terminal_reward = torch.stack(self.terminal_reward, dim=1)
-                self.log_reward = torch.stack(self.log_reward, dim=1)
-                # plot_values(self.dir+"/terminal_reward", "terminal_reward", self.terminal_reward)
-                # plot_values(self.dir+"/log_reward", "log_reward", self.log_reward)
-                plot_potentials2(self.dir+"/potential", "potential", self.potentials, self.terminal_reward, self.log_reward)
+                fig_potential = plot_potentials2(
+                    self.dir+"/potential",
+                    rollout,
+                    potentials,
+                    terminal_reward,
+                    log_reward
+                )
                 self.logger.info(f"Plotting Done.!!")
+        
+        # Log to wandb
+        if self.wandb:
+            wandb.log(
+                {
+                    f'{start_state}_to_{end_state}/expected_pairwise_distance (pm)': expected_pairwise_distance(last_position, target_position),
+                    f'{start_state}_to_{end_state}/log_z': policy.get_log_z(start_position, target_position).item(), 
+                    'loss': loss,
+                },
+                step=rollout
+            )
+            if rollout%10==0 and self.molecule == 'alanine':
+                if self.type == "train":
+                    fig_potential = f"{self.dir}/potential/potential_rollout{rollout}.png"
+                    wandb.log(
+                        {
+                            f'{start_state}_to_{end_state}/target_hit_percentage (%)': target_hit_percentage(last_position, target_position),
+                            f'{start_state}_to_{end_state}/energy_transition_point (kJ/mol)': energy_transition_point(last_position, target_position, potentials),
+                            f'{start_state}_to_{end_state}/paths': wandb.Image(plot_paths_alanine(positions, target_position)),
+                            f'{start_state}_to_{end_state}/potentials': wandb.Image(fig_potential),
+                        }, 
+                        step=rollout
+                    )
+                else:
+                    wandb.log(
+                        {
+                            f'{start_state}_to_{end_state}/target_hit_percentage (%)': target_hit_percentage(last_position, target_position),
+                            f'{start_state}_to_{end_state}/energy_transition_point (kJ/mol)': energy_transition_point(last_position, target_position, potentials),
+                            f'{start_state}_to_{end_state}/paths': wandb.Image(plot_paths_alanine(positions, target_position)),
+                        }, 
+                        step=rollout
+                    )
+
+        # Log to system log
+        if self.logger:
+            self.logger.info("")
+            self.logger.info(f'Rollout: {rollout}')
+            self.logger.info(f"{start_state}_to_{end_state}/expected_pairwise_distance (pm): {expected_pairwise_distance(last_position, target_position)}")
+            self.logger.info(f"{start_state}_to_{end_state}/log_z: {policy.get_log_z(start_position, target_position).item()}")
+            if self.type == "train":
+                self.logger.info(f"Loss: {loss}")
+            
+            if rollout % 10 == 0 and self.molecule == 'alanine':
+                self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): {target_hit_percentage(last_position, target_position)}")
+                self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): {energy_transition_point(last_position, target_position, potentials)}")
     
     def plot(self, positions, target_position, potentials, **kwargs):
         self.logger.info(f"[Plot] Plotting potentials")
