@@ -27,16 +27,24 @@ class MDs:
             self.mds[i].step(force[i])
 
     def report(self):
-        positions, potentials = [], []
+        positions, velocities, forces, potentials = [], [], [], []
         for i in range(self.num_samples):
-            position, potential = self.mds[i].report()
+            position, velocity, force, potential = self.mds[i].report()
             positions.append(position)
+            velocities.append(velocity)
+            forces.append(force)
             potentials.append(potential)
             
         positions = torch.tensor(positions, dtype=torch.float, device=self.device)
+        velocities = torch.tensor(velocities, dtype=torch.float, device=self.device)
+        forces = torch.tensor(forces, dtype=torch.float, device=self.device)
         potentials = torch.tensor(potentials, dtype=torch.float, device=self.device)
-        return positions, potentials
+        return positions, velocities, forces, potentials
     
     def reset(self):
         for i in range(self.num_samples):
             self.mds[i].reset()
+
+    def set_temperature(self, temperature):
+        for i in range(self.num_samples):
+            self.mds[i].set_temperature(temperature)

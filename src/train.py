@@ -32,19 +32,20 @@ parser.add_argument('--start_states', default='c5', type=str)
 parser.add_argument('--end_states', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
-parser.add_argument('--temperature', default=0., type=float, help='In training, must set 0(K) since we use external noise')
+parser.add_argument('--bias_scale', default=1000., type=float, help='Scale of bias which is the output of policy')
+parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
+parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
+parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')
 
 # Training Config
 parser.add_argument('--loss', default='tb', type=str)
-parser.add_argument('--learning_rate', default=1e-3, type=float)
-parser.add_argument('--std', default=0.1, type=float, help='std of target policy')
-parser.add_argument('--start_std', default=0.2, type=float, help='Start std of annealing schedule used in behavior policy')
-parser.add_argument('--end_std', default=0.1, type=float, help='End std of annealing schedule used in behavior policy')
-parser.add_argument('--hindsight', action='store_true', help='Use hindsight replay proposed by https://arxiv.org/abs/1707.01495')
+parser.add_argument('--learning_rate', default=1e-4, type=float)
+parser.add_argument('--start_temperature', default=1500., type=float, help='Start of temperature schedule in annealing')
+parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
-parser.add_argument('--terminal_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--terminal_std', default=0.2, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
@@ -78,13 +79,13 @@ if __name__ == '__main__':
         target_position = getattr(dynamics, args.molecule.title())(args, state).position
         target_position_dict[state] = torch.tensor(target_position, dtype=torch.float, device=args.device)
 
-    annealing_schedule = torch.linspace(args.start_std, args.end_std, args.num_rollouts, device=args.device)
+    annealing_schedule = torch.linspace(args.start_temperature, args.end_temperature, args.num_rollouts, device=args.device)
 
     logger.info("")
     logger.info(f"Starting training for {args.num_rollouts} rollouts")
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
-        std = annealing_schedule[rollout]
+        temperature = annealing_schedule[rollout]
 
         print('Sampling:')
         start_state = random.choice(start_states)
@@ -93,7 +94,7 @@ if __name__ == '__main__':
         mds = mds_dict[start_state]         
         target_position = target_position_dict[end_state].unsqueeze(0).unsqueeze(0)
         
-        log = agent.sample(args, mds, target_position, std)
+        log = agent.sample(args, mds, target_position, temperature)
 
         print('Training:')
         loss = 0

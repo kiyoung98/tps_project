@@ -3,15 +3,15 @@ from torch import nn
 
 
 class Alanine(nn.Module):
-    def __init__(self, args, md_info):
+    def __init__(self, args, md):
         super().__init__()
         
         self.force = args.force
         self.goal_conditioned = args.goal_conditioned
 
-        self.num_particles = md_info.num_particles
-        self.input_dim = md_info.num_particles*3
-        self.output_dim = md_info.num_particles*3 if self.force else 1
+        self.num_particles = md.num_particles
+        self.input_dim = md.num_particles*3
+        self.output_dim = md.num_particles*3 if self.force else 1
 
         self.linear = nn.Linear(self.input_dim, 128)
 
@@ -72,15 +72,15 @@ class Alanine(nn.Module):
     
 
 class Chignolin(nn.Module):
-    def __init__(self, args, md_info):
+    def __init__(self, args, md):
         super().__init__()
         
         self.force = args.force
         self.goal_conditioned = args.goal_conditioned
 
-        self.num_particles = md_info.num_particles
-        self.input_dim = md_info.num_particles*3
-        self.output_dim = md_info.num_particles*3 if self.force else 1
+        self.num_particles = md.num_particles
+        self.input_dim = md.num_particles*3
+        self.output_dim = md.num_particles*3 if self.force else 1
 
         self.linear = nn.Linear(self.input_dim, 512)
 
@@ -141,15 +141,15 @@ class Chignolin(nn.Module):
     
 
 class Poly(nn.Module):
-    def __init__(self, args, md_info):
+    def __init__(self, args, md):
         super().__init__()
         
         self.force = args.force
         self.goal_conditioned = args.goal_conditioned
 
-        self.num_particles = md_info.num_particles
-        self.input_dim = md_info.num_particles*3
-        self.output_dim = md_info.num_particles*3 if self.force else 1
+        self.num_particles = md.num_particles
+        self.input_dim = md.num_particles*3
+        self.output_dim = md.num_particles*3 if self.force else 1
 
         self.linear = nn.Linear(self.input_dim, 256)
 
