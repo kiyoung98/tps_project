@@ -1,3 +1,4 @@
+import yaml
 import wandb
 import torch
 import random
@@ -13,15 +14,19 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 parser = argparse.ArgumentParser()
 
 # System Config
-parser.add_argument('--seed', default=0, type=int)
-parser.add_argument('--wandb', action='store_true')
-parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--project', default='alanine', type=str)
+parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--type', default='train', type=str)
+parser.add_argument('--wandb', action='store_true')
+parser.add_argument('--device', default='cuda', type=str)
+
+# Logger Config
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
-parser.add_argument('--date', type=str, help='Date of the training')
+parser.add_argument('--date', default="test-run", type=str, help='Date of the training')
 parser.add_argument('--freq_rollout_save', default=100, type=int, help='Frequency of saving in  rollouts')
+parser.add_argument('--server', default="server", type=str, choices=["server", "cluster", "else"], help='Server we are using')
+parser.add_argument('--config', default="", type=str, help='Path to config file')
 
 # Policy Config
 parser.add_argument('--force', action='store_true', help='Model force otherwise potential')
@@ -53,12 +58,20 @@ if args.wandb:
     wandb.init(
         project=args.project,
         config=args,
-        # entity="postech-ml-tsp"
     )
 
 torch.manual_seed(args.seed)
 
 if __name__ == '__main__':
+    # NOTE: testing parsing from config file
+    # Nothing happends if config file is not provided
+    if args.config:
+        with open(args.config, 'r') as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+            for config_class in config.keys():
+                for key, value in config[config_class].items():
+                    setattr(args, key, value)
+    
     start_states = args.start_states.split(',')
     end_states = args.end_states.split(',')
 

@@ -37,7 +37,7 @@ parser.add_argument('--hindsight', action='store_true', help='Use hindsight repl
 args = parser.parse_args()
 
 if args.wandb:
-    wandb.init(project=args.project, config=args)
+    wandb.init(project=args.project+"-eval", config=args)
 
 if __name__ == '__main__':
     md = getattr(dynamics, args.molecule.title())(args, args.end_state)
