@@ -58,8 +58,11 @@ class BaseDynamics(ABC):
         return positions, velocities, forces, potentials
 
     def reset(self):
+        for i in range(len(self.position)):
+            self.external_force.setParticleParameters(i, i, [0, 0, 0])
+        self.external_force.updateParametersInContext(self.simulation.context)
         self.simulation.context.setPositions(self.position)
-        self.simulation.context.setVelocitiesToTemperature(self.temperature)
+        self.simulation.context.setVelocities(np.zeros((len(self.position), len(self.position[0]))))
 
     def set_temperature(self, temperature):
         self.integrator.setTemperature(temperature * unit.kelvin)

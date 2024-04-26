@@ -1,14 +1,21 @@
 current_date=$(date +"%m%d-%H%M")
 
-for seed in {0..7}; do
-  echo ">>" Training alanine for $seed
-    CUDA_VISIBLE_DEVICES=$seed python src/train.py \
+# Define an array with different learning rates
+seeds=(0 1 2 3)
+
+# Initialize a counter variable
+gpu=4
+
+# Iterate over the learning rates
+for seed in "${seeds[@]}"; do
+  CUDA_VISIBLE_DEVICES=$gpu python src/train.py \
     --date $current_date \
-    --seed 0 \
-    --bias_scale $((seed*100+100)) \
+    --seed $seed \
     --wandb \
-    --num_steps 600 \
-    --project alanine_mass &
+    --project alanine_mass_md_init &
+  
+  # Increment the counter variable
+  ((gpu++))
 done
 
 wait

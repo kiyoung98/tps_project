@@ -29,11 +29,11 @@ class TqdmLoggingHandler(logging.StreamHandler):
             self.handleError(record)
 
 class Logger():
-    def __init__(self, args, md_info):
+    def __init__(self, args, md):
         self.wandb = args.wandb
         self.project = args.project
         self.molecule = args.molecule
-        self.start_file = md_info.start_file
+        self.start_file = md.start_file
         self.type = args.type
         if self.type == "train":
             self.num_rollouts = args.num_rollouts

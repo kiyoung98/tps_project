@@ -16,7 +16,7 @@ class FlowNetAgent:
         self.replay = ReplayBuffer(args)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
-    def sample(self, args, mds, target_position, temperature):
+    def sample(self, args, mds, target_position, temperature, biased=True):
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
@@ -28,7 +28,10 @@ class FlowNetAgent:
 
         mds.set_temperature(temperature)
         for s in tqdm(range(args.num_steps)):
-            bias = args.bias_scale * self.policy(position.unsqueeze(1), target_position).squeeze().detach()
+            if biased:
+                bias = args.bias_scale * self.policy(position.unsqueeze(1), target_position).squeeze().detach()
+            else:
+                bias = torch.zeros_like(position)
             mds.step(bias)
 
             next_position, velocity, force, potential = mds.report()
@@ -40,14 +43,12 @@ class FlowNetAgent:
             position = next_position
             
             positions[:, s+1] = position
-            potentials[:, s+1] = potential
+            potentials[:, s+1] = potential - (bias*position).sum((-1, -2)) # subtract bias potential
             actions[:, s] = bias / self.masses.view(1, -1, 1) + noise / self.f_scale
         mds.reset()
-        
+
         start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
         last_position = position.unsqueeze(1)
-
-        mds.reset()
 
         last_dist_matrix = get_dist_matrix(last_position)
         target_dist_matrix = get_dist_matrix(target_position)

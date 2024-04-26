@@ -34,7 +34,7 @@ class MDs:
             velocities.append(velocity)
             forces.append(force)
             potentials.append(potential)
-            
+
         positions = torch.tensor(positions, dtype=torch.float, device=self.device)
         velocities = torch.tensor(velocities, dtype=torch.float, device=self.device)
         forces = torch.tensor(forces, dtype=torch.float, device=self.device)

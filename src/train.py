@@ -37,7 +37,7 @@ parser.add_argument('--friction_coefficient', default=1., type=float, help='Fric
 
 # Training Config
 parser.add_argument('--loss', default='tb', type=str)
-parser.add_argument('--learning_rate', default=1e-4, type=float)
+parser.add_argument('--learning_rate', default=0.01, type=float)
 parser.add_argument('--start_temperature', default=1500., type=float, help='Start of temperature schedule in annealing')
 parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
@@ -77,10 +77,22 @@ if __name__ == '__main__':
         target_position = getattr(dynamics, args.molecule.title())(args, state).position
         target_position_dict[state] = torch.tensor(target_position, dtype=torch.float, device=args.device)
 
-    annealing_schedule = torch.linspace(args.start_temperature, args.end_temperature, args.num_rollouts, device=args.device)
+    logger.info(f"Initializing buffer with MD")
+    for _ in range(args.buffer_size):
+        print('Sampling:')
+        start_state = random.choice(start_states)
+        end_state = random.choice(end_states)
+
+        mds = mds_dict[start_state]         
+        target_position = target_position_dict[end_state].unsqueeze(0).unsqueeze(0)
+
+        agent.sample(args, mds, target_position, args.start_temperature, False)
 
     logger.info("")
     logger.info(f"Starting training for {args.num_rollouts} rollouts")
+
+    annealing_schedule = torch.linspace(args.start_temperature, args.end_temperature, args.num_rollouts, device=args.device)
+
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
         temperature = annealing_schedule[rollout]
