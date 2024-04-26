@@ -1,3 +1,4 @@
+htop
 wandb/
 notebooks/
 results/
@@ -11,4 +12,3 @@ openmmforcefields/
 cluster/
 img/
 *.png
-*.gif
