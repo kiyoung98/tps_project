@@ -2,9 +2,7 @@ import os
 import wandb
 import torch
 import argparse
-import proxy
 
-from tqdm import tqdm
 from dynamics.mds import MDs
 from flow import FlowNetAgent
 from dynamics import dynamics
@@ -31,7 +29,7 @@ parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
-parser.add_argument('--bias_scale', default=200., type=float, help='Scale of bias which is the output of policy')
+parser.add_argument('--bias_scale', default=300., type=float, help='Scale of bias which is the output of policy')
 parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
 parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
 parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')

@@ -30,14 +30,14 @@ parser.add_argument('--start_states', default='c5', type=str)
 parser.add_argument('--end_states', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
-parser.add_argument('--bias_scale', default=200., type=float, help='Scale of bias which is the output of policy')
+parser.add_argument('--bias_scale', default=300., type=float, help='Scale of bias which is the output of policy')
 parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
 parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
 parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')
 
 # Training Config
 parser.add_argument('--loss', default='tb', type=str)
-parser.add_argument('--learning_rate', default=0.01, type=float)
+parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--start_temperature', default=1500., type=float, help='Start of temperature schedule in annealing')
 parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
@@ -52,7 +52,6 @@ if args.wandb:
     wandb.init(
         project=args.project,
         config=args,
-        # entity="postech-ml-tsp"
     )
 
 torch.manual_seed(args.seed)
