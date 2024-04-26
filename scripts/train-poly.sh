@@ -3,19 +3,20 @@ current_date=$(date +"%m%d-%H%M")
 for seed in {0..7}; do
   echo ">>" Training poly for $seed
   CUDA_VISIBLE_DEVICES=$seed python src/train.py\
-    --seed $seed \
-    --wandb \
     --molecule poly \
-    --project $current_date \
+    --project poly \
+    --date $current_date \
+    --seed $seed \
     --start_states pp2 \
     --end_states pp1 \
     --num_samples 2 \
-    --trains_per_rollout 1000 \
+    --trains_per_rollout 2000 \
     --num_steps 5000 \
     --start_std 0.1 \
     --end_std 0.05 \
     --learning_rate 0.01 \
-    --terminal_std 0.2 &
+    --terminal_std 0.2 \
+    --wandb &
     sleep 0.2
 done
 

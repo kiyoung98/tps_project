@@ -86,7 +86,7 @@ if __name__ == '__main__':
         print(f'Rollout: {rollout}')
         std = annealing_schedule[rollout]
 
-        print('Sampling:')
+        print('Sampling...')
         start_state = random.choice(start_states)
         end_state = random.choice(end_states)
 
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         
         log = agent.sample(args, mds, target_position, std)
 
-        print('Training:')
+        print('Training...')
         loss = 0
         for _ in range(args.trains_per_rollout):
             loss += agent.train(args)

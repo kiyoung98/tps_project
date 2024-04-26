@@ -17,7 +17,7 @@ class FlowNetAgent:
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * std)
 
-        for s in tqdm(range(args.num_steps)):
+        for s in range(args.num_steps):
             position, potential = mds.report()
             bias = self.policy(position.unsqueeze(1), target_position).squeeze().detach()
             noise = noises[:, s]
