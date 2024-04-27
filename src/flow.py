@@ -53,8 +53,8 @@ class FlowNetAgent:
         last_dist_matrix = get_dist_matrix(last_position)
         target_dist_matrix = get_dist_matrix(target_position)
 
-        # sqrt_mass = torch.sqrt(self.masses) sqrt_mass.view(1, 1, -1) sqrt_mass.view(1, -1, 1)
-        terminal_log_reward = get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
+        sqrt_mass = torch.sqrt(self.masses)
+        terminal_log_reward = get_log_normal(sqrt_mass.view(1, 1, -1)*(last_dist_matrix-target_dist_matrix)*sqrt_mass.view(1, -1, 1)/args.terminal_std).mean((1, 2))
         intermediate_log_reward = get_log_normal(actions/self.std.view(1, -1, 1)).mean((1, 2, 3))
         log_reward = intermediate_log_reward + terminal_log_reward
 
