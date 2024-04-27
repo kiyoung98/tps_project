@@ -96,8 +96,8 @@ def plot_paths_alanine(positions, target_position):
     
     psis_target = []
     phis_target = []
-    psis_target.append(compute_dihedral(target_position[0, 0, angle_1, :]))
-    phis_target.append(compute_dihedral(target_position[0, 0, angle_2, :]))
+    psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
+    phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
     ax.scatter(phis_target, psis_target, edgecolors='w', c='w', zorder=100, s=10)
 
     plt.xlabel('phi')
@@ -145,8 +145,8 @@ def plot_paths(dir_path, positions, target_position):
         
         psis_target = []
         phis_target = []
-        psis_target.append(compute_dihedral(target_position[0, 0, angle_1, :]))
-        phis_target.append(compute_dihedral(target_position[0, 0, angle_2, :]))
+        psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
+        phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
         ax.scatter(phis_target, psis_target, edgecolors='w', c='w', zorder=100, s=10)
 
         plt.xlabel('phi')
@@ -156,13 +156,14 @@ def plot_paths(dir_path, positions, target_position):
         plt.clf()
         plt.close()    
 
-def plot_potentials(dir_path, potentials):
+def plot_potential(dir_path, potentials, terminal_log_reward, log_reward):
     potentials = potentials.detach().cpu().numpy()
     for i in range(potentials.shape[0]):
-        plt.figure(figsize=(20, 5))
-        plt.plot(potentials[i])
+        plt.plot(potentials[i], label=f"Sample {i}: terminal log reward {terminal_log_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
         plt.xlabel('Time (fs)')
-        plt.ylabel('Potential Energy (kJ/mol)')
+        plt.ylabel("Potential Energy (kJ/mol)")
+        plt.legend()
+        plt.show()
         plt.savefig(f'{dir_path}/potential_{i}.png')
         plt.clf()
         plt.close()
@@ -179,26 +180,15 @@ def plot_3D_view(dir_path, start_file, positions):
             else:
                 trajs = trajs.join(traj)
         trajs.save(f'{dir_path}/3D_view_{i}.h5')
+    
         
-def plot_values(dir_path, name, values):
-    values = values.detach().cpu().numpy()
-    for i in range(values.shape[0]):
-        plt.figure(figsize=(20, 5))
-        plt.plot(values[i])
-        plt.xlabel('Rollout')
-        plt.ylabel(name)
-        plt.savefig(f'{dir_path}/{name}_{i}.png')
-        plt.clf()
-        plt.close()
-        
-def plot_potentials2(dir_path, rollout, values, terminal_log_reward, log_reward):
-    values = values.detach().cpu().numpy()
-    # for i in range(values.shape[0]):
+def plot_potentials(dir_path, rollout, potentials, terminal_log_reward, log_reward):
+    potentials = potentials.detach().cpu().numpy()
     fig = plt.figure(figsize=(20, 5))
-    for traj_idx in range(values.shape[0]):
-        plt.plot(values[traj_idx], label=f"Sample {traj_idx}: terminal reward {terminal_log_reward[traj_idx]:.4f}, log reward {log_reward[traj_idx]:.4f}")
-    plt.xlabel('Trajectory length')
-    plt.ylabel("potential")
+    for i in range(potentials.shape[0]):
+        plt.plot(potentials[i], label=f"Sample {i}: terminal log reward {terminal_log_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
+    plt.xlabel('Time (fs)')
+    plt.ylabel("Potential Energy (kJ/mol)")
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/potential_rollout{rollout}.png')

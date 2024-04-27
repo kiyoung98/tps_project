@@ -1,7 +1,6 @@
 import os
 import sys
 import pytz
-import time
 import wandb
 import logging
 import datetime
@@ -92,7 +91,7 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, terminal_log_reward, log_reward):
+    def log(self, loss, policy, start_state, end_state, rollout, positions, last_position, target_position, potentials, terminal_log_reward, log_reward):
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
@@ -105,7 +104,7 @@ class Logger():
             # Log potential by trajectory index, with termianl reward, log reward
             if rollout % self.save_freq == 0:
                 self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
-                fig_potential = plot_potentials2(
+                fig_potential = plot_potentials(
                     self.dir+"/potential",
                     rollout,
                     potentials,
@@ -119,7 +118,7 @@ class Logger():
             wandb.log(
                 {
                     f'{start_state}_to_{end_state}/expected_pairwise_distance (pm)': expected_pairwise_distance(last_position, target_position),
-                    f'{start_state}_to_{end_state}/log_z': policy.get_log_z(start_position, target_position).item(), 
+                    f'{start_state}_to_{end_state}/log_z': policy.get_log_z(positions[:, :1], target_position).item(), 
                     'loss': loss,
                 },
                 step=rollout
@@ -152,7 +151,7 @@ class Logger():
             self.logger.info("")
             self.logger.info(f'Rollout: {rollout}')
             self.logger.info(f"{start_state}_to_{end_state}/expected_pairwise_distance (pm): {expected_pairwise_distance(last_position, target_position)}")
-            self.logger.info(f"{start_state}_to_{end_state}/log_z: {policy.get_log_z(start_position, target_position).item()}")
+            self.logger.info(f"{start_state}_to_{end_state}/log_z: {policy.get_log_z(positions[:, :1], target_position).item()}")
             if self.type == "train":
                 self.logger.info(f"Loss: {loss}")
             
@@ -160,9 +159,9 @@ class Logger():
                 self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): {target_hit_percentage(last_position, target_position)}")
                 self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): {energy_transition_point(last_position, target_position, potentials)}")
     
-    def plot(self, positions, target_position, potentials, **kwargs):
+    def plot(self, positions, target_position, potentials, terminal_log_reward, log_reward, **kwargs):
         self.logger.info(f"[Plot] Plotting potentials")
-        plot_potentials(self.dir, potentials)
+        plot_potential(self.dir, potentials, terminal_log_reward, log_reward)
         
         self.logger.info(f"[Plot] Plotting 3D view")
         plot_3D_view(self.dir, self.start_file, positions)

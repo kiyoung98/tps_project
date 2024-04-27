@@ -1,4 +1,3 @@
-import torch
 from tqdm import tqdm
 from dynamics import dynamics
 
@@ -6,7 +5,6 @@ class MDs:
     def __init__(self, args, state):
         self.args = args
         self.state = state
-        self.device = args.device
         self.molecule = args.molecule
         self.num_samples = args.num_samples
 
@@ -21,29 +19,20 @@ class MDs:
             mds.append(md)
         return mds
 
-    def step(self, force):
-        force = force.detach().cpu().numpy()
-        for i in range(self.num_samples):
-            self.mds[i].step(force[i])
-
-    def report(self):
+    def step(self, bias):
+        bias = bias.detach().cpu().numpy()
         positions, velocities, forces, potentials = [], [], [], []
         for i in range(self.num_samples):
-            position, velocity, force, potential = self.mds[i].report()
-            positions.append(position)
-            velocities.append(velocity)
-            forces.append(force)
-            potentials.append(potential)
-
-        positions = torch.tensor(positions, dtype=torch.float, device=self.device)
-        velocities = torch.tensor(velocities, dtype=torch.float, device=self.device)
-        forces = torch.tensor(forces, dtype=torch.float, device=self.device)
-        potentials = torch.tensor(potentials, dtype=torch.float, device=self.device)
+            position, velocity, force, potential = self.mds[i].step(bias[i])
+            positions.append(position); velocities.append(velocity); forces.append(force); potentials.append(potential)
         return positions, velocities, forces, potentials
     
-    def reset(self):
+    def set(self):
+        positions, velocities, forces, potentials = [], [], [], []
         for i in range(self.num_samples):
-            self.mds[i].reset()
+            position, velocity, force, potential = self.mds[i].set()
+            positions.append(position); velocities.append(velocity); forces.append(force); potentials.append(potential)
+        return positions, velocities, forces, potentials
 
     def set_temperature(self, temperature):
         for i in range(self.num_samples):

@@ -20,12 +20,12 @@ def target_hit_percentage(last_position, target_position):
     angle_2 = [1, 6, 8, 14]
     angle_1 = [6, 8, 14, 16]
 
-    target_psi = compute_dihedral(target_position[0, 0, angle_1, :])
-    target_phi = compute_dihedral(target_position[0, 0, angle_2, :])
+    target_psi = compute_dihedral(target_position[0, angle_1, :])
+    target_phi = compute_dihedral(target_position[0, angle_2, :])
     
     for i in range(last_position.shape[0]):
-        psi = compute_dihedral(last_position[i, 0, angle_1, :])
-        phi = compute_dihedral(last_position[i, 0, angle_2, :])
+        psi = compute_dihedral(last_position[i, angle_1, :])
+        phi = compute_dihedral(last_position[i, angle_2, :])
         psi_dist = min(abs(psi-target_psi), abs(psi-target_psi+2*np.pi), abs(psi-target_psi-2*np.pi))
         phi_dist = min(abs(phi-target_phi), abs(phi-target_phi+2*np.pi), abs(phi-target_phi-2*np.pi))
         if psi_dist < 0.75 and phi_dist < 0.75:
@@ -45,12 +45,12 @@ def energy_transition_point(last_position, target_position, potentials):
     angle_2 = [1, 6, 8, 14]
     angle_1 = [6, 8, 14, 16]
 
-    target_psi = compute_dihedral(target_position[0, 0, angle_1, :])
-    target_phi = compute_dihedral(target_position[0, 0, angle_2, :])
+    target_psi = compute_dihedral(target_position[0, angle_1, :])
+    target_phi = compute_dihedral(target_position[0, angle_2, :])
     
     for i in range(last_position.shape[0]):
-        psi = compute_dihedral(last_position[i, 0, angle_1, :])
-        phi = compute_dihedral(last_position[i, 0, angle_2, :])
+        psi = compute_dihedral(last_position[i, angle_1, :])
+        phi = compute_dihedral(last_position[i, angle_2, :])
         psi_dist = min(abs(psi-target_psi), abs(psi-target_psi+2*np.pi), abs(psi-target_psi-2*np.pi))
         phi_dist = min(abs(phi-target_phi), abs(phi-target_phi+2*np.pi), abs(phi-target_phi-2*np.pi))
         if psi_dist < 0.75 and phi_dist < 0.75:

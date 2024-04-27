@@ -2,6 +2,7 @@ import wandb
 import torch
 import random
 import argparse
+from tqdm import tqdm
 
 from flow import FlowNetAgent
 from dynamics.mds import MDs
@@ -34,6 +35,7 @@ parser.add_argument('--bias_scale', default=2000., type=float, help='Scale of bi
 parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
 parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
 parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')
+parser.add_argument('--terminal_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # Training Config
 parser.add_argument('--loss', default='tb', type=str)
@@ -42,8 +44,9 @@ parser.add_argument('--start_temperature', default=1500., type=float, help='Star
 parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
-parser.add_argument('--terminal_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--buffer_size', default=2000, type=int, help='Size of buffer which stores sampled paths')
+parser.add_argument('--batch_size', default=16, type=int)
+parser.add_argument('--replay_strategy', default='top_k', type=str)
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
@@ -77,13 +80,13 @@ if __name__ == '__main__':
         target_position_dict[state] = torch.tensor(target_position, dtype=torch.float, device=args.device)
 
     logger.info(f"Initializing buffer with MD")
-    for _ in range(args.buffer_size):
+    for _ in range(args.buffer_size//args.num_samples):
         print('Sampling:')
         start_state = random.choice(start_states)
         end_state = random.choice(end_states)
 
         mds = mds_dict[start_state]         
-        target_position = target_position_dict[end_state].unsqueeze(0).unsqueeze(0)
+        target_position = target_position_dict[end_state].unsqueeze(0)
 
         agent.sample(args, mds, target_position, args.start_temperature, False)
 
@@ -101,13 +104,13 @@ if __name__ == '__main__':
         end_state = random.choice(end_states)
 
         mds = mds_dict[start_state]         
-        target_position = target_position_dict[end_state].unsqueeze(0).unsqueeze(0)
+        target_position = target_position_dict[end_state].unsqueeze(0)
         
         log = agent.sample(args, mds, target_position, temperature)
 
         print('Training:')
         loss = 0
-        for _ in range(args.trains_per_rollout):
+        for _ in tqdm(range(args.trains_per_rollout)):
             loss += agent.train(args)
         
         loss = loss / args.trains_per_rollout
@@ -116,4 +119,3 @@ if __name__ == '__main__':
     
     logger.info("")
     logger.info(f"Training finished for {args.num_rollouts} rollouts..!")
-    
