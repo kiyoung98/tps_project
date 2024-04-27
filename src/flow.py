@@ -72,7 +72,12 @@ class FlowNetAgent:
             loss = torch.mean((log_z+log_forward-log_reward)**2)
         elif args.loss == 'pice':
             costs = get_log_normal(noises/args.std).mean((1, 2, 3)) - get_log_normal(actions/args.std).mean((1, 2, 3)) - get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
-            importances = torch.softmax(-costs, 0)
+            if args.molecule == "poly":
+                importance = torch.softmax(-10000*cost, 0)
+            elif args.molecule == "chignolin":
+                importance = torch.softmax(-100*cost, 0)
+            else:
+                importances = torch.softmax(-costs, 0)
             match = - get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
             loss = torch.sum(importances*match)
         

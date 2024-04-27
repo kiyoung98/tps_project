@@ -50,9 +50,12 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
     ```
 
 ## Results
+
 **Alanine Dipeptide**
 ![3D trajectory of Alanine Dipeptide](alanine.gif)
+
 **Polyproline**
 ![3D trajectory of Polyproline](poly.gif)
+
 **Chignolin**
 ![3D trajectory of Chignolin](chignolin.gif)
