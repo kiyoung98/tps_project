@@ -50,7 +50,7 @@ class FlowNetAgent:
         log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
-            self.replay.add((positions, actions, target_position.expand(args.num_samples, -1, -1), log_reward))
+            self.replay.add((positions.to(args.buffer_device), actions.to(args.buffer_device), target_position.expand(args.num_samples, -1, -1).to(args.buffer_device), log_reward.to(args.buffer_device)))
 
         log = {
             'positions': positions, 
@@ -87,20 +87,21 @@ class FlowNetAgent:
 
 class ReplayBuffer:
     def __init__(self, args, md):
-        self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.device)
-        self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
-        self.target_positions = torch.zeros((args.buffer_size, md.num_particles, 3), device=args.device)
-        self.log_reward = torch.zeros(args.buffer_size, device=args.device)
+        self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.buffer_device)
+        self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.buffer_device)
+        self.target_positions = torch.zeros((args.buffer_size, md.num_particles, 3), device=args.buffer_device)
+        self.log_reward = torch.zeros(args.buffer_size, device=args.buffer_device)
 
         self.idx = 0
         self.device = args.device
+        self.buffer_device = args.buffer_device
         self.batch_size = args.batch_size
         self.buffer_size = args.buffer_size
         self.num_samples = args.num_samples
         self.replay_strategy = args.replay_strategy
 
     def add(self, data):
-        indices = torch.arange(self.idx, self.idx+self.num_samples, device=self.device) % self.buffer_size
+        indices = torch.arange(self.idx, self.idx+self.num_samples, device=self.buffer_device) % self.buffer_size
         if self.idx >= self.buffer_size and self.replay_strategy == 'top_k':
             indices = torch.argsort(self.log_reward)[:self.num_samples]
         self.idx += self.num_samples
@@ -109,4 +110,5 @@ class ReplayBuffer:
             
     def sample(self):
         indices = torch.randperm(self.buffer_size)[:self.batch_size]
-        return self.positions[indices], self.actions[indices], self.target_positions[indices], self.log_reward[indices]
+
+        return self.positions[indices].to(self.device), self.actions[indices].to(self.device), self.target_positions[indices].to(self.device), self.log_reward[indices].to(self.device)
