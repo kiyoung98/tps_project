@@ -13,16 +13,19 @@ class FlowNetAgent:
         if args.type == 'train':
             self.replay = ReplayBuffer(args, md)
 
-    def sample(self, args, mds):
+    def sample(self, args, mds, biased=True):
         positions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
-        noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * 0.1)
+        noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * 0.2)
 
         for s in range(args.num_steps):
             position, potential = mds.report()
-            bias = self.policy(position.unsqueeze(1)).squeeze().detach()
             noise = noises[:, s] if args.type == 'train' else 0
+            if biased:
+                bias = self.policy(position.unsqueeze(1)).squeeze().detach()
+            else:
+                bias = torch.zeros_like(position)
             action = bias + noise
             
             positions[:, s] = position

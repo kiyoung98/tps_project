@@ -75,6 +75,11 @@ if __name__ == '__main__':
     logger.info(f"Starting MD at {args.start_state}")
     mds = MDs(args)
 
+    logger.info(f"Initializing buffer with MD")
+    for _ in range(args.buffer_size//args.num_samples):
+        print('Sampling:')
+        agent.sample(args, mds, False)
+
     logger.info("")
     logger.info(f"Starting training for {args.num_rollouts} rollouts")
     for rollout in range(args.num_rollouts):
