@@ -104,7 +104,7 @@ class Logger():
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             
             # Log potential by trajectory index, with termianl reward, log reward
-            if rollout % 10 == 0:
+            if rollout % 10 == 0 and self.molecule == 'alanine':
                 self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
                 fig_potential = plot_potentials2(
                     self.dir+"/potential",
