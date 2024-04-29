@@ -50,9 +50,10 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(positions, target_position):
+def plot_paths_alanine(positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
+    last_idx = last_idx.detach().cpu().numpy()
     
     plt.clf()
     plt.close()
@@ -87,7 +88,7 @@ def plot_paths_alanine(positions, target_position):
 
         psi = []
         phi = []
-        for j in range(positions.shape[1]):
+        for j in range(last_idx[i]):
             psi.append(compute_dihedral(positions[i, j, angle_1, :]))
             phi.append(compute_dihedral(positions[i, j, angle_2, :]))
         ax.plot(phi, psi, marker='o', linestyle='None', markersize=2, alpha=1.)
@@ -105,7 +106,7 @@ def plot_paths_alanine(positions, target_position):
     plt.show()
     return fig
 
-def plot_paths(dir_path, positions, target_position):
+def plot_path(dir_path, positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
 
@@ -136,7 +137,7 @@ def plot_paths(dir_path, positions, target_position):
 
         psi = []
         phi = []
-        for j in range(positions.shape[1]):
+        for j in range(last_idx[i]):
             psi.append(compute_dihedral(positions[i, j, angle_1, :]))
             phi.append(compute_dihedral(positions[i, j, angle_2, :]))
         ax.plot(phi, psi, marker='o', linestyle='None', markersize=2, alpha=1.)
@@ -156,10 +157,10 @@ def plot_paths(dir_path, positions, target_position):
         plt.clf()
         plt.close()    
 
-def plot_potential(dir_path, potentials, terminal_log_reward, log_reward):
+def plot_potential(dir_path, potentials, log_target_reward, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
     for i in range(potentials.shape[0]):
-        plt.plot(potentials[i], label=f"Sample {i}: terminal log reward {terminal_log_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
+        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: terminal log reward {log_target_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
         plt.xlabel('Time (fs)')
         plt.ylabel("Potential Energy (kJ/mol)")
         plt.legend()
@@ -168,10 +169,10 @@ def plot_potential(dir_path, potentials, terminal_log_reward, log_reward):
         plt.clf()
         plt.close()
 
-def plot_3D_view(dir_path, start_file, positions):
+def plot_3D_view(dir_path, start_file, positions, last_idx):
     positions = positions.detach().cpu().numpy()
     for i in tqdm(range(positions.shape[0])):
-        for j in range(positions.shape[1]):
+        for j in range(last_idx[i]):
             traj = md.load_pdb(start_file)
             traj.xyz = positions[i, j]
             
@@ -182,11 +183,11 @@ def plot_3D_view(dir_path, start_file, positions):
         trajs.save(f'{dir_path}/3D_view_{i}.h5')
     
         
-def plot_potentials(dir_path, rollout, potentials, terminal_log_reward, log_reward):
+def plot_potentials(dir_path, rollout, potentials, log_target_reward, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
     fig = plt.figure(figsize=(20, 5))
     for i in range(potentials.shape[0]):
-        plt.plot(potentials[i], label=f"Sample {i}: terminal log reward {terminal_log_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
+        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: terminal log reward {log_target_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
     plt.xlabel('Time (fs)')
     plt.ylabel("Potential Energy (kJ/mol)")
     plt.legend()

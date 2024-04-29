@@ -28,12 +28,12 @@ parser.add_argument('--goal_conditioned', action='store_true', help='Receive tar
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=1000, type=int, help='Number of steps in each path i.e. length of trajectory')
-parser.add_argument('--num_samples', default=20, type=int, help='Number of paths to sample')
+parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--bias_scale', default=2000., type=float, help='Scale of bias which is the output of policy')
 parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
 parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
 parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')
-parser.add_argument('--terminal_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 args = parser.parse_args()
 
@@ -47,9 +47,9 @@ if __name__ == '__main__':
     logger = Logger(args, md)
 
     mds = MDs(args, args.start_state)
-    target_position = torch.tensor(md.position, dtype=torch.float, device=args.device).unsqueeze(0).unsqueeze(0)
+    target_position = torch.tensor(md.position, dtype=torch.float, device=args.device).unsqueeze(0)
 
-    train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/1000"
+    train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/{args.seed}"
     filename = "policy.pt"
     policy_file = f"{train_log_dir}/{filename}"
     if os.path.exists(policy_file):

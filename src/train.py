@@ -35,7 +35,7 @@ parser.add_argument('--bias_scale', default=2000., type=float, help='Scale of bi
 parser.add_argument('--timestep', default=1., type=float, help='Timestep (fs) of the langevin integrator')
 parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator which we want to evaluate')
 parser.add_argument('--friction_coefficient', default=1., type=float, help='Friction_coefficient (ps) of the langevin integrator')
-parser.add_argument('--terminal_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # Training Config
 parser.add_argument('--loss', default='tb', type=str)
@@ -43,10 +43,10 @@ parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--start_temperature', default=1500., type=float, help='Start of temperature schedule in annealing')
 parser.add_argument('--end_temperature', default=300., type=float, help='End of temperature schedule in annealing')
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
-parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--buffer_size', default=2000, type=int, help='Size of buffer which stores sampled paths')
-parser.add_argument('--batch_size', default=16, type=int)
-parser.add_argument('--replay_strategy', default='top_k', type=str)
+parser.add_argument('--trains_per_rollout', default=100, type=int, help='Number of training per rollout in a rollout')
+parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
+parser.add_argument('--batch_size', default=256, type=int)
+parser.add_argument('--replay_strategy', default='', type=str)
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()

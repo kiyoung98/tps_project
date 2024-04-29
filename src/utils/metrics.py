@@ -35,7 +35,7 @@ def target_hit_percentage(last_position, target_position):
     return thp
 
 
-def energy_transition_point(last_position, target_position, potentials):
+def energy_transition_point(last_position, target_position, potentials, last_idx):
     last_position = last_position.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     
@@ -54,7 +54,7 @@ def energy_transition_point(last_position, target_position, potentials):
         psi_dist = min(abs(psi-target_psi), abs(psi-target_psi+2*np.pi), abs(psi-target_psi-2*np.pi))
         phi_dist = min(abs(phi-target_phi), abs(phi-target_phi+2*np.pi), abs(phi-target_phi-2*np.pi))
         if psi_dist < 0.75 and phi_dist < 0.75:
-            etp += potentials[i].max()
+            etp += potentials[i][:last_idx[i]].max()
             hit += 1
     
     etp = etp.item() / hit if hit > 0 else None
