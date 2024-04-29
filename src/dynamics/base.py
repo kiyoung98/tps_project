@@ -12,9 +12,10 @@ class BaseDynamics(ABC):
         self.simulation, self.external_force = self.setup()
 
         self.simulation.minimizeEnergy()
-        self.num_particles = self.simulation.system.getNumParticles()
-        self.position = self.simulation.context.getState(getPositions=True).getPositions().value_in_unit(unit.nanometer)
+        self.position = self.report()[0]
         self.reset()
+        
+        self.num_particles = self.simulation.system.getNumParticles()
 
     @abstractmethod
     def setup(self):
@@ -33,5 +34,8 @@ class BaseDynamics(ABC):
         return positions, potentials
 
     def reset(self):
+        for i in range(len(self.position)):
+            self.external_force.setParticleParameters(i, i, [0, 0, 0])
+        self.external_force.updateParametersInContext(self.simulation.context)
         self.simulation.context.setPositions(self.position)
         self.simulation.context.setVelocitiesToTemperature(0)
