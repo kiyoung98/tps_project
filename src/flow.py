@@ -19,6 +19,9 @@ class FlowNetAgent:
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * 0.2)
 
         position, potential = mds.report()
+        
+        positions[:, 0] = position
+        potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s] if args.type == 'train' else 0
             if biased:

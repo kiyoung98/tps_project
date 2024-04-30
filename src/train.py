@@ -40,7 +40,7 @@ parser.add_argument('--temperature', default=0., type=float, help='In training, 
 # Training Config
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
-parser.add_argument('--trains_per_rollout', default=1000, type=int, help='Number of training per rollout in a rollout')
+parser.add_argument('--trains_per_rollout', default=1, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--init_buffer', action='store_true')
