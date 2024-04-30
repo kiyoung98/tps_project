@@ -27,12 +27,12 @@ class FlowNetAgent:
             else:
                 bias = torch.zeros_like(position)
             action = bias + noise
-            
+
+            mds.step(action)
+
             positions[:, s] = position
             potentials[:, s] = potential - (1000*bias*position).sum((-2, -1))
             actions[:, s] = action
-
-            mds.step(action)
 
         mds.reset()
 

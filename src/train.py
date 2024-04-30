@@ -1,15 +1,12 @@
 import yaml
 import wandb
 import torch
-import random
 import argparse
-from tqdm import tqdm
 
 from flow import FlowNetAgent
 from dynamics.mds import MDs
 from dynamics import dynamics
 from utils.logging import Logger
-from tqdm.contrib.logging import logging_redirect_tqdm
 
 parser = argparse.ArgumentParser()
 
@@ -24,7 +21,7 @@ parser.add_argument('--device', default='cuda', type=str)
 # Logger Config
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 parser.add_argument('--date', default="test-run", type=str, help='Date of the training')
-parser.add_argument('--save_freq', default=100, type=int, help='Frequency of saving in  rollouts')
+parser.add_argument('--save_freq', default=10, type=int, help='Frequency of saving in  rollouts')
 parser.add_argument('--server', default="server", type=str, choices=["server", "cluster", "else"], help='Server we are using')
 parser.add_argument('--config', default="", type=str, help='Path to config file')
 
@@ -41,9 +38,9 @@ parser.add_argument('--temperature', default=0., type=float, help='In training, 
 
 # Training Config
 parser.add_argument('--learning_rate', default=1e-3, type=float)
-parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
+parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=10, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--buffer_size', default=1024, type=int, help='Size of buffer which stores sampled paths')
+parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--replay_strategy', default='', type=str)
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
