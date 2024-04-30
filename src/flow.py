@@ -26,7 +26,7 @@ class FlowNetAgent:
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s] if args.type == 'train' else 0
             if biased:
-                bias = self.policy(position).detach()
+                bias = args.bias_scale * self.policy(position).detach()
             else:
                 bias = torch.zeros_like(position)
             action = bias + noise * torch.sqrt(self.masses).unsqueeze(-1)
@@ -42,7 +42,7 @@ class FlowNetAgent:
         dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
         target_dist_matrix = get_dist_matrix(mds.target_position)
         log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)
-        log_md_reward = get_log_normal(20*actions/torch.sqrt(self.masses).unsqueeze(-1)).mean((1, 2, 3))
+        log_md_reward = get_log_normal(actions/(0.1*torch.sqrt(self.masses).unsqueeze(-1))).mean((1, 2, 3))
         log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
@@ -65,10 +65,10 @@ class FlowNetAgent:
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = self.policy(positions[:, :-1])
+        biases = args.bias_scale * self.policy(positions[:, :-1])
         
         log_z = self.policy.log_z
-        log_forward = get_log_normal(20*(biases-actions)/torch.sqrt(self.masses).unsqueeze(-1)).mean((1, 2, 3))
+        log_forward = get_log_normal((biases-actions)/(0.1*torch.sqrt(self.masses).unsqueeze(-1))).mean((1, 2, 3))
         loss = torch.mean((log_z+log_forward-log_reward)**2)
         
         loss.backward()
