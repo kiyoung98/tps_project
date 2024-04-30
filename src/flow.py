@@ -1,5 +1,6 @@
 import torch
 import proxy
+from tqdm import tqdm
 
 from utils.utils import get_log_normal, get_dist_matrix
 
@@ -17,7 +18,7 @@ class FlowNetAgent:
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * 0.2)
 
-        for s in range(args.num_steps):
+        for s in tqdm(range(args.num_steps)):
             position, potential = mds.report()
             noise = noises[:, s] if args.type == 'train' else 0
             if biased:
@@ -26,7 +27,7 @@ class FlowNetAgent:
                 bias = torch.zeros_like(position)
             action = bias + noise
 
-            positions[:, s] = position
+            positions[:, s] = position.detach()
             potentials[:, s] = potential - (1000*action*position).sum((-2, -1))
             actions[:, s] = action
 

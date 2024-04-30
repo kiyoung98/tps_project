@@ -2,6 +2,7 @@ import yaml
 import wandb
 import torch
 import argparse
+from tqdm import tqdm
 
 from flow import FlowNetAgent
 from dynamics.mds import MDs
@@ -73,8 +74,7 @@ if __name__ == '__main__':
     mds = MDs(args)
 
     logger.info(f"Initializing buffer with MD")
-    for _ in range(args.buffer_size//args.num_samples):
-        print('Sampling:')
+    for _ in tqdm(range(args.buffer_size//args.num_samples)):
         agent.sample(args, mds, False)
 
     logger.info("")
