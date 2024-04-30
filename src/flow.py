@@ -39,11 +39,16 @@ class FlowNetAgent:
             actions[:, s] = action
         mds.reset()
 
-        dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
         target_dist_matrix = get_dist_matrix(mds.target_position)
-        log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)
-        log_md_reward = get_log_normal(actions/(0.1*torch.sqrt(self.masses).unsqueeze(-1))).mean((1, 2, 3))
-        log_reward = log_md_reward + log_target_reward
+        if args.flexible:
+            dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
+            log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)
+        else:
+            dist_matrix = get_dist_matrix(positions[:, -1])
+            last_idx = (args.num_steps-1) * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
+            log_target_reward = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2))
+            log_md_reward = get_log_normal(actions/(0.1*torch.sqrt(self.masses).unsqueeze(-1))).mean((1, 2, 3))
+            log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
