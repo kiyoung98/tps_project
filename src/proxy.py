@@ -35,7 +35,7 @@ class Alanine(nn.Module):
         if not self.force:
             pos.requires_grad = True
 
-        pos_ = self.linear(pos.view(*pos.shape[:-2], -1))
+        pos_ = self.linear(pos.view(-1, self.input_dim))
         out = self.mlp(pos_)
 
         if not self.force:

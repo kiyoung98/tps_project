@@ -21,17 +21,16 @@ class FlowNetAgent:
             position, potential = mds.report()
             noise = noises[:, s] if args.type == 'train' else 0
             if biased:
-                bias = self.policy(position.unsqueeze(1)).squeeze().detach()
+                bias = self.policy(position).detach()
             else:
                 bias = torch.zeros_like(position)
             action = bias + noise
 
-            mds.step(action)
-
             positions[:, s] = position
-            potentials[:, s] = potential - (1000*bias*position).sum((-2, -1))
+            potentials[:, s] = potential - (1000*action*position).sum((-2, -1))
             actions[:, s] = action
 
+            mds.step(action)
         mds.reset()
 
         dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
