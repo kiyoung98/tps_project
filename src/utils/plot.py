@@ -1,10 +1,10 @@
 import torch
 import numpy as np
 import mdtraj as md
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from .utils import compute_dihedral
-from tqdm import tqdm
 
 class AlaninePotential():
     def __init__(self):

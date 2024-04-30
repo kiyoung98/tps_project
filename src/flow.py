@@ -1,8 +1,6 @@
 import torch
-import random
-from tqdm import tqdm
-
 import proxy
+
 from utils.utils import get_log_normal, get_dist_matrix
 
 class FlowNetAgent:
