@@ -34,7 +34,7 @@ class Alanine(nn.Module):
         if not self.force:
             pos.requires_grad = True
             
-        out = self.mlp(pos.view(-1, self.input_dim))
+        out = self.mlp(pos.reshape(-1, self.input_dim))
 
         if not self.force:
             force = - 10 * torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0]

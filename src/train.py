@@ -40,9 +40,10 @@ parser.add_argument('--temperature', default=0., type=float, help='In training, 
 # Training Config
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
-parser.add_argument('--trains_per_rollout', default=10, type=int, help='Number of training per rollout in a rollout')
+parser.add_argument('--trains_per_rollout', default=1000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--batch_size', default=128, type=int)
+parser.add_argument('--init_buffer', action='store_true')
 parser.add_argument('--replay_strategy', default='', type=str)
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
@@ -73,9 +74,10 @@ if __name__ == '__main__':
     logger.info(f"Starting MD at {args.start_state}")
     mds = MDs(args)
 
-    logger.info(f"Initializing buffer with MD")
-    for _ in tqdm(range(args.buffer_size//args.num_samples)):
-        agent.sample(args, mds, False)
+    if args.init_buffer:
+        logger.info(f"Initializing buffer with MD")
+        for _ in tqdm(range(args.buffer_size//args.num_samples)):
+            agent.sample(args, mds, False)
 
     logger.info("")
     logger.info(f"Starting training for {args.num_rollouts} rollouts")

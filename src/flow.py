@@ -13,25 +13,26 @@ class FlowNetAgent:
             self.replay = ReplayBuffer(args, md)
 
     def sample(self, args, mds, biased=True):
-        positions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
-        potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
+        positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
+        potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * 0.2)
 
+        position, potential = mds.report()
         for s in tqdm(range(args.num_steps)):
-            position, potential = mds.report()
             noise = noises[:, s] if args.type == 'train' else 0
             if biased:
                 bias = self.policy(position).detach()
             else:
                 bias = torch.zeros_like(position)
             action = bias + noise
-
-            positions[:, s] = position.detach()
-            potentials[:, s] = potential - (1000*action*position).sum((-2, -1))
-            actions[:, s] = action
-
             mds.step(action)
+
+            position, potential = mds.report()
+
+            positions[:, s+1] = position.detach()
+            potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
+            actions[:, s] = action
         mds.reset()
 
         dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
@@ -60,7 +61,7 @@ class FlowNetAgent:
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = self.policy(positions)
+        biases = self.policy(positions[:, :-1])
         
         log_z = self.policy.log_z
         log_forward = get_log_normal((biases-actions)/0.1).mean((1, 2, 3))
@@ -76,7 +77,7 @@ class FlowNetAgent:
 
 class ReplayBuffer:
     def __init__(self, args, md):
-        self.positions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
+        self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.device)
         self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
         self.target_positions = torch.zeros((args.buffer_size, md.num_particles, 3), device=args.device)
         self.log_reward = torch.zeros(args.buffer_size, device=args.device)
@@ -97,5 +98,5 @@ class ReplayBuffer:
         self.positions[indices], self.actions[indices], self.log_reward[indices] = data
             
     def sample(self):
-        indices = torch.randperm(self.buffer_size)[:self.batch_size]
+        indices = torch.randperm(min(self.idx, self.buffer_size))[:self.batch_size]
         return self.positions[indices], self.actions[indices], self.log_reward[indices]
