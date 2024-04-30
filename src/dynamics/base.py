@@ -16,6 +16,7 @@ class BaseDynamics(ABC):
         self.reset()
         
         self.num_particles = self.simulation.system.getNumParticles()
+        self.masses = [self.simulation.system.getParticleMass(i).value_in_unit(unit.dalton) for i in range(self.num_particles)]
 
     @abstractmethod
     def setup(self):
