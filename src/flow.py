@@ -7,10 +7,6 @@ from utils.utils import get_log_normal, get_dist_matrix
 class FlowNetAgent:
     def __init__(self, args, md):
         self.num_particles = md.num_particles
-        self.v_scale = torch.tensor(md.v_scale, dtype=torch.float, device=args.device)
-        self.f_scale = torch.tensor(md.f_scale.value_in_unit(md.f_scale.unit), dtype=torch.float, device=args.device)
-        self.std = torch.tensor(md.std.value_in_unit(md.std.unit), dtype=torch.float, device=args.device)
-        self.masses = torch.tensor(md.masses.value_in_unit(md.masses.unit), dtype=torch.float, device=args.device).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
         if args.type == 'train':
@@ -28,17 +24,14 @@ class FlowNetAgent:
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s]
-            bias = args.bias_scale * self.policy.get_bias(position).detach()
-            if args.mode:
-                action = bias + args.std_scale * self.std * self.masses / self.f_scale * noise
-            else:
-                action = bias + args.std_scale * noise
+            bias = args.bias_scale * self.policy(position).detach()
+            action = bias + 2 * args.std * noise
             mds.step(action)
 
             position, potential = mds.report()
 
             positions[:, s+1] = position.detach()
-            potentials[:, s+1] = potential - (action*position).sum((-2, -1))
+            potentials[:, s+1] = potential - (args.external_force_scale*action*position).sum((-2, -1))
             actions[:, s] = action
         mds.reset()
 
@@ -51,7 +44,7 @@ class FlowNetAgent:
             dist_matrix = get_dist_matrix(positions[:, -1])
             last_idx = (args.num_steps-1) * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
             log_target_reward = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2))
-        log_md_reward = get_log_normal(actions/(self.masses*self.std/self.v_scale)).mean((1, 2, 3))
+        log_md_reward = get_log_normal(actions/args.std).mean((1, 2, 3))
         log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
@@ -68,17 +61,15 @@ class FlowNetAgent:
         }
         return log
 
-
     def train(self, args):
         policy_optimizers = torch.optim.SGD(self.policy.parameters(), lr=args.learning_rate)
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = args.bias_scale * self.policy.get_bias(positions[:, :-1])
-        stds = self.policy.get_std(positions[:, :-1]).unsqueeze(-1)
+        biases = args.bias_scale * self.policy(positions[:, :-1])
         
         log_z = self.policy.log_z
-        log_forward = get_log_normal((biases-actions)/(self.std*self.masses/self.v_scale*stds)).mean((1, 2, 3))
+        log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
         loss = torch.mean((log_z+log_forward-log_reward)**2)
         
         loss.backward()
@@ -97,16 +88,14 @@ class ReplayBuffer:
         self.log_reward = torch.zeros(args.buffer_size, device=args.device)
 
         self.idx = 0
-        self.device = args.device
         self.batch_size = args.batch_size
         self.buffer_size = args.buffer_size
         self.num_samples = args.num_samples
 
     def add(self, data):
-        indices = torch.arange(self.idx, self.idx+self.num_samples, device=self.device) % self.buffer_size
-        self.idx += self.num_samples
-
+        indices = torch.arange(self.idx, self.idx+self.num_samples) % self.buffer_size
         self.positions[indices], self.actions[indices], self.log_reward[indices] = data
+        self.idx += self.num_samples
             
     def sample(self):
         indices = torch.randperm(min(self.idx, self.buffer_size))[:self.batch_size]
