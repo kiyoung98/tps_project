@@ -31,6 +31,9 @@ parser.add_argument('--force', action='store_true', help='Model force otherwise 
 # Sampling Config
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
+parser.add_argument('--mode', action='store_true')
+parser.add_argument('--flexible', action='store_true')
+parser.add_argument('--external_force_scale', default=1000., type=float)
 parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 parser.add_argument('--num_steps', default=800, type=int, help='Number of steps in each path i.e. length of trajectory')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
@@ -44,10 +47,7 @@ parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of ro
 parser.add_argument('--trains_per_rollout', default=100, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--batch_size', default=128, type=int)
-parser.add_argument('--bias_scale', default=10000, type=float)
-parser.add_argument('--std_scale', default=2, type=float)
-parser.add_argument('--flexible', action='store_true')
-parser.add_argument('--replay_strategy', default='', type=str)
+parser.add_argument('--bias_scale', default=1, type=float)
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()

@@ -29,8 +29,10 @@ class FlowNetAgent:
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s] if args.type == 'train' else 0
             bias = args.bias_scale * self.policy.get_bias(position).detach()
-            std = self.policy.get_std(position).unsqueeze(-1).detach()
-            action = bias + args.std_scale * self.std * self.masses / self.v_scale * noise * std
+            if args.mode:
+                action = bias + self.std * self.masses / self.v_scale * noise
+            else:
+                action = bias + 0.2 * noise
             mds.step(action)
 
             position, potential = mds.report()
@@ -98,12 +100,9 @@ class ReplayBuffer:
         self.batch_size = args.batch_size
         self.buffer_size = args.buffer_size
         self.num_samples = args.num_samples
-        self.replay_strategy = args.replay_strategy
 
     def add(self, data):
         indices = torch.arange(self.idx, self.idx+self.num_samples, device=self.device) % self.buffer_size
-        if self.idx >= self.buffer_size and self.replay_strategy == 'top_k':
-            indices = torch.argsort(self.log_reward)[:self.num_samples]
         self.idx += self.num_samples
 
         self.positions[indices], self.actions[indices], self.log_reward[indices] = data

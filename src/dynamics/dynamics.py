@@ -1,7 +1,6 @@
 import openmm as mm
 from openmm import app
 import openmm.unit as unit
-from openmmtools.integrators import LangevinIntegrator
 
 from .base import BaseDynamics
 
@@ -11,7 +10,7 @@ class Alanine(BaseDynamics):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField('amber99sbildn.xml')
+        forcefield = app.ForceField('amber99sbildn.xml', 'tip3p.xml')
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
@@ -20,9 +19,10 @@ class Alanine(BaseDynamics):
             constraints=app.HBonds,
             ewaldErrorTolerance=0.0005
         )
-        external_force = mm.CustomExternalForce("fx*x + fy*y + fz*z")
+        external_force = mm.CustomExternalForce("k*(fx*x+fy*y+fz*z)")
 
         # creating the parameters
+        external_force.addGlobalParameter("k", self.external_force_scale)
         external_force.addPerParticleParameter("fx")
         external_force.addPerParticleParameter("fy")
         external_force.addPerParticleParameter("fz")

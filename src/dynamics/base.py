@@ -8,10 +8,12 @@ class BaseDynamics(ABC):
     def __init__(self, args, state):
         super().__init__()
         self.device = args.device
+        self.external_force_scale = args.external_force_scale
+        self.start_file = f'./data/{args.molecule}/{state}.pdb'
+
+        self.timestep = args.timestep * unit.femtoseconds
         self.temperature = args.temperature * unit.kelvin
         self.friction_coefficient = args.friction_coefficient / unit.picoseconds
-        self.timestep = args.timestep * unit.femtoseconds
-        self.start_file = f'./data/{args.molecule}/{state}.pdb'
 
         self.simulation, self.external_force = self.setup()
 
