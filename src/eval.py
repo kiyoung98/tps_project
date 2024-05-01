@@ -21,7 +21,7 @@ parser.add_argument('--date', default='', type=str, help="Date of the training")
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 
 # Policy Config
-parser.add_argument('--force', action='store_true', help='Model force otherwise potential')
+parser.add_argument('--force', action='store_true', help='Predict force otherwise potential')
 
 # Sampling Config
 parser.add_argument('--start_state', default='c5', type=str)
