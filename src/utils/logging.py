@@ -47,7 +47,7 @@ class Logger():
         self.date = args.date
         kst = pytz.timezone('Asia/Seoul')
         
-        self.dir = f'results/{self.molecule}/{self.project}/{self.date}/{self.type}/{self.seed}'
+        self.dir = f'results/{self.molecule}/{self.project}/{self.date}/{self.type}/{args.std_scale}'
         
         # Set up system logging    
         if args.logger:

@@ -20,10 +20,9 @@ class Alanine(BaseDynamics):
             constraints=app.HBonds,
             ewaldErrorTolerance=0.0005
         )
-        external_force = mm.CustomExternalForce("k*(fx*x + fy*y + fz*z)")
+        external_force = mm.CustomExternalForce("fx*x + fy*y + fz*z")
 
         # creating the parameters
-        external_force.addGlobalParameter("k", 1000)
         external_force.addPerParticleParameter("fx")
         external_force.addPerParticleParameter("fy")
         external_force.addPerParticleParameter("fz")
@@ -31,10 +30,10 @@ class Alanine(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = LangevinIntegrator(
-            self.temperature * unit.kelvin,  
-            1.0 / unit.picoseconds,
-            1.0 * unit.femtoseconds,
+        integrator = mm.LangevinIntegrator(
+            self.temperature,  
+            self.friction_coefficient,  
+            self.timestep,
         ) 
 
         integrator.setConstraintTolerance(0.00001)

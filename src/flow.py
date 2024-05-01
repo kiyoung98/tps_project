@@ -7,17 +7,20 @@ from utils.utils import get_log_normal, get_dist_matrix
 class FlowNetAgent:
     def __init__(self, args, md):
         self.num_particles = md.num_particles
-        self.masses = torch.tensor(md.masses, device=args.device)
+        self.v_scale = torch.tensor(md.v_scale, dtype=torch.float, device=args.device)
+        self.f_scale = torch.tensor(md.f_scale.value_in_unit(md.f_scale.unit), dtype=torch.float, device=args.device)
+        self.std = torch.tensor(md.std.value_in_unit(md.std.unit), dtype=torch.float, device=args.device)
+        self.masses = torch.tensor(md.masses.value_in_unit(md.masses.unit), dtype=torch.float, device=args.device).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
         if args.type == 'train':
             self.replay = ReplayBuffer(args, md)
 
-    def sample(self, args, mds, biased=True):
+    def sample(self, args, mds):
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
-        noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * 0.1)
+        noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
 
         position, potential = mds.report()
         
@@ -25,17 +28,15 @@ class FlowNetAgent:
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s] if args.type == 'train' else 0
-            if biased:
-                bias = args.bias_scale * self.policy(position).detach()
-            else:
-                bias = torch.zeros_like(position)
-            action = bias + noise * torch.sqrt(self.masses).unsqueeze(-1)
+            bias = args.bias_scale * self.policy.get_bias(position).detach()
+            std = self.policy.get_std(position).unsqueeze(-1).detach()
+            action = bias + args.std_scale * self.std * self.masses / self.v_scale * noise * std
             mds.step(action)
 
             position, potential = mds.report()
 
             positions[:, s+1] = position.detach()
-            potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
+            potentials[:, s+1] = potential - (action*position).sum((-2, -1))
             actions[:, s] = action
         mds.reset()
 
@@ -47,8 +48,8 @@ class FlowNetAgent:
             dist_matrix = get_dist_matrix(positions[:, -1])
             last_idx = (args.num_steps-1) * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
             log_target_reward = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2))
-            log_md_reward = get_log_normal(actions/(0.1*torch.sqrt(self.masses).unsqueeze(-1))).mean((1, 2, 3))
-            log_reward = log_md_reward + log_target_reward
+        log_md_reward = get_log_normal(actions/(self.masses*self.std/self.v_scale)).mean((1, 2, 3))
+        log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
@@ -70,10 +71,11 @@ class FlowNetAgent:
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = args.bias_scale * self.policy(positions[:, :-1])
+        biases = args.bias_scale * self.policy.get_bias(positions[:, :-1])
+        stds = self.policy.get_std(positions[:, :-1]).unsqueeze(-1)
         
         log_z = self.policy.log_z
-        log_forward = get_log_normal((biases-actions)/(0.1*torch.sqrt(self.masses).unsqueeze(-1))).mean((1, 2, 3))
+        log_forward = get_log_normal((biases-actions)/(self.std*self.masses/self.v_scale*stds)).mean((1, 2, 3))
         loss = torch.mean((log_z+log_forward-log_reward)**2)
         
         loss.backward()

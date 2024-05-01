@@ -1,18 +1,21 @@
 current_date=$(date +"%m%d-%H%M%S")
 
 # Define an array with different learning rates
-seeds=(0 1 2 3 4 5 6 7)
+std_scales=(1.5 2 2.5 3 3.5 4 4.5 5)
 
+gpu=0
 
 # Iterate over the learning rates
-for seed in "${seeds[@]}"; do
-  CUDA_VISIBLE_DEVICES=$seed python src/train.py \
+for std_scale in "${std_scales[@]}"; do
+  CUDA_VISIBLE_DEVICES=$gpu python src/train.py \
     --date $current_date \
-    --seed $seed \
+    --std_scale $std_scale \
     --wandb \
-    --project alanine_final &
+    --flexible \
+    --project alanine_std_scale &
 
   # Increment the counter variable
+  ((gpu++))
 done
 
 wait
