@@ -24,7 +24,7 @@ class FlowNetAgent:
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s]
-            bias = args.bias_scale * self.policy(position).detach()
+            bias = args.bias_scale * self.policy(position, torch.tensor([[s]], dtype=torch.float, device=args.device)).detach()
             action = bias + 2 * args.std * noise
             mds.step(action)
 
@@ -66,7 +66,7 @@ class FlowNetAgent:
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = args.bias_scale * self.policy(positions[:, :-1])
+        biases = args.bias_scale * self.policy(positions[:, :-1], torch.arange(args.num_steps, dtype=torch.float, device=args.device).view(1, -1, 1))
         
         log_z = self.policy.log_z
         log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
