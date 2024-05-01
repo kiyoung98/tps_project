@@ -5,11 +5,11 @@ from dynamics import dynamics
 class MDs:
     def __init__(self, args):
         self.args = args
-        self.start_state = args.start_state
-        self.end_state = args.end_state
         self.device = args.device
         self.molecule = args.molecule
         self.num_samples = args.num_samples
+        self.start_state = args.start_state
+        self.end_state = args.end_state
 
         self.mds = self._init_mds()
         self.target_position = self._init_target_position()
@@ -24,7 +24,7 @@ class MDs:
         return mds
 
     def _init_target_position(self):
-        print(f"Getting position for {self.end_state}")
+        print(f"Get position for {self.end_state}")
 
         target_position = getattr(dynamics, self.molecule.title())(self.args, self.end_state).position
         target_position = torch.tensor(target_position, dtype=torch.float, device=self.device).unsqueeze(0)

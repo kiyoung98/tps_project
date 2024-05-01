@@ -135,11 +135,17 @@ class Logger():
                     }
             wandb.log(log, step=rollout)
 
-            if rollout % self.save_freq==0 and self.molecule == 'alanine':
+            if rollout % self.save_freq==0:
+                if self.molecule == 'alanine':
+                    wandb.log(
+                        {
+                            'paths': wandb.Image(plot_paths_alanine(positions, target_position, last_idx)),
+                        }, 
+                        step=rollout
+                    )
                 fig_potential = f"{self.dir}/potential/potential_rollout{rollout}.png"
                 wandb.log(
                     {
-                        'paths': wandb.Image(plot_paths_alanine(positions, target_position, last_idx)),
                         'potentials': wandb.Image(fig_potential),
                     }, 
                     step=rollout

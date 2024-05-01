@@ -1,7 +1,7 @@
 import torch
 import proxy
-from tqdm import tqdm
 
+from tqdm import tqdm
 from utils.utils import get_log_normal, get_dist_matrix
 
 class FlowNetAgent:
@@ -23,15 +23,15 @@ class FlowNetAgent:
         positions[:, 0] = position
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
-            noise = noises[:, s]
+            noise = noises[:, s] if args.type == 'train' else 0
             bias = args.bias_scale * self.policy(position).detach()
-            action = bias + 2 * args.std * noise
+            action = bias + 2 * args.std * noise # 2 means we use tempered version of policy
             mds.step(action)
 
             position, potential = mds.report()
 
             positions[:, s+1] = position.detach()
-            potentials[:, s+1] = potential - (args.external_force_scale*action*position).sum((-2, -1))
+            potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
             actions[:, s] = action
         mds.reset()
 
@@ -42,7 +42,7 @@ class FlowNetAgent:
             log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)
         else:
             dist_matrix = get_dist_matrix(positions[:, -1])
-            last_idx = (args.num_steps-1) * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
+            last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
             log_target_reward = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2))
         log_md_reward = get_log_normal(actions/args.std).mean((1, 2, 3))
         log_reward = log_md_reward + log_target_reward
@@ -84,7 +84,6 @@ class ReplayBuffer:
     def __init__(self, args, md):
         self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.device)
         self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
-        self.target_positions = torch.zeros((args.buffer_size, md.num_particles, 3), device=args.device)
         self.log_reward = torch.zeros(args.buffer_size, device=args.device)
 
         self.idx = 0
@@ -98,5 +97,6 @@ class ReplayBuffer:
         self.idx += self.num_samples
             
     def sample(self):
-        indices = torch.randperm(min(self.idx, self.buffer_size))[:self.batch_size]
+        num_samples = min(self.idx, self.buffer_size)
+        indices = torch.randperm(num_samples)[:self.batch_size]
         return self.positions[indices], self.actions[indices], self.log_reward[indices]

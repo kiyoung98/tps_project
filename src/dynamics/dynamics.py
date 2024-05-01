@@ -1,7 +1,6 @@
 import openmm as mm
 from openmm import app
 import openmm.unit as unit
-
 from .base import BaseDynamics
 
 
@@ -22,7 +21,7 @@ class Alanine(BaseDynamics):
         external_force = mm.CustomExternalForce("k*(fx*x+fy*y+fz*z)")
 
         # creating the parameters
-        external_force.addGlobalParameter("k", self.external_force_scale)
+        external_force.addGlobalParameter("k", 1000)
         external_force.addPerParticleParameter("fx")
         external_force.addPerParticleParameter("fy")
         external_force.addPerParticleParameter("fz")
