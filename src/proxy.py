@@ -12,7 +12,7 @@ class Alanine(nn.Module):
         self.input_dim = md.num_particles*3
         self.output_dim = md.num_particles*3 if self.force else 1
 
-        self.bias_mlp = nn.Sequential(
+        self.mlp = nn.Sequential(
             nn.Linear(self.input_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 256),
@@ -34,7 +34,7 @@ class Alanine(nn.Module):
         if not self.force:
             pos.requires_grad = True
             
-        out = self.bias_mlp(pos.reshape(-1, self.input_dim))
+        out = self.mlp(pos.reshape(-1, self.input_dim))
 
         if not self.force:
             force = - torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0]

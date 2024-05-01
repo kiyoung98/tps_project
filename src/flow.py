@@ -27,12 +27,12 @@ class FlowNetAgent:
         positions[:, 0] = position
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
-            noise = noises[:, s] if args.type == 'train' else 0
+            noise = noises[:, s]
             bias = args.bias_scale * self.policy.get_bias(position).detach()
             if args.mode:
-                action = bias + self.std * self.masses / self.v_scale * noise
+                action = bias + args.std_scale * self.std * self.masses / self.f_scale * noise
             else:
-                action = bias + 0.2 * noise
+                action = bias + args.std_scale * noise
             mds.step(action)
 
             position, potential = mds.report()
@@ -43,6 +43,7 @@ class FlowNetAgent:
         mds.reset()
 
         target_dist_matrix = get_dist_matrix(mds.target_position)
+
         if args.flexible:
             dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
             log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)

@@ -48,6 +48,7 @@ parser.add_argument('--trains_per_rollout', default=100, type=int, help='Number 
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--batch_size', default=128, type=int)
 parser.add_argument('--bias_scale', default=1, type=float)
+parser.add_argument('--std_scale', default=0.2, type=float)
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
