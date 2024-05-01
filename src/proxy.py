@@ -13,6 +13,7 @@ class Alanine(nn.Module):
         self.output_dim = md.num_particles*3 if self.force else 1
 
         self.mlp = nn.Sequential(
+            nn.Linear(self.input_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 256),
             nn.ReLU(),
@@ -25,21 +26,15 @@ class Alanine(nn.Module):
             nn.Linear(128, self.output_dim, bias=False)
         )
 
-        self.pos_linear = nn.Linear(self.input_dim, 128)
-        self.time_linear = nn.Linear(1, 128)
-
         self.log_z = nn.Parameter(torch.tensor(0.))
 
         self.to(args.device)
 
-    def forward(self, pos, t):
+    def forward(self, pos):
         if not self.force:
             pos.requires_grad = True
-        
-        pos_ = self.pos_linear(pos.reshape(*pos.shape[:-2], self.input_dim))
-        t_ = self.time_linear(t)
             
-        out = self.mlp(pos_+t_)
+        out = self.mlp(pos.reshape(-1, self.input_dim))
 
         if not self.force:
             force = - torch.autograd.grad(out.sum(), pos, create_graph=True, retain_graph=True)[0]
