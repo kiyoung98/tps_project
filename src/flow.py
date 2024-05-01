@@ -12,22 +12,26 @@ class FlowNetAgent:
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
     def sample(self, args, mds, target_position, std):
-        positions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
-        potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
+        positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
+        potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * std)
 
+        position, potential = mds.report()
+
+        positions[:, 0] = position
+        potentials[:, 0] = potential
         for s in range(args.num_steps):
-            position, potential = mds.report()
             bias = self.policy(position.unsqueeze(1), target_position).squeeze().detach()
             noise = noises[:, s]
             action = bias + noise
-            
-            positions[:, s] = position
-            potentials[:, s] = potential
-            actions[:, s] = action
 
             mds.step(action)
+            
+            position, potential = mds.report()
+            positions[:, s+1] = position
+            potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
+            actions[:, s] = action
         
         start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
         last_position = mds.report()[0].unsqueeze(1)
@@ -60,7 +64,7 @@ class FlowNetAgent:
 
         # if args.hindsight and random.random() < 0.5: target_position = last_position
 
-        biases = self.policy(positions, target_position)
+        biases = self.policy(positions[:, :-1], target_position)
         
         last_dist_matrix = get_dist_matrix(last_position)
         target_dist_matrix = get_dist_matrix(target_position)

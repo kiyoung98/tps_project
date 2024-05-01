@@ -57,21 +57,27 @@ if __name__ == '__main__':
         raise FileNotFoundError("Policy checkpoint not found")
     
     # Sampling and obtain results for evaluation (positions, potentials)
-    positions = torch.zeros((args.num_samples, args.num_steps, md.num_particles, 3), device=args.device)
-    potentials = torch.zeros(args.num_samples, args.num_steps, device=args.device)
+    positions = torch.zeros((args.num_samples, args.num_steps+1, md.num_particles, 3), device=args.device)
+    potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
     pbar = tqdm(
         range(args.num_steps),
         total=args.num_steps,
         desc="Sampling using trainend policy..."
     )
+
+    position, potential = mds.report()
+
+    positions[:, 0] = position
+    potentials[:, 0] = potential
+
     for s in pbar:
-        position, potential = mds.report()
-        
-        positions[:, s] = position
-        potentials[:, s] = potential
         bias = policy(position.unsqueeze(1), target_position).squeeze().detach()
 
         mds.step(bias)
+
+        position, potential = mds.report()
+        positions[:, s+1] = position
+        potentials[:, s+1] = potential - (1000*bias*position).sum((-2, -1))
 
     start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
     last_position = mds.report()[0].unsqueeze(1)
