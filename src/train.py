@@ -45,9 +45,9 @@ parser.add_argument('--target_std', default=0.05, type=float, help='Standard dev
 parser.add_argument('--learning_rate', default=1e-3, type=float)
 parser.add_argument('--batch_size', default=128, type=int, help='Batch size from buffer')
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
-parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
+parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=100, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--max_grad_norm', default=1, type=int, help='Maximum norm of gradient to clip')
+parser.add_argument('--max_grad_norm', default=2, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
 
