@@ -55,7 +55,7 @@ class Chignolin(nn.Module):
         self.output_dim = md.num_particles*3 if self.force else 1
 
         self.mlp = nn.Sequential(
-            nn.Linear(self.input_dim, 128),
+            nn.Linear(self.input_dim, 512),
             nn.ReLU(),
             nn.Linear(512, 1024),
             nn.ReLU(),
@@ -97,7 +97,7 @@ class Poly(nn.Module):
         self.output_dim = md.num_particles*3 if self.force else 1
 
         self.mlp = nn.Sequential(
-            nn.Linear(self.input_dim, 128),
+            nn.Linear(self.input_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 512),
             nn.ReLU(),
