@@ -10,7 +10,7 @@ class FlowNetAgent:
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
         if args.type == 'train':
-            self.replay = ReplayBuffer(args)
+            self.replay = ReplayBuffer(args, md)
 
     def sample(self, args, mds):
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
@@ -100,19 +100,3 @@ class ReplayBuffer:
         num_samples = min(self.idx, self.buffer_size)
         indices = torch.randperm(num_samples)[:self.batch_size]
         return self.positions[indices], self.actions[indices], self.log_reward[indices]
-
-# import random
-
-# class ReplayBuffer:
-#     def __init__(self, args):
-#         self.buffer = []
-#         self.buffer_size = args.buffer_size
-
-#     def add(self, data):
-#         self.buffer.append(data)
-#         if len(self.buffer) > self.buffer_size:
-#             self.buffer.pop(0)
-
-#     def sample(self):
-#         idx = random.randrange(len(self.buffer))
-#         return self.buffer[idx]
