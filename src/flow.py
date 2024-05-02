@@ -57,6 +57,7 @@ class FlowNetAgent:
             'target_position': mds.target_position,
             'potentials': potentials,
             'log_target_reward': log_target_reward,
+            'log_md_reward': log_md_reward,
             'log_reward': log_reward,
             'last_idx': last_idx,
         }

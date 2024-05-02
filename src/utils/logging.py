@@ -91,7 +91,8 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, rollout, positions, last_position, target_position, potentials, log_target_reward, log_reward, last_idx):
+    def log(self, loss, policy, rollout, positions, last_position, target_position, potentials, log_target_reward, log_md_reward, log_reward, last_idx):
+        nll = -log_md_reward.mean().item()
         epd = expected_pairwise_distance(last_position, target_position)
         if self.molecule == 'alanine':
             thp = target_hit_percentage(last_position, target_position)
@@ -127,11 +128,13 @@ class Logger():
                         'target_hit_percentage (%)': thp,
                         'energy_transition_point (kJ/mol)': etp,
                         'loss': loss,
+                        'NLL': nll,
                     }
             else:
                 log = {
                         'expected_pairwise_distance (pm)': epd,
                         'loss': loss,
+                        'NLL': nll,
                     }
             wandb.log(log, step=rollout)
 
@@ -156,6 +159,7 @@ class Logger():
             self.logger.info("")
             self.logger.info(f'Rollout: {rollout}')
             self.logger.info(f"expected_pairwise_distance (pm): {epd}")
+            self.logger.info(f"NLL: {nll}")
             if self.type == "train":
                 self.logger.info(f"Loss: {loss}")
             if self.molecule == 'alanine':
