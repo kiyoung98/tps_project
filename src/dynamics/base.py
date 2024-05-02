@@ -12,14 +12,15 @@ class BaseDynamics(ABC):
         self.simulation, self.external_force = self.setup()
 
         self.simulation.minimizeEnergy()
-        self.num_particles = self.simulation.system.getNumParticles()
-        self.position = self.simulation.context.getState(getPositions=True).getPositions().value_in_unit(unit.nanometer)
+        self.position = self.report()[0]
         self.reset()
-
+        
+        self.num_particles = self.simulation.system.getNumParticles()
+        
     @abstractmethod
     def setup(self):
         pass
-
+    
     def step(self, forces):
         for i in range(forces.shape[0]):
             self.external_force.setParticleParameters(i, i, forces[i])

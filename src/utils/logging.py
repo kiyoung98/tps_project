@@ -1,7 +1,6 @@
 import os
 import sys
 import pytz
-import time
 import wandb
 import logging
 import datetime
@@ -29,18 +28,18 @@ class TqdmLoggingHandler(logging.StreamHandler):
             self.handleError(record)
 
 class Logger():
-    def __init__(self, args, md_info):
+    def __init__(self, args, md):
         self.wandb = args.wandb
         self.project = args.project
         self.molecule = args.molecule
-        self.start_file = md_info.start_file
+        self.start_file = md.start_file
         self.type = args.type
         if self.type == "train":
             self.num_rollouts = args.num_rollouts
-            self.freq_rollout_save = args.freq_rollout_save
+            self.save_freq = args.save_freq
             self.num_samples = args.num_samples
         else:
-            self.freq_rollout_save = 1
+            self.save_freq = 1
             
         self.seed = args.seed
         if not hasattr(args, 'date'):
@@ -48,8 +47,7 @@ class Logger():
         self.date = args.date
         kst = pytz.timezone('Asia/Seoul')
         
-        self.dir = f'results/{self.molecule}/{self.project}/{self.date}/{self.type}/{self.seed}'
-        print(f"Logger directory set to {self.dir}")
+        self.dir = f'results/{self.molecule}/{self.project}/{self.date}/{self.type}/{args.seed}'
         
         # Set up system logging    
         if args.logger:
@@ -93,80 +91,84 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, start_state, end_state, rollout, positions, start_position, last_position, target_position, potentials, terminal_reward, log_reward):
+    def log(self, loss, policy, rollout, positions, last_position, target_position, potentials, log_target_reward, log_reward, last_idx):
+        epd = expected_pairwise_distance(last_position, target_position)
+        if self.molecule == 'alanine':
+            thp = target_hit_percentage(last_position, target_position)
+            etp = energy_transition_point(last_position, target_position, potentials, last_idx)
+
         # In case of training logger
         if self.type == "train":
-            # Save policy at freq_rollout_save and last rollout
-            if rollout % self.freq_rollout_save == 0:
+            # Save policy at save_freq and last rollout
+            if rollout % self.save_freq == 0:
                 torch.save(policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             if rollout == self.num_rollouts - 1 :
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             
             # Log potential by trajectory index, with termianl reward, log reward
-            if rollout % 10 == 0 and self.molecule == 'alanine':
+            if rollout % self.save_freq == 0:
                 self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
-                fig_potential = plot_potentials2(
+                fig_potential = plot_potentials(
                     self.dir+"/potential",
                     rollout,
                     potentials,
-                    terminal_reward,
-                    log_reward
+                    log_target_reward,
+                    log_reward,
+                    last_idx
                 )
                 self.logger.info(f"Plotting Done.!!")
         
         # Log to wandb
         if self.wandb:
-            wandb.log(
-                {
-                    f'{start_state}_to_{end_state}/expected_pairwise_distance (pm)': expected_pairwise_distance(last_position, target_position),
-                    f'{start_state}_to_{end_state}/log_z': policy.get_log_z(start_position, target_position).item(), 
-                    'loss': loss,
-                },
-                step=rollout
-            )
-            if rollout%10==0 and self.molecule == 'alanine':
-                if self.type == "train":
-                    fig_potential = f"{self.dir}/potential/potential_rollout{rollout}.png"
+            if self.molecule == 'alanine':
+                log = {
+                        'expected_pairwise_distance (pm)': epd,
+                        'target_hit_percentage (%)': thp,
+                        'energy_transition_point (kJ/mol)': etp,
+                        'loss': loss,
+                    }
+            else:
+                log = {
+                        'expected_pairwise_distance (pm)': epd,
+                        'loss': loss,
+                    }
+            wandb.log(log, step=rollout)
+
+            if rollout % self.save_freq==0:
+                if self.molecule == 'alanine':
                     wandb.log(
                         {
-                            f'{start_state}_to_{end_state}/target_hit_percentage (%)': target_hit_percentage(last_position, target_position),
-                            f'{start_state}_to_{end_state}/energy_transition_point (kJ/mol)': energy_transition_point(last_position, target_position, potentials),
-                            f'{start_state}_to_{end_state}/paths': wandb.Image(plot_paths_alanine(positions, target_position)),
-                            f'{start_state}_to_{end_state}/potentials': wandb.Image(fig_potential),
+                            'paths': wandb.Image(plot_paths_alanine(positions, target_position, last_idx)),
                         }, 
                         step=rollout
                     )
-                else:
-                    wandb.log(
-                        {
-                            f'{start_state}_to_{end_state}/target_hit_percentage (%)': target_hit_percentage(last_position, target_position),
-                            f'{start_state}_to_{end_state}/energy_transition_point (kJ/mol)': energy_transition_point(last_position, target_position, potentials),
-                            f'{start_state}_to_{end_state}/paths': wandb.Image(plot_paths_alanine(positions, target_position)),
-                        }, 
-                        step=rollout
-                    )
+                fig_potential = f"{self.dir}/potential/potential_rollout{rollout}.png"
+                wandb.log(
+                    {
+                        'potentials': wandb.Image(fig_potential),
+                    }, 
+                    step=rollout
+                )
 
         # Log to system log
         if self.logger:
             self.logger.info("")
             self.logger.info(f'Rollout: {rollout}')
-            self.logger.info(f"{start_state}_to_{end_state}/expected_pairwise_distance (pm): {expected_pairwise_distance(last_position, target_position)}")
-            self.logger.info(f"{start_state}_to_{end_state}/log_z: {policy.get_log_z(start_position, target_position).item()}")
+            self.logger.info(f"expected_pairwise_distance (pm): {epd}")
             if self.type == "train":
                 self.logger.info(f"Loss: {loss}")
-            
-            if rollout % 10 == 0 and self.molecule == 'alanine':
-                self.logger.info(f"{start_state}_to_{end_state}/target_hit_percentage (%): {target_hit_percentage(last_position, target_position)}")
-                self.logger.info(f"{start_state}_to_{end_state}/energy_transition_point (kJ/mol): {energy_transition_point(last_position, target_position, potentials)}")
+            if self.molecule == 'alanine':
+                self.logger.info(f"target_hit_percentage (%): {thp}")
+                self.logger.info(f"energy_transition_point (kJ/mol): {etp}")
     
-    def plot(self, positions, target_position, potentials, **kwargs):
+    def plot(self, positions, target_position, potentials, log_target_reward, log_reward, last_idx, **kwargs):
         self.logger.info(f"[Plot] Plotting potentials")
-        plot_potentials(self.dir, potentials)
+        plot_potential(self.dir, potentials, log_target_reward, log_reward, last_idx)
         
         self.logger.info(f"[Plot] Plotting 3D view")
-        plot_3D_view(self.dir, self.start_file, positions)
+        plot_3D_view(self.dir, self.start_file, positions, last_idx)
         
         if self.molecule == 'alanine':
             self.logger.info(f"[Plot] Plotting paths")
-            plot_paths(self.dir, positions, target_position,)
+            plot_path(self.dir, positions, target_position, last_idx)

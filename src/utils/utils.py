@@ -20,6 +20,5 @@ def get_log_normal(x):
     return normal.log_prob(x)
 
 def get_dist_matrix(x):
-    x = x.view(x.shape[0], -1, 3)
     dist_matrix = torch.cdist(x, x)
     return dist_matrix

@@ -1,97 +1,84 @@
 import torch
-import random
-from tqdm import tqdm
-
 import proxy
+import random
+
+from tqdm import tqdm
 from utils.utils import get_log_normal, get_dist_matrix
 
 class FlowNetAgent:
     def __init__(self, args, md):
         self.num_particles = md.num_particles
-        self.replay = ReplayBuffer(args)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
-    def sample(self, args, mds, target_position, std):
+        if args.type == 'train':
+            self.replay = ReplayBuffer(args)
+
+    def sample(self, args, mds):
+        noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
-        potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
-        noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device) * std)
+        potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
 
         position, potential = mds.report()
-
+        
         positions[:, 0] = position
         potentials[:, 0] = potential
-        for s in range(args.num_steps):
-            bias = self.policy(position.unsqueeze(1), target_position).squeeze().detach()
-            noise = noises[:, s]
-            action = bias + noise
-
+        for s in tqdm(range(args.num_steps)):
+            noise = noises[:, s] if args.type == 'train' else 0
+            bias = args.bias_scale * self.policy(position).detach()
+            action = bias + 2 * args.std * noise # We use tempered version of policy as sampler by multiplying 2
             mds.step(action)
-            
+
             position, potential = mds.report()
-            positions[:, s+1] = position
+
+            positions[:, s+1] = position.detach()
             potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
             actions[:, s] = action
-        
-        start_position = positions[0, 0].unsqueeze(0).unsqueeze(0)
-        last_position = mds.report()[0].unsqueeze(1)
-
         mds.reset()
 
-        last_dist_matrix = get_dist_matrix(last_position)
-        target_dist_matrix = get_dist_matrix(target_position)
-        terminal_reward = get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
-        log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + terminal_reward
+        target_dist_matrix = get_dist_matrix(mds.target_position)
 
-        self.replay.add((positions, actions, noises, start_position, last_position, target_position, log_reward))
+        if args.flexible:
+            dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
+            log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)
+        else:
+            dist_matrix = get_dist_matrix(positions[:, -1])
+            last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
+            log_target_reward = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2))
+        log_md_reward = get_log_normal(actions/args.std).mean((1, 2, 3))
+        log_reward = log_md_reward + log_target_reward
+
+        if args.type == 'train':
+            self.replay.add((positions, actions, log_reward))
 
         log = {
             'positions': positions, 
-            'start_position': start_position,
-            'last_position': last_position, 
-            'target_position': target_position, 
+            'last_position': positions[torch.arange(args.num_samples), last_idx],
+            'target_position': mds.target_position,
             'potentials': potentials,
-            'terminal_reward': terminal_reward,
+            'log_target_reward': log_target_reward,
             'log_reward': log_reward,
+            'last_idx': last_idx,
         }
         return log
-
 
     def train(self, args):
         policy_optimizers = torch.optim.SGD(self.policy.parameters(), lr=args.learning_rate)
 
-        positions, actions, noises, start_position, last_position, target_position, log_reward = self.replay.sample()
+        positions, actions, log_reward = self.replay.sample()
 
-        # if args.hindsight and random.random() < 0.5: target_position = last_position
-
-        biases = self.policy(positions[:, :-1], target_position)
+        biases = args.bias_scale * self.policy(positions[:, :-1])
         
-        last_dist_matrix = get_dist_matrix(last_position)
-        target_dist_matrix = get_dist_matrix(target_position)
-        
-        if args.loss == 'tb':
-            log_z = self.policy.get_log_z(start_position, target_position)
-            log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
-            # log_reward = get_log_normal(actions/args.std).mean((1, 2, 3)) + get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
-            loss = torch.mean((log_z+log_forward-log_reward)**2)
-        elif args.loss == 'pice':
-            costs = get_log_normal(noises/args.std).mean((1, 2, 3)) - get_log_normal(actions/args.std).mean((1, 2, 3)) - get_log_normal((last_dist_matrix-target_dist_matrix)/args.terminal_std).mean((1, 2))
-            if args.molecule == "poly":
-                importances = torch.softmax(-10000*costs, 0)
-            elif args.molecule == "chignolin":
-                importances = torch.softmax(-100*costs, 0)
-            else:
-                importances = torch.softmax(-costs, 0)
-            match = - get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
-            loss = torch.sum(importances*match)
+        log_z = self.policy.log_z
+        log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
+        loss = torch.mean((log_z+log_forward-log_reward)**2)
         
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.parameters(), args.max_grad_norm)
         
         policy_optimizers.step()
         policy_optimizers.zero_grad()
-        return loss
-    
+        return loss.item()
 
 class ReplayBuffer:
     def __init__(self, args):
@@ -104,8 +91,5 @@ class ReplayBuffer:
             self.buffer.pop(0)
 
     def sample(self):
-        idx = random.randrange(len(self))
+        idx = random.randrange(len(self.buffer))
         return self.buffer[idx]
-
-    def __len__(self):
-        return len(self.buffer)
