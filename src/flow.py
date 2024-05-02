@@ -80,39 +80,39 @@ class FlowNetAgent:
         return loss.item()
     
 
-# class ReplayBuffer:
-#     def __init__(self, args, md):
-#         self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.device)
-#         self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
-#         self.log_reward = torch.zeros(args.buffer_size, device=args.device)
-
-#         self.idx = 0
-#         self.batch_size = args.batch_size
-#         self.buffer_size = args.buffer_size
-#         self.num_samples = args.num_samples
-
-#     def add(self, data):
-#         indices = torch.arange(self.idx, self.idx+self.num_samples) % self.buffer_size
-#         self.positions[indices], self.actions[indices], self.log_reward[indices] = data
-#         self.idx += self.num_samples
-            
-#     def sample(self):
-#         num_samples = min(self.idx, self.buffer_size)
-#         indices = torch.randperm(num_samples)[:self.batch_size]
-#         return self.positions[indices], self.actions[indices], self.log_reward[indices]
-
-import random
-
 class ReplayBuffer:
-    def __init__(self, args):
-        self.buffer = []
+    def __init__(self, args, md):
+        self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.device)
+        self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
+        self.log_reward = torch.zeros(args.buffer_size, device=args.device)
+
+        self.idx = 0
+        self.batch_size = args.batch_size
         self.buffer_size = args.buffer_size
+        self.num_samples = args.num_samples
 
     def add(self, data):
-        self.buffer.append(data)
-        if len(self.buffer) > self.buffer_size:
-            self.buffer.pop(0)
-
+        indices = torch.arange(self.idx, self.idx+self.num_samples) % self.buffer_size
+        self.positions[indices], self.actions[indices], self.log_reward[indices] = data
+        self.idx += self.num_samples
+            
     def sample(self):
-        idx = random.randrange(len(self.buffer))
-        return self.buffer[idx]
+        num_samples = min(self.idx, self.buffer_size)
+        indices = torch.randperm(num_samples)[:self.batch_size]
+        return self.positions[indices], self.actions[indices], self.log_reward[indices]
+
+# import random
+
+# class ReplayBuffer:
+#     def __init__(self, args):
+#         self.buffer = []
+#         self.buffer_size = args.buffer_size
+
+#     def add(self, data):
+#         self.buffer.append(data)
+#         if len(self.buffer) > self.buffer_size:
+#             self.buffer.pop(0)
+
+#     def sample(self):
+#         idx = random.randrange(len(self.buffer))
+#         return self.buffer[idx]
