@@ -13,10 +13,10 @@ class FlowNetAgent:
             self.replay = ReplayBuffer(args, md)
 
     def sample(self, args, mds):
-        positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
-        potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
-        actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
+        positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
+        actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
+        potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
 
         position, potential = mds.report()
         
@@ -25,7 +25,7 @@ class FlowNetAgent:
         for s in tqdm(range(args.num_steps)):
             noise = noises[:, s] if args.type == 'train' else 0
             bias = args.bias_scale * self.policy(position).detach()
-            action = bias + 2 * args.std * noise # 2 means we use tempered version of policy
+            action = bias + 2 * args.std * noise # We use tempered version of policy as sampler by multiplying 2
             mds.step(action)
 
             position, potential = mds.report()
