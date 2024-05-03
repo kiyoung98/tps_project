@@ -50,14 +50,14 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(positions, target_position, last_idx):
+def plot_paths_alanine(dir_path, rollout, positions, target_position, last_idx, res):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     last_idx = last_idx.detach().cpu().numpy()
     
     plt.clf()
     plt.close()
-    fig = plt.figure(figsize=(7, 7))
+    fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)
     plt.xlim([-np.pi, np.pi])
     plt.ylim([-np.pi, np.pi])
@@ -101,9 +101,11 @@ def plot_paths_alanine(positions, target_position, last_idx):
     phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
     ax.scatter(phis_target, psis_target, edgecolors='w', c='w', zorder=100, s=10)
 
+    plt.title(res)
     plt.xlabel('phi')
     plt.ylabel('psi')
     plt.show()
+    plt.savefig(f'{dir_path}/paths_rollout_{rollout}.png')
     return fig
 
 def plot_path(dir_path, positions, target_position, last_idx):
@@ -192,7 +194,7 @@ def plot_potentials(dir_path, rollout, potentials, log_target_reward, log_reward
     plt.ylabel("Potential Energy (kJ/mol)")
     plt.legend()
     plt.show()
-    plt.savefig(f'{dir_path}/potential_rollout{rollout}.png')
+    plt.savefig(f'{dir_path}/potential_rollout_{rollout}.png')
     plt.clf()
     plt.close()
     

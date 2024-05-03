@@ -1,0 +1,9 @@
+CUDA_VISIBLE_DEVICES=0 python mode.py --seed 0 &
+CUDA_VISIBLE_DEVICES=1 python mode.py --seed 1 &
+CUDA_VISIBLE_DEVICES=2 python mode.py --seed 2 &
+CUDA_VISIBLE_DEVICES=3 python mode.py --seed 3 &
+CUDA_VISIBLE_DEVICES=4 python mode.py --seed 4 &
+CUDA_VISIBLE_DEVICES=5 python mode.py --seed 5 &
+CUDA_VISIBLE_DEVICES=6 python mode.py --seed 6 &
+CUDA_VISIBLE_DEVICES=7 python mode.py --seed 7 
+
