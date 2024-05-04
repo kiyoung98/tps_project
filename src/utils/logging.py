@@ -29,15 +29,15 @@ class TqdmLoggingHandler(logging.StreamHandler):
 
 class Logger():
     def __init__(self, args, md):
+        self.type = args.type
         self.wandb = args.wandb
         self.project = args.project
         self.molecule = args.molecule
         self.start_file = md.start_file
-        self.type = args.type
+        self.num_samples = args.num_samples
         if self.type == "train":
             self.num_rollouts = args.num_rollouts
             self.save_freq = args.save_freq
-            self.num_samples = args.num_samples
         else:
             self.save_freq = 1
             
@@ -54,10 +54,9 @@ class Logger():
             # Check directories
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
-            if self.type == "train":
-                for dir in ['policy', 'potential']:
-                    if not os.path.exists(f'{self.dir}/{dir}'):
-                        os.makedirs(f'{self.dir}/{dir}')
+            for dir in ['policy', 'potential']:
+                if not os.path.exists(f'{self.dir}/{dir}'):
+                    os.makedirs(f'{self.dir}/{dir}')
             
             # Logger basic configurations
             log_file_name = self.dir + f"/{self.type}.log"
@@ -91,7 +90,7 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, rollout, positions, last_position, target_position, potentials, log_target_reward, log_md_reward, log_reward, last_idx):
+    def log(self, loss, policy, rollout, positions, last_position, target_position, potentials, log_target_reward, log_md_reward, log_reward, last_idx, log_z):
         nll = -log_md_reward.mean().item()
         epd = expected_pairwise_distance(last_position, target_position)
         if self.molecule == 'alanine':
@@ -108,17 +107,17 @@ class Logger():
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             
             # Log potential by trajectory index, with termianl reward, log reward
-            if rollout % self.save_freq == 0:
-                self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
-                fig_potential = plot_potentials(
-                    self.dir+"/potential",
-                    rollout,
-                    potentials,
-                    log_target_reward,
-                    log_reward,
-                    last_idx
-                )
-                self.logger.info(f"Plotting Done.!!")
+        if rollout % self.save_freq == 0:
+            self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
+            fig_potential = plot_potentials(
+                self.dir+"/potential",
+                rollout,
+                potentials,
+                log_target_reward,
+                log_reward,
+                last_idx
+            )
+            self.logger.info(f"Plotting Done.!!")
         
         # Log to wandb
         if self.wandb:
@@ -129,12 +128,14 @@ class Logger():
                         'energy_transition_point (kJ/mol)': etp,
                         'loss': loss,
                         'NLL': nll,
+                        'log_z': log_z,
                     }
             else:
                 log = {
                         'expected_pairwise_distance (pm)': epd,
                         'loss': loss,
                         'NLL': nll,
+                        'log_z': log_z,
                     }
             wandb.log(log, step=rollout)
 
@@ -160,6 +161,7 @@ class Logger():
             self.logger.info(f'Rollout: {rollout}')
             self.logger.info(f"expected_pairwise_distance (pm): {epd}")
             self.logger.info(f"NLL: {nll}")
+            self.logger.info(f"log_z: {log_z}")
             if self.type == "train":
                 self.logger.info(f"Loss: {loss}")
             if self.molecule == 'alanine':
