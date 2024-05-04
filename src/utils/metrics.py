@@ -1,15 +1,28 @@
 import torch
 import numpy as np
 
-from .utils import compute_dihedral, get_dist_matrix
+from .utils import compute_dihedral
 
-def expected_pairwise_distance(last_position, target_position):
-    last_dist_matrix = get_dist_matrix(last_position)
-    target_dist_matrix = get_dist_matrix(target_position)
+def expected_pairwise_distance(agent, last_position, target_position):
+    last_dist_matrix = agent.dist(last_position)
+    target_dist_matrix = agent.dist(target_position)
     
     epd = torch.mean((last_dist_matrix-target_dist_matrix)**2).item()
     return 1000*epd
 
+def expected_pairwise_scaled_distance(agent, last_position, target_position):
+    last_dist_matrix = agent.scaled_dist(last_position)
+    target_dist_matrix = agent.scaled_dist(target_position)
+    
+    epsd = torch.mean((last_dist_matrix-target_dist_matrix)**2).item()
+    return 1000*epsd
+
+def expected_pairwise_coulomb_distance(agent, last_position, target_position):
+    last_dist_matrix = agent.coulomb(last_position)
+    target_dist_matrix = agent.coulomb(target_position)
+    
+    epcd = torch.mean((last_dist_matrix-target_dist_matrix)**2).item()
+    return epcd
 
 def target_hit_percentage(last_position, target_position):
     last_position = last_position.detach().cpu().numpy()
@@ -35,12 +48,13 @@ def target_hit_percentage(last_position, target_position):
     return thp
 
 
-def energy_transition_point(last_position, target_position, potentials, last_idx):
+def energy_point(last_position, target_position, potentials, last_idx):
     last_position = last_position.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     
     hit = 0
     etp = 0
+    efp = 0
     
     angle_2 = [1, 6, 8, 14]
     angle_1 = [6, 8, 14, 16]
@@ -55,7 +69,9 @@ def energy_transition_point(last_position, target_position, potentials, last_idx
         phi_dist = min(abs(phi-target_phi), abs(phi-target_phi+2*np.pi), abs(phi-target_phi-2*np.pi))
         if psi_dist < 0.75 and phi_dist < 0.75:
             etp += potentials[i][:last_idx[i]].max()
+            efp += potentials[i][last_idx[i]]
             hit += 1
     
     etp = etp.item() / hit if hit > 0 else None
-    return etp
+    efp = efp.item() / hit if hit > 0 else None
+    return etp, efp

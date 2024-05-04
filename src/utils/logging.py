@@ -90,21 +90,23 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, policy, rollout, positions, last_position, target_position, potentials, log_target_reward, log_md_reward, log_reward, last_idx, log_z):
+    def log(self, loss, agent, rollout, positions, last_position, target_position, potentials, log_target_reward, log_md_reward, log_reward, last_idx, log_z):
         nll = -log_md_reward.mean().item()
-        epd = expected_pairwise_distance(last_position, target_position)
+        epd = expected_pairwise_distance(agent, last_position, target_position)
+        epsd = expected_pairwise_scaled_distance(agent, last_position, target_position)
+        epcd = expected_pairwise_coulomb_distance(agent, last_position, target_position)
         if self.molecule == 'alanine':
             thp = target_hit_percentage(last_position, target_position)
-            etp = energy_transition_point(last_position, target_position, potentials, last_idx)
+            etp, efp = energy_point(last_position, target_position, potentials, last_idx)
 
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
             if rollout % self.save_freq == 0:
-                torch.save(policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
-                torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
+                torch.save(agent.policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
+                torch.save(agent.policy.state_dict(), f'{self.dir}/policy.pt')
             if rollout == self.num_rollouts - 1 :
-                torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
+                torch.save(agent.policy.state_dict(), f'{self.dir}/policy.pt')
             
             # Log potential by trajectory index, with termianl reward, log reward
         if rollout % self.save_freq == 0:
@@ -124,8 +126,11 @@ class Logger():
             if self.molecule == 'alanine':
                 log = {
                         'expected_pairwise_distance (pm)': epd,
+                        'expected_pairwise_scaled_distance': epsd,
+                        'expected_pairwise_coulomb_distance': epcd,
                         'target_hit_percentage (%)': thp,
                         'energy_transition_point (kJ/mol)': etp,
+                        'energy_final_point (kJ/mol)': efp,
                         'loss': loss,
                         'NLL': nll,
                         'log_z': log_z,
@@ -133,6 +138,8 @@ class Logger():
             else:
                 log = {
                         'expected_pairwise_distance (pm)': epd,
+                        'expected_pairwise_scaled_distance': epsd,
+                        'expected_pairwise_coulomb_distance': epcd,
                         'loss': loss,
                         'NLL': nll,
                         'log_z': log_z,
@@ -160,6 +167,8 @@ class Logger():
             self.logger.info("")
             self.logger.info(f'Rollout: {rollout}')
             self.logger.info(f"expected_pairwise_distance (pm): {epd}")
+            self.logger.info(f"expected_pairwise_scaled_distance: {epsd}")
+            self.logger.info(f"expected_pairwise_coulomb_distance: {epcd}")
             self.logger.info(f"NLL: {nll}")
             self.logger.info(f"log_z: {log_z}")
             if self.type == "train":
@@ -167,6 +176,7 @@ class Logger():
             if self.molecule == 'alanine':
                 self.logger.info(f"target_hit_percentage (%): {thp}")
                 self.logger.info(f"energy_transition_point (kJ/mol): {etp}")
+                self.logger.info(f"energy_final_point (kJ/mol): {efp}")
     
     def plot(self, positions, target_position, potentials, log_target_reward, log_reward, last_idx, **kwargs):
         self.logger.info(f"[Plot] Plotting potentials")

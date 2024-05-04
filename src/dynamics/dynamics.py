@@ -42,7 +42,7 @@ class Alanine(BaseDynamics):
         simulation = app.Simulation(pdb.topology, system, integrator)
         simulation.context.setPositions(pdb.positions)
 
-        return simulation, external_force
+        return pdb, simulation, external_force
     
 
 class Chignolin(BaseDynamics):
@@ -81,7 +81,7 @@ class Chignolin(BaseDynamics):
         simulation = app.Simulation(pdb.topology, system, integrator)
         simulation.context.setPositions(pdb.positions)
 
-        return simulation, external_force
+        return pdb, simulation, external_force
     
 
 class Poly(BaseDynamics):
@@ -121,4 +121,4 @@ class Poly(BaseDynamics):
         simulation = app.Simulation(pdb.topology, system, integrator)
         simulation.context.setPositions(pdb.positions)
 
-        return simulation, external_force
+        return pdb, simulation, external_force
