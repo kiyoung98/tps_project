@@ -58,7 +58,7 @@ if __name__ == '__main__':
         raise FileNotFoundError("Policy checkpoint not found")
     
     # Sampling and obtain results for evaluation (positions, potentials)
-    log = agent.sample(args, mds)
+    log = agent.sample(args, mds, 0)
 
 
     logger.info(f"Sampling done..!")

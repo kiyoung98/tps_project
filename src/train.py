@@ -41,6 +41,8 @@ parser.add_argument('--target_std', default=0.05, type=float, help='Standard dev
 
 # Training Config
 parser.add_argument('--learning_rate', default=1e-3, type=float)
+parser.add_argument('--start_std', default=0.2, type=float, help='Initial standard deviation of annealing schedule')
+parser.add_argument('--end_std', default=0.1, type=float, help='Final standard deviation of annealing schedule')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
@@ -75,11 +77,13 @@ if __name__ == '__main__':
 
     logger.info("")
     logger.info(f"Starting training for {args.num_rollouts} rollouts")
+    annealing_schedule = torch.linspace(args.start_std, args.end_std, args.num_rollouts)
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
+        std = annealing_schedule[rollout]
 
         print('Sampling...')
-        log = agent.sample(args, mds)
+        log = agent.sample(args, mds, std)
 
         print('Training...')
         loss = 0

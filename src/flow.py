@@ -13,7 +13,7 @@ class FlowNetAgent:
         if args.type == 'train':
             self.replay = ReplayBuffer(args)
 
-    def sample(self, args, mds):
+    def sample(self, args, mds, std):
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
@@ -24,9 +24,9 @@ class FlowNetAgent:
         positions[:, 0] = position
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
-            noise = noises[:, s] if args.type == 'train' else 0
+            noise = noises[:, s]
             bias = args.bias_scale * self.policy(position).detach()
-            action = bias + 2 * args.std * noise # We use tempered version of policy as sampler by multiplying 2
+            action = bias + std * noise
             mds.step(action)
 
             position, potential = mds.report()
@@ -60,6 +60,7 @@ class FlowNetAgent:
             'log_md_reward': log_md_reward,
             'log_reward': log_reward,
             'last_idx': last_idx,
+            'log_z': self.policy.log_z.item(),
         }
         return log
 
