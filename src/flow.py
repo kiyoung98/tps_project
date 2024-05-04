@@ -98,7 +98,7 @@ class FlowNetAgent:
 
     def coulomb(self, x):
         dist_matrix = torch.cdist(x, x) + self.eye
-        coulomb_matrix = self.charge_matrix / dist_matrix
+        coulomb_matrix = 1e-2 * self.charge_matrix / dist_matrix
         return coulomb_matrix
 
 class ReplayBuffer:

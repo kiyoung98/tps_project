@@ -22,7 +22,7 @@ def expected_pairwise_coulomb_distance(agent, last_position, target_position):
     target_dist_matrix = agent.coulomb(target_position)
     
     epcd = torch.mean((last_dist_matrix-target_dist_matrix)**2).item()
-    return epcd
+    return 1000*epcd
 
 def target_hit_percentage(last_position, target_position):
     last_position = last_position.detach().cpu().numpy()
