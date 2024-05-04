@@ -22,7 +22,7 @@ parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--config', default="", type=str, help='Path to config file')
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 parser.add_argument('--date', default="test-run", type=str, help='Date of the training')
-parser.add_argument('--save_freq', default=10, type=int, help='Frequency of saving in  rollouts')
+parser.add_argument('--save_freq', default=100, type=int, help='Frequency of saving in  rollouts')
 parser.add_argument('--server', default="server", type=str, choices=["server", "cluster", "else"], help='Server we are using')
 
 # Policy Config
