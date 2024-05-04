@@ -51,15 +51,14 @@ parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm 
 
 args = parser.parse_args()
 
-if args.wandb:
-    wandb.init(
-        project=args.project,
-        config=args,
-    )
-
-torch.manual_seed(args.seed)
-
 if __name__ == '__main__':
+    if args.wandb:
+        wandb.init(
+            project=args.project,
+            config=args,
+        )
+
+    torch.manual_seed(args.seed)
     # NOTE: testing parsing from config file
     # Nothing happends if config file is not provided
     if args.config:
