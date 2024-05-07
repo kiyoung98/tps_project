@@ -36,8 +36,8 @@ parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--type', default='train', type=str)
 parser.add_argument('--device', default='cuda', type=str)
-parser.add_argument('--project', default='alanine_mass', type=str)
-parser.add_argument('--molecule', default='alanine', type=str)
+parser.add_argument('--project', default='poly_mode', type=str)
+parser.add_argument('--molecule', default='poly', type=str)
 
 # Logger Config
 parser.add_argument('--config', default="", type=str, help='Path to config file')
@@ -51,31 +51,31 @@ parser.add_argument('--force', action='store_true', help='Predict force otherwis
 
 # Sampling Config
 parser.add_argument('--reward_matrix', default='dist', type=str)
-parser.add_argument('--bias_scale', default=2000, type=float, help='Scale factor of bias')
-parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
+parser.add_argument('--bias_scale', default=5000, type=float, help='Scale factor of bias')
+parser.add_argument('--num_samples', default=2, type=int, help='Number of paths to sample')
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
-parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
-parser.add_argument('--target_std', default=0.02, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--num_steps', default=5000, type=int, help='Number of steps in each path i.e. length of trajectory')
+parser.add_argument('--target_std', default=0.1, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # Training Config
 parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--start_temperature', default=1200, type=float, help='Initial temperature of annealing schedule')
 parser.add_argument('--end_temperature', default=1200, type=float, help='Final temperature of annealing schedule')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
-parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
+parser.add_argument('--trains_per_rollout', default=200, type=int, help='Number of training per rollout in a rollout')
+parser.add_argument('--buffer_size', default=256, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
 
-class AlanineDynamics:
+class PolyDynamics:
     def __init__(self, state):
         super().__init__()
-        self.start_file = f'./data/alanine/{state}.pdb'
+        self.start_file = f'./data/poly/{state}.pdb'
 
         self.temperature = 300 * unit.kelvin
         self.friction_coefficient = 1 / unit.picoseconds
-        self.timestep = 1 * unit.femtoseconds
+        self.timestep = 2 * unit.femtoseconds
 
         self.pdb, self.integrator, self.simulation, self.external_force = self.setup()
 
@@ -90,13 +90,14 @@ class AlanineDynamics:
         self.charge_matrix = self.get_charge_matrix()
 
     def setup(self):
-        forcefield = app.ForceField('amber99sbildn.xml')
+        forcefield = app.ForceField('amber/protein.ff14SBonlysc.xml', 'implicit/gbn2.xml')
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
-            nonbondedMethod=app.PME,
+            nonbondedMethod=app.NoCutoff,
             nonbondedCutoff=1.0 * unit.nanometers,
             constraints=app.HBonds,
+            rigidWater=True,
             ewaldErrorTolerance=0.0005
         )
         external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
@@ -186,16 +187,16 @@ class MDs:
         self.target_position = self._init_target_position()
 
     def _init_mds(self):
-        print(f"Initialize dynamics starting at c5 of alanine")
+        print(f"Initialize dynamics starting at pp2 of poly")
 
         mds = []
         for _ in tqdm(range(self.num_samples)):
-            md = AlanineDynamics('c5')
+            md = PolyDynamics('pp2')
             mds.append(md)
         return mds
 
     def _init_target_position(self):
-        target_position = AlanineDynamics('c7ax').position
+        target_position = PolyDynamics('pp1').position
         target_position = torch.tensor(target_position, dtype=torch.float, device=self.device).unsqueeze(0)
         return target_position
 
@@ -225,7 +226,7 @@ class MDs:
             self.mds[i].set_temperature(temperature)
 
 
-class AlaninePolicy(nn.Module):
+class PolyPolicy(nn.Module):
     def __init__(self, args, md):
         super().__init__()
         
@@ -236,17 +237,17 @@ class AlaninePolicy(nn.Module):
         self.output_dim = md.num_particles*3 if self.force else 1
 
         self.mlp = nn.Sequential(
-            nn.Linear(self.input_dim, 128),
+            nn.Linear(self.input_dim, 256),
             nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.Linear(256, 512),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(512, 1024),
             nn.ReLU(),
-            nn.Linear(256, 256),
+            nn.Linear(1024, 512),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(512, 256),
             nn.ReLU(),
-            nn.Linear(128, self.output_dim, bias=False)
+            nn.Linear(256, self.output_dim, bias=False)
         )
 
         self.log_z = nn.Parameter(torch.tensor(0.))
@@ -264,7 +265,7 @@ class AlaninePolicy(nn.Module):
         else:
             force = out.view(*pos.shape)
                 
-        return force    
+        return force
     
 
 class FlowNetAgent:
@@ -280,7 +281,7 @@ class FlowNetAgent:
         self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, device=args.device).unsqueeze(0)
 
         self.replay = ReplayBuffer(args, md)
-        self.policy = AlaninePolicy(args, md)
+        self.policy = PolyPolicy(args, md)
 
     def sample(self, args, mds, temperature):
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
@@ -400,7 +401,7 @@ if __name__ == '__main__':
 
     torch.manual_seed(args.seed)
 
-    md = AlanineDynamics('c5')
+    md = PolyDynamics('pp2')
 
     mds = MDs(args)
     logger = Logger(args, md)
