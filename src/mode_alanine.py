@@ -60,7 +60,7 @@ parser.add_argument('--target_std', default=0.02, type=float, help='Standard dev
 # Training Config
 parser.add_argument('--learning_rate', default=0.001, type=float)
 parser.add_argument('--start_temperature', default=1200, type=float, help='Initial temperature of annealing schedule')
-parser.add_argument('--end_temperature', default=1200, type=float, help='Final temperature of annealing schedule')
+parser.add_argument('--end_temperature', default=300, type=float, help='Final temperature of annealing schedule')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
