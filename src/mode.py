@@ -43,7 +43,7 @@ parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--config', default="", type=str, help='Path to config file')
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 parser.add_argument('--date', default="test-run", type=str, help='Date of the training')
-parser.add_argument('--save_freq', default=100, type=int, help='Frequency of saving in  rollouts')
+parser.add_argument('--save_freq', default=10, type=int, help='Frequency of saving in  rollouts')
 parser.add_argument('--server', default="server", type=str, choices=["server", "cluster", "else"], help='Server we are using')
 
 # Policy Config
@@ -55,15 +55,15 @@ parser.add_argument('--bias_scale', default=2000, type=float, help='Scale factor
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
-parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--target_std', default=0.02, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # Training Config
 parser.add_argument('--learning_rate', default=0.001, type=float)
-parser.add_argument('--start_temperature', default=1500, type=float, help='Initial temperature of annealing schedule')
-parser.add_argument('--end_temperature', default=1500, type=float, help='Final temperature of annealing schedule')
+parser.add_argument('--start_temperature', default=1200, type=float, help='Initial temperature of annealing schedule')
+parser.add_argument('--end_temperature', default=1200, type=float, help='Final temperature of annealing schedule')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
-parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
+parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
 parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm of gradient to clip')
 
 args = parser.parse_args()
@@ -279,7 +279,7 @@ class FlowNetAgent:
         self.charge_matrix = torch.tensor(md.charge_matrix, device=args.device).unsqueeze(0)
         self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, device=args.device).unsqueeze(0)
 
-        self.replay = ReplayBuffer(args)
+        self.replay = ReplayBuffer(args, md)
         self.policy = AlaninePolicy(args, md)
 
     def sample(self, args, mds, temperature):
@@ -364,7 +364,7 @@ class FlowNetAgent:
     def scaled_dist(self, x):
         dist_matrix = torch.cdist(x, x) + self.eye
         scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
-        return scaled_dist_matrix * 3
+        return scaled_dist_matrix * 2
 
     def coulomb(self, x):
         dist_matrix = torch.cdist(x, x) + self.eye
@@ -372,18 +372,24 @@ class FlowNetAgent:
         return coulomb_matrix / 100
 
 class ReplayBuffer:
-    def __init__(self, args):
-        self.buffer = []
+    def __init__(self, args, md):
+        self.positions = torch.zeros((args.buffer_size, args.num_steps+1, md.num_particles, 3), device=args.device)
+        self.actions = torch.zeros((args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device)
+        self.log_reward = torch.zeros(args.buffer_size, device=args.device)
+
+        self.idx = 0
         self.buffer_size = args.buffer_size
+        self.num_samples = args.num_samples
 
     def add(self, data):
-        self.buffer.append(data)
-        if len(self.buffer) > self.buffer_size:
-            self.buffer.pop(0)
+        indices = torch.arange(self.idx, self.idx+self.num_samples) % self.buffer_size
+        self.idx += self.num_samples
 
+        self.positions[indices], self.actions[indices], self.log_reward[indices] = data
+            
     def sample(self):
-        idx = random.randrange(len(self.buffer))
-        return self.buffer[idx]
+        indices = torch.randperm(min(self.idx, self.buffer_size))[:self.num_samples]
+        return self.positions[indices], self.actions[indices], self.log_reward[indices]
 
 if __name__ == '__main__':
     if args.wandb:
