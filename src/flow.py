@@ -12,8 +12,8 @@ class FlowNetAgent:
         self.masses = torch.tensor(md.masses.value_in_unit(md.masses.unit), dtype=torch.float, device=args.device).unsqueeze(-1)
         
         self.eye = torch.eye(self.num_particles, device=args.device).unsqueeze(0)
-        self.charge_matrix = torch.tensor(md.charge_matrix, device=args.device).unsqueeze(0)
-        self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, device=args.device).unsqueeze(0)
+        self.charge_matrix = torch.tensor(md.charge_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
+        self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
 
         if args.type == 'train':
             self.replay = ReplayBuffer(args, md)
