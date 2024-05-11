@@ -32,7 +32,7 @@ parser.add_argument('--force', action='store_true', help='Predict force otherwis
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--reward_matrix', default='dist', type=str)
-parser.add_argument('--bias_scale', default=2000, type=float, help='Scale factor of bias')
+parser.add_argument('--bias_scale', default=1000, type=float, help='Scale factor of bias')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
 parser.add_argument('--temperature', default=300, type=float, help='In training, set 0(K) since we use external noise')
@@ -40,9 +40,10 @@ parser.add_argument('--num_steps', default=500, type=int, help='Number of steps 
 parser.add_argument('--target_std', default=0.02, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # Training Config
-parser.add_argument('--learning_rate', default=0.001, type=float)
-parser.add_argument('--start_temperature', default=1200, type=float, help='Initial temperature of annealing schedule')
-parser.add_argument('--end_temperature', default=300, type=float, help='Final temperature of annealing schedule')
+parser.add_argument('--mlp_lr', default=1e-4, type=float)
+parser.add_argument('--log_z_lr', default=1e-2, type=float)
+parser.add_argument('--start_temperature', default=600, type=float, help='Initial temperature of annealing schedule')
+parser.add_argument('--end_temperature', default=600, type=float, help='Final temperature of annealing schedule')
 parser.add_argument('--num_rollouts', default=5000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=2048, type=int, help='Size of buffer which stores sampled paths')
@@ -131,7 +132,7 @@ if __name__ == '__main__':
         
         loss = loss / args.trains_per_rollout
 
-        logger.log(loss, agent, rollout, **log)
+        logger.log(agent.policy, loss, rollout, **log)
 
     logger.info("")
     logger.info(f"Training finished for {args.num_rollouts} rollouts..!")

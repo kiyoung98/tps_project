@@ -32,7 +32,7 @@ parser.add_argument('--num_samples', default=64, type=int, help='Number of paths
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
 parser.add_argument('--temperature', default=300, type=float, help='In training, set 0(K) since we use external noise')
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
-parser.add_argument('--target_std', default=0.02, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--target_std', default=0.005, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # # Sampling Config
 # parser.add_argument('--start_state', default='unfolded', type=str)
@@ -83,6 +83,6 @@ if __name__ == '__main__':
     
     logger.info(f"Evaluating results...")
 
-    logger.log(None, agent, 0, **log)
+    logger.log(agent.policy, None, 0, **log)
     logger.plot(**log)
     logger.info(f"Evaluation done..!")

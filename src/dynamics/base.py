@@ -83,7 +83,7 @@ class BaseDynamics(ABC):
         state = self.simulation.context.getState(getPositions=True, getVelocities=True, getForces=True, getEnergy=True)
         positions = state.getPositions().value_in_unit(unit.nanometer)
         velocities = state.getVelocities().value_in_unit(unit.nanometer/unit.femtosecond)
-        forces = state.getForces().value_in_unit(unit.kilojoules/unit.mole/unit.nanometer)
+        forces = state.getForces().value_in_unit(unit.dalton*unit.nanometer/unit.femtosecond/unit.femtosecond)
         potentials = state.getPotentialEnergy().value_in_unit(unit.kilojoules/unit.mole)
         return positions, velocities, forces, potentials
 

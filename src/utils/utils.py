@@ -1,12 +1,11 @@
 import numpy as np
 
 def compute_dihedral(p): 
-    """http://stackoverflow.com/q/20305272/1128289"""
     b = p[:-1] - p[1:]
     b[0] *= -1
     v = np.array(
         [v - (v.dot(b[1]) / b[1].dot(b[1])) * b[1] for v in [b[0], b[2]]])
-    # Normalize vectors
+
     v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1, 1)
     b1 = b[1] / np.linalg.norm(b[1])
     x = np.dot(v[0], v[1])
