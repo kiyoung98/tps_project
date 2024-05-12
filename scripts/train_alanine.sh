@@ -1,6 +1,6 @@
 # alanine potential
 current_date=$(date +"%m%d-%H%M%S")
-bias_scales=(20 50 100 200 500 1000 1500 2000)
+bias_scales=(0.01 0.1 1 10 20 50 100 200)
 num_gpus=8
 idx=0
 for gpu in $(seq 0 $((num_gpus-1))); do
