@@ -131,7 +131,7 @@ if __name__ == '__main__':
         
         loss = loss / args.trains_per_rollout
 
-        logger.log(loss, agent, rollout, **log)
+        logger.log(agent.policy, loss, rollout, **log)
 
     logger.info("")
     logger.info(f"Training finished for {args.num_rollouts} rollouts..!")

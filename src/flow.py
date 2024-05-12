@@ -23,6 +23,8 @@ class FlowNetAgent:
     def sample(self, args, mds, temperature):
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
+        biases = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
+        noises = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         
         position, _, _, potential = mds.report()
@@ -38,11 +40,13 @@ class FlowNetAgent:
             next_position, velocity, force, potential = mds.report()
 
             # extract noise which openmm does not provide
-            noises = (next_position - position) - (self.v_scale * velocity + self.f_scale * force / self.masses)
-            action = bias / self.masses + noises / self.f_scale
+            noise = (next_position - position) - (self.v_scale * velocity + self.f_scale * force / self.masses)
+            action = bias / self.masses + noise / self.f_scale
 
             positions[:, s+1] = next_position
             actions[:, s] = action
+            biases[:, s] = bias
+            noises[:, s] = noise
             potentials[:, s+1] = potential - (bias*next_position).sum((-2, -1))
 
             position = next_position
@@ -68,19 +72,21 @@ class FlowNetAgent:
         log_md_reward = (-1/2)*torch.square(actions/self.std).mean((1, 2, 3))
         log_reward = log_md_reward + log_target_reward
 
+        log_likelihood = (-1/2)*torch.square(noises/self.std).mean((1, 2, 3))
+
         if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
         
         log = {
             'positions': positions, 
-            'last_position': positions[torch.arange(args.num_samples), last_idx],
-            'target_position': mds.target_position,
+            'biases': biases,
             'potentials': potentials,
+            'last_idx': last_idx,
+            'target_position': mds.target_position,
             'log_target_reward': log_target_reward,
             'log_md_reward': log_md_reward,
             'log_reward': log_reward,
-            'last_idx': last_idx,
-            'log_z': self.policy.log_z.item(),
+            'log_likelihood': log_likelihood,
         }
         return log
 
