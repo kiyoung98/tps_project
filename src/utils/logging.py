@@ -5,11 +5,9 @@ import wandb
 import logging
 import datetime
 
-
 from .plot import *
-from .metrics import *
+from .metrics import Metric
 from tqdm import tqdm
-
 
 class TqdmLoggingHandler(logging.StreamHandler):
     """Avoid tqdm progress bar interruption by logger's output to console"""
@@ -48,13 +46,15 @@ class Logger():
         kst = pytz.timezone('Asia/Seoul')
         
         self.dir = f'results/{self.molecule}/{self.project}/{self.date}/{self.type}/{args.seed}'
+
+        self.metric = Metric(args, md)
         
         # Set up system logging    
         if args.logger:
             # Check directories
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
-            for dir in ['policy', 'potential']:
+            for dir in ['policy', 'etp', 'efp', 'potential']:
                 if not os.path.exists(f'{self.dir}/{dir}'):
                     os.makedirs(f'{self.dir}/{dir}')
             
@@ -90,97 +90,152 @@ class Logger():
         if self.logger:
             self.logger.info(message)
     
-    def log(self, loss, agent, rollout, positions, last_position, target_position, potentials, log_target_reward, log_md_reward, log_reward, last_idx, log_z):
-        nll = -log_md_reward.mean().item()
-        epd = expected_pairwise_distance(agent, last_position, target_position)
-        epsd = expected_pairwise_scaled_distance(agent, last_position, target_position)
-        epcd = expected_pairwise_coulomb_distance(agent, last_position, target_position)
+    def log(
+            self, 
+            policy, 
+            loss, 
+            rollout, 
+            positions, 
+            biases, 
+            potentials, 
+            last_idx, 
+            target_position, 
+            log_reward, 
+            log_md_reward, 
+            log_target_reward,
+            log_likelihood,  
+        ):
+        last_position = positions[torch.arange(self.num_samples), last_idx]
+
+        mean_bias_norm = torch.norm(biases, dim=-1).mean()
+        mean_nll, std_nll = -log_md_reward.mean().item(), log_md_reward.std().item()
+        ess_ratio = self.metric.effective_sample_size(log_likelihood, log_reward) / self.num_samples
+        mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
+        mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
+        mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
+
+        mean_reward, std_reward = log_reward.mean().item(), log_reward.std().item()
+        mean_md_reward, std_md_reward = log_md_reward.mean().item(), log_md_reward.std().item()
+        mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
+
         if self.molecule == 'alanine':
-            thp = target_hit_percentage(last_position, target_position)
-            etp, efp = energy_point(last_position, target_position, potentials, last_idx)
+            thp = self.metric.target_hit_percentage(last_position, target_position)
+            mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.energy_point(last_position, target_position, potentials, last_idx)
 
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
             if rollout % self.save_freq == 0:
-                torch.save(agent.policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
-                torch.save(agent.policy.state_dict(), f'{self.dir}/policy.pt')
+                torch.save(policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
+                torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
             if rollout == self.num_rollouts - 1 :
-                torch.save(agent.policy.state_dict(), f'{self.dir}/policy.pt')
-            
-            # Log potential by trajectory index, with termianl reward, log reward
+                torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
+
         if rollout % self.save_freq == 0:
-            self.logger.info(f"Plotting potentials for {self.num_samples} samples...")
-            fig_potential = plot_potentials(
-                self.dir+"/potential",
-                rollout,
-                potentials,
-                log_target_reward,
-                log_reward,
-                last_idx
-            )
+            self.logger.info(f"Plotting for {self.num_samples} samples...")
+            if self.molecule == 'alanine':
+                fig_paths_alanine = plot_paths_alanine(positions, target_position, last_idx)
+            if len(etps)>0:
+                fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
+                fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
+            fig_potentials = plot_potentials(self.dir+"/potential", rollout, potentials, log_reward, last_idx)
             self.logger.info(f"Plotting Done.!!")
-        
+ 
         # Log to wandb
         if self.wandb:
+            log = {
+                    'loss': loss,
+                    'log_z': policy.log_z.item(),
+                    'effective_sample_size_ratio': ess_ratio,
+                    'mean_bias_norm': mean_bias_norm,
+                    'negative_log_likelihood': mean_nll,
+                    'expected_log_reward': mean_reward,
+                    'expected_log_md_reward': mean_md_reward,
+                    'expected_log_target_reward': mean_target_reward,
+                    'expected_pairwise_distance (pm)': mean_pd,
+                    'expected_pairwise_scaled_distance': mean_psd,
+                    'expected_pairwise_coulomb_distance': mean_pcd,
+                }
+            wandb.log(log, step=rollout)
+
             if self.molecule == 'alanine':
                 log = {
-                        'expected_pairwise_distance (pm)': epd,
-                        'expected_pairwise_scaled_distance': epsd,
-                        'expected_pairwise_coulomb_distance': epcd,
                         'target_hit_percentage (%)': thp,
-                        'energy_transition_point (kJ/mol)': etp,
-                        'energy_final_point (kJ/mol)': efp,
-                        'loss': loss,
-                        'NLL': nll,
-                        'log_z': log_z,
+                        'energy_transition_point (kJ/mol)': mean_etp,
+                        'energy_final_point (kJ/mol)': mean_efp,
                     }
-            else:
+                wandb.log(log, step=rollout)
+
+            if self.type == 'eval':
                 log = {
-                        'expected_pairwise_distance (pm)': epd,
-                        'expected_pairwise_scaled_distance': epsd,
-                        'expected_pairwise_coulomb_distance': epcd,
-                        'loss': loss,
-                        'NLL': nll,
-                        'log_z': log_z,
-                    }
-            wandb.log(log, step=rollout)
+                        'std_nll': std_nll,
+                        'std_pd': std_pd,
+                        'std_psd': std_psd,
+                        'std_pcd': std_pcd,
+                    }  
+                wandb.log(log, step=rollout)
+
+                if self.molecule == 'alanine':
+                    log = {
+                            'std_etp': std_etp,
+                            'std_efp': std_efp,
+                        }
+                    wandb.log(log, step=rollout)
 
             if rollout % self.save_freq==0:
                 if self.molecule == 'alanine':
                     wandb.log(
                         {
-                            'paths': wandb.Image(plot_paths_alanine(positions, target_position, last_idx)),
+                            'paths': wandb.Image(fig_paths_alanine)
                         }, 
                         step=rollout
                     )
-                fig_potential = f"{self.dir}/potential/potential_rollout{rollout}.png"
+                
+                if len(etps)>0:
+                    wandb.log(
+                        {
+                            'etps': wandb.Image(fig_etps),
+                            'efps': wandb.Image(fig_efps)
+                        }, 
+                        step=rollout
+                    )
+
                 wandb.log(
                     {
-                        'potentials': wandb.Image(fig_potential),
+                        'potentials': wandb.Image(fig_potentials),
                     }, 
                     step=rollout
                 )
 
         # Log to system log
         if self.logger:
-            self.logger.info("")
-            self.logger.info(f'Rollout: {rollout}')
-            self.logger.info(f"expected_pairwise_distance (pm): {epd}")
-            self.logger.info(f"expected_pairwise_scaled_distance: {epsd}")
-            self.logger.info(f"expected_pairwise_coulomb_distance: {epcd}")
-            self.logger.info(f"NLL: {nll}")
-            self.logger.info(f"log_z: {log_z}")
             if self.type == "train":
-                self.logger.info(f"Loss: {loss}")
+                self.logger.info(f'Rollout: {rollout}')
+                self.logger.info(f"loss: {loss}")
+            self.logger.info("")
+            self.logger.info(f"log_z: {policy.log_z.item()}")
+            self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
+            self.logger.info(f"negative_log_likelihood: {mean_nll}")
+            self.logger.info(f"expected_log_reward: {mean_reward}")
+            self.logger.info(f"expected_log_md_reward: {mean_md_reward}")
+            self.logger.info(f"expected_log_target_reward: {mean_target_reward}")
+            self.logger.info(f"expected_pairwise_distance (pm): {mean_pd}")
+            self.logger.info(f"expected_pairwise_scaled_distance: {mean_psd}")
+            self.logger.info(f"expected_pairwise_coulomb_distance: {mean_pcd}")
+            self.logger.info(f"std_nll: {std_nll}")
+            self.logger.info(f"std_pd: {std_pd}")
+            self.logger.info(f"std_psd: {std_psd}")
+            self.logger.info(f"std_pcd: {std_pcd}")
             if self.molecule == 'alanine':
                 self.logger.info(f"target_hit_percentage (%): {thp}")
-                self.logger.info(f"energy_transition_point (kJ/mol): {etp}")
-                self.logger.info(f"energy_final_point (kJ/mol): {efp}")
+                self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
+                self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
+                self.logger.info(f"std_etp: {std_etp}")
+                self.logger.info(f"std_etp: {std_efp}")
     
-    def plot(self, positions, target_position, potentials, log_target_reward, log_reward, last_idx, **kwargs):
+    def plot(self, positions, target_position, potentials, log_reward, last_idx, **kwargs):
         self.logger.info(f"[Plot] Plotting potentials")
-        plot_potential(self.dir, potentials, log_target_reward, log_reward, last_idx)
+        plot_potential(self.dir, potentials, log_reward, last_idx)
         
         self.logger.info(f"[Plot] Plotting 3D view")
         plot_3D_view(self.dir, self.start_file, positions, last_idx)

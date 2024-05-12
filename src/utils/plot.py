@@ -50,14 +50,14 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(dir_path, rollout, positions, target_position, last_idx, res):
+def plot_paths_alanine(positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     last_idx = last_idx.detach().cpu().numpy()
     
     plt.clf()
     plt.close()
-    fig = plt.figure(figsize=(8, 8))
+    fig = plt.figure(figsize=(7, 7))
     ax = fig.add_subplot(111)
     plt.xlim([-np.pi, np.pi])
     plt.ylim([-np.pi, np.pi])
@@ -101,11 +101,9 @@ def plot_paths_alanine(dir_path, rollout, positions, target_position, last_idx, 
     phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
     ax.scatter(phis_target, psis_target, edgecolors='w', c='w', zorder=100, s=10)
 
-    plt.title(res)
     plt.xlabel('phi')
     plt.ylabel('psi')
     plt.show()
-    plt.savefig(f'{dir_path}/paths_rollout_{rollout}.png')
     return fig
 
 def plot_path(dir_path, positions, target_position, last_idx):
@@ -156,20 +154,6 @@ def plot_path(dir_path, positions, target_position, last_idx):
         plt.ylabel('psi')
         plt.show()
         plt.savefig(f'{dir_path}/paths_{i}.png')
-        plt.clf()
-        plt.close()    
-
-def plot_potential(dir_path, potentials, log_target_reward, log_reward, last_idx):
-    potentials = potentials.detach().cpu().numpy()
-    for i in range(potentials.shape[0]):
-        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: terminal log reward {log_target_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
-        plt.xlabel('Time (fs)')
-        plt.ylabel("Potential Energy (kJ/mol)")
-        plt.legend()
-        plt.show()
-        plt.savefig(f'{dir_path}/potential_{i}.png')
-        plt.clf()
-        plt.close()
 
 def plot_3D_view(dir_path, start_file, positions, last_idx):
     positions = positions.detach().cpu().numpy()
@@ -184,18 +168,56 @@ def plot_3D_view(dir_path, start_file, positions, last_idx):
                 trajs = trajs.join(traj)
         trajs.save(f'{dir_path}/3D_view_{i}.h5')
     
-        
-def plot_potentials(dir_path, rollout, potentials, log_target_reward, log_reward, last_idx):
+def plot_potential(dir_path, potentials, log_reward, last_idx):
+    potentials = potentials.detach().cpu().numpy()
+    for i in range(potentials.shape[0]):
+        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
+        plt.xlabel('Time (fs)')
+        plt.ylabel("Potential Energy (kJ/mol)")
+        plt.legend()
+        plt.show()
+        plt.savefig(f'{dir_path}/potential_{i}.png')
+
+def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
     fig = plt.figure(figsize=(20, 5))
     for i in range(potentials.shape[0]):
-        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: terminal log reward {log_target_reward[i]:.4f}, log reward {log_reward[i]:.4f}")
+        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
     plt.xlabel('Time (fs)')
     plt.ylabel("Potential Energy (kJ/mol)")
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/potential_rollout_{rollout}.png')
-    plt.clf()
-    plt.close()
-    
+    return fig
+
+def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
+    potentials = potentials.detach().cpu().numpy()
+    fig = plt.figure(figsize=(20, 5))
+    for i in range(4):
+        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
+    plt.xlabel('Time (fs)')
+    plt.ylabel("Potential Energy (kJ/mol)")
+    plt.legend()
+    plt.show()
+    plt.savefig(f'{dir_path}/potential_rollout_{rollout}.png')
+    return fig
+
+def plot_etps(dir_path, rollout, etps, etp_idxs):
+    fig = plt.figure(figsize=(20, 5))
+    plt.scatter(etp_idxs, etps)
+    plt.xlabel('Time (fs)')
+    plt.ylabel("Potential Energy (kJ/mol)")
+    plt.legend()
+    plt.show()
+    plt.savefig(f'{dir_path}/etps_rollout_{rollout}.png')
+    return fig
+
+def plot_efps(dir_path, rollout, efps, efp_idxs):
+    fig = plt.figure(figsize=(20, 5))
+    plt.scatter(efp_idxs, efps)
+    plt.xlabel('Time (fs)')
+    plt.ylabel("Potential Energy (kJ/mol)")
+    plt.legend()
+    plt.show()
+    plt.savefig(f'{dir_path}/efps_rollout_{rollout}.png')
     return fig

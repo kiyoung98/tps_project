@@ -20,6 +20,7 @@ class FlowNetAgent:
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
+        biases = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
 
         position, potential = mds.report()
@@ -37,6 +38,7 @@ class FlowNetAgent:
             positions[:, s+1] = position.detach()
             potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
             actions[:, s] = action
+            biases[:, s] = bias
         mds.reset()
 
         target_matrix = getattr(self, args.reward_matrix)(mds.target_position)
@@ -53,19 +55,21 @@ class FlowNetAgent:
         log_md_reward = (-1/2)*torch.square(actions/args.std).mean((1, 2, 3))
         log_reward = log_md_reward + log_target_reward
 
+        log_likelihood = (-1/2)*torch.square(noises).mean((1, 2, 3))
+
         if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
 
         log = {
             'positions': positions, 
-            'last_position': positions[torch.arange(args.num_samples), last_idx],
-            'target_position': mds.target_position,
+            'biases': biases,
             'potentials': potentials,
+            'last_idx': last_idx,
+            'target_position': mds.target_position,
             'log_target_reward': log_target_reward,
             'log_md_reward': log_md_reward,
             'log_reward': log_reward,
-            'last_idx': last_idx,
-            'log_z': self.policy.log_z.item(),
+            'log_likelihood': log_likelihood,
         }
         return log
 
