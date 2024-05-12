@@ -6,12 +6,12 @@ The goal of this project is to solve Transition Path Sampling (TPS) using GFlowN
 
 1. First, create a new Conda environment:
     ```
-    conda create -n tps_gflow python=3.9
+    conda create -n gflow_tps python=3.9
     ```
 
 2. Activate the newly created environment:
     ```
-    conda activate tps_gflow
+    conda activate gflow_tps
     ```
 
 3. Install the openmmtools for Molecular Dynamics (MD) simulation using the following commands:

@@ -3,17 +3,20 @@ import proxy
 import random
 
 from tqdm import tqdm
-from utils.utils import get_log_normal, get_dist_matrix
 
 class FlowNetAgent:
     def __init__(self, args, md):
         self.num_particles = md.num_particles
+        self.eye = torch.eye(self.num_particles, device=args.device).unsqueeze(0)
+        self.charge_matrix = torch.tensor(md.charge_matrix, device=args.device).unsqueeze(0)
+        self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, device=args.device).unsqueeze(0)
+        
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
         if args.type == 'train':
             self.replay = ReplayBuffer(args)
 
-    def sample(self, args, mds):
+    def sample(self, args, mds, std):
         noises = torch.normal(torch.zeros(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device), torch.ones(args.num_samples, args.num_steps, self.num_particles, 3, device=args.device))
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
@@ -24,9 +27,9 @@ class FlowNetAgent:
         positions[:, 0] = position
         potentials[:, 0] = potential
         for s in tqdm(range(args.num_steps)):
-            noise = noises[:, s] if args.type == 'train' else 0
+            noise = noises[:, s]
             bias = args.bias_scale * self.policy(position).detach()
-            action = bias + 2 * args.std * noise # We use tempered version of policy as sampler by multiplying 2
+            action = bias + std * noise
             mds.step(action)
 
             position, potential = mds.report()
@@ -36,16 +39,18 @@ class FlowNetAgent:
             actions[:, s] = action
         mds.reset()
 
-        target_dist_matrix = get_dist_matrix(mds.target_position)
+        target_matrix = getattr(self, args.reward_matrix)(mds.target_position)
 
         if args.flexible:
-            dist_matrix = get_dist_matrix(positions.reshape(-1, *positions.shape[-2:]))
-            log_target_reward, last_idx = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2)).view(args.num_samples, -1).max(1)
+            matrix = getattr(self, args.reward_matrix)(positions.reshape(-1, *positions.shape[-2:]))
+            log_target_reward = (-1/2)*torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
+            log_target_reward, last_idx = log_target_reward.view(args.num_samples, -1).max(1)
         else:
-            dist_matrix = get_dist_matrix(positions[:, -1])
+            matrix = getattr(self, args.reward_matrix)(positions[:, -1])
             last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
-            log_target_reward = get_log_normal((dist_matrix-target_dist_matrix)/args.target_std).mean((1, 2))
-        log_md_reward = get_log_normal(actions/args.std).mean((1, 2, 3))
+            log_target_reward = (-1/2)*torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
+            
+        log_md_reward = (-1/2)*torch.square(actions/args.std).mean((1, 2, 3))
         log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
@@ -60,6 +65,7 @@ class FlowNetAgent:
             'log_md_reward': log_md_reward,
             'log_reward': log_reward,
             'last_idx': last_idx,
+            'log_z': self.policy.log_z.item(),
         }
         return log
 
@@ -71,7 +77,7 @@ class FlowNetAgent:
         biases = args.bias_scale * self.policy(positions[:, :-1])
         
         log_z = self.policy.log_z
-        log_forward = get_log_normal((biases-actions)/args.std).mean((1, 2, 3))
+        log_forward = (-1/2)*torch.square((biases-actions)/args.std).mean((1, 2, 3))
         loss = torch.mean((log_z+log_forward-log_reward)**2)
         
         loss.backward()
@@ -80,6 +86,20 @@ class FlowNetAgent:
         policy_optimizers.step()
         policy_optimizers.zero_grad()
         return loss.item()
+
+    def dist(self, x):
+        dist_matrix = torch.cdist(x, x)
+        return dist_matrix
+
+    def scaled_dist(self, x):
+        dist_matrix = torch.cdist(x, x) + self.eye
+        scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
+        return scaled_dist_matrix * 3
+
+    def coulomb(self, x):
+        dist_matrix = torch.cdist(x, x) + self.eye
+        coulomb_matrix = self.charge_matrix / dist_matrix
+        return coulomb_matrix / 100
 
 class ReplayBuffer:
     def __init__(self, args):

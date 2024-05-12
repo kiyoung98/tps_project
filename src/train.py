@@ -22,7 +22,7 @@ parser.add_argument('--molecule', default='alanine', type=str)
 parser.add_argument('--config', default="", type=str, help='Path to config file')
 parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
 parser.add_argument('--date', default="test-run", type=str, help='Date of the training')
-parser.add_argument('--save_freq', default=10, type=int, help='Frequency of saving in  rollouts')
+parser.add_argument('--save_freq', default=100, type=int, help='Frequency of saving in  rollouts')
 parser.add_argument('--server', default="server", type=str, choices=["server", "cluster", "else"], help='Server we are using')
 
 # Policy Config
@@ -31,6 +31,7 @@ parser.add_argument('--force', action='store_true', help='Predict force otherwis
 # Sampling Config
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
+parser.add_argument('--reward_matrix', default='dist', type=str)
 parser.add_argument('--bias_scale', default=20, type=float, help='Scale factor of bias')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
@@ -41,6 +42,8 @@ parser.add_argument('--target_std', default=0.05, type=float, help='Standard dev
 
 # Training Config
 parser.add_argument('--learning_rate', default=1e-3, type=float)
+parser.add_argument('--start_std', default=0.2, type=float, help='Initial standard deviation of annealing schedule')
+parser.add_argument('--end_std', default=0.1, type=float, help='Final standard deviation of annealing schedule')
 parser.add_argument('--num_rollouts', default=10000, type=int, help='Number of rollouts (or sampling)')
 parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number of training per rollout in a rollout')
 parser.add_argument('--buffer_size', default=100, type=int, help='Size of buffer which stores sampled paths')
@@ -48,15 +51,14 @@ parser.add_argument('--max_grad_norm', default=10, type=int, help='Maximum norm 
 
 args = parser.parse_args()
 
-if args.wandb:
-    wandb.init(
-        project=args.project,
-        config=args,
-    )
-
-torch.manual_seed(args.seed)
-
 if __name__ == '__main__':
+    if args.wandb:
+        wandb.init(
+            project=args.project,
+            config=args,
+        )
+
+    torch.manual_seed(args.seed)
     # NOTE: testing parsing from config file
     # Nothing happends if config file is not provided
     if args.config:
@@ -75,11 +77,13 @@ if __name__ == '__main__':
 
     logger.info("")
     logger.info(f"Starting training for {args.num_rollouts} rollouts")
+    annealing_schedule = torch.linspace(args.start_std, args.end_std, args.num_rollouts)
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
+        std = annealing_schedule[rollout]
 
         print('Sampling...')
-        log = agent.sample(args, mds)
+        log = agent.sample(args, mds, std)
 
         print('Training...')
         loss = 0
@@ -88,7 +92,7 @@ if __name__ == '__main__':
         
         loss = loss / args.trains_per_rollout
 
-        logger.log(loss, agent.policy, rollout, **log)
+        logger.log(loss, agent, rollout, **log)
     
     logger.info("")
     logger.info(f"Training finished for {args.num_rollouts} rollouts..!")

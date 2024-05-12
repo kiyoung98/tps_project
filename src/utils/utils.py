@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 
 def compute_dihedral(p): 
@@ -14,11 +13,3 @@ def compute_dihedral(p):
     m = np.cross(v[0], b1)
     y = np.dot(m, v[1])
     return np.arctan2(y, x)
-
-def get_log_normal(x):
-    normal = torch.distributions.normal.Normal(loc=0, scale=1)
-    return normal.log_prob(x)
-
-def get_dist_matrix(x):
-    dist_matrix = torch.cdist(x, x)
-    return dist_matrix

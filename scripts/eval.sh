@@ -1,17 +1,14 @@
-train_date=0427-0630
+date=0502-152513
 
-# for seed in 4
 for seed in {0..7}
 do
   echo ">>" Evaluating poly for seed $seed
-  CUDA_VISIBLE_DEVICES=$seed  python src/eval.py \
-    --molecule poly \
-    --project poly \
-    --date $train_date \
+  CUDA_VISIBLE_DEVICES=$seed python src/eval.py \
+    --date $date \
     --seed $seed \
-    --start_state pp2 \
-    --end_state pp1 \
-    --num_steps 5000 \
+    --force \
+    --bias_scale 1 \
     --wandb &
-  sleep 0.5
 done
+
+wait
