@@ -32,7 +32,7 @@ parser.add_argument('--force', action='store_true', help='Predict force otherwis
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--reward_matrix', default='dist', type=str)
-parser.add_argument('--bias_scale', default=1, type=float, help='Scale factor of bias')
+parser.add_argument('--bias_scale', default=0.01, type=float, help='Scale factor of bias')
 parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
 parser.add_argument('--temperature', default=300, type=float, help='In training, set 0(K) since we use external noise')
