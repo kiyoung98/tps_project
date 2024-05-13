@@ -112,6 +112,7 @@ class Logger():
         mean_bias_norm = torch.norm(biases, dim=-1).mean()
         mean_nll, std_nll = -log_md_reward.mean().item(), log_md_reward.std().item()
         ess_ratio = self.metric.effective_sample_size(log_likelihood, log_reward) / self.num_samples
+        mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(positions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
         mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
         mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
@@ -147,6 +148,7 @@ class Logger():
                     'loss': loss,
                     'log_z': policy.log_z.item(),
                     'effective_sample_size_ratio': ess_ratio,
+                    'expected_pairwise_path_distance': mean_ppd,
                     'mean_bias_norm': mean_bias_norm,
                     'negative_log_likelihood': mean_nll,
                     'expected_log_reward': mean_reward,
@@ -174,6 +176,7 @@ class Logger():
                         'std_pd': std_pd,
                         'std_psd': std_psd,
                         'std_pcd': std_pcd,
+                        'std_ppd': std_ppd,
                     }  
                 wandb.log(log, step=rollout)
 
@@ -181,6 +184,7 @@ class Logger():
                     log = {
                             'std_etp': std_etp,
                             'std_efp': std_efp,
+                            'std_length': std_len,
                         }
                     wandb.log(log, step=rollout)
 
@@ -217,6 +221,7 @@ class Logger():
             self.logger.info("")
             self.logger.info(f"log_z: {policy.log_z.item()}")
             self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
+            self.logger.info(f"expected_pairwise_path_distance: {mean_ppd}")
             self.logger.info(f"negative_log_likelihood: {mean_nll}")
             self.logger.info(f"expected_log_reward: {mean_reward}")
             self.logger.info(f"expected_log_md_reward: {mean_md_reward}")
@@ -228,6 +233,7 @@ class Logger():
             self.logger.info(f"std_pd: {std_pd}")
             self.logger.info(f"std_psd: {std_psd}")
             self.logger.info(f"std_pcd: {std_pcd}")
+            self.logger.info(f"std_ppd: {std_ppd}")
             if self.molecule == 'alanine':
                 self.logger.info(f"target_hit_percentage (%): {thp}")
                 self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
