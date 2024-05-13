@@ -27,34 +27,12 @@ parser.add_argument('--force', action='store_true', help='Predict force otherwis
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--reward_matrix', default='dist', type=str)
-parser.add_argument('--bias_scale', default=2000, type=float, help='Scale factor of bias')
+parser.add_argument('--bias_scale', default=0.01, type=float, help='Scale factor of bias')
 parser.add_argument('--num_samples', default=64, type=int, help='Number of paths to sample')
 parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
 parser.add_argument('--temperature', default=300, type=float, help='In training, set 0(K) since we use external noise')
 parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
-parser.add_argument('--target_std', default=0.005, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
-
-# # Sampling Config
-# parser.add_argument('--start_state', default='unfolded', type=str)
-# parser.add_argument('--end_state', default='folded', type=str)
-# parser.add_argument('--reward_matrix', default='dist', type=str)
-# parser.add_argument('--bias_scale', default=10000, type=float, help='Scale factor of bias')
-# parser.add_argument('--num_samples', default=64, type=int, help='Number of paths to sample')
-# parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
-# parser.add_argument('--temperature', default=300, type=float, help='In training, set 0(K) since we use external noise')
-# parser.add_argument('--num_steps', default=5000, type=int, help='Number of steps in each path i.e. length of trajectory')
-# parser.add_argument('--target_std', default=0.1, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
-
-# # Sampling Config
-# parser.add_argument('--start_state', default='pp2', type=str)
-# parser.add_argument('--end_state', default='pp1', type=str)
-# parser.add_argument('--reward_matrix', default='dist', type=str)
-# parser.add_argument('--bias_scale', default=5000, type=float, help='Scale factor of bias')
-# parser.add_argument('--num_samples', default=64, type=int, help='Number of paths to sample')
-# parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
-# parser.add_argument('--temperature', default=300, type=float, help='In training, set 0(K) since we use external noise')
-# parser.add_argument('--num_steps', default=5000, type=int, help='Number of steps in each path i.e. length of trajectory')
-# parser.add_argument('--target_std', default=0.1, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
+parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 args = parser.parse_args()
 
