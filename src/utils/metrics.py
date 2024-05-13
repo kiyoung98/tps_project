@@ -45,11 +45,11 @@ class Metric:
         phi = self.compute_dihedral(positions[:, :, self.angle_2])
 
         hit_mask = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
-        hit, hit_idx = hit_mask.max(-1)
+        hit, hit_idxs = hit_mask.max(-1)
 
         thp = 100 * hit.sum().float() / hit.shape[0]
 
-        for i, hit_idx in enumerate(hit_idx):
+        for i, hit_idx in enumerate(hit_idxs):
             if hit_idx > 0:
                 etp, idx = potentials[i][:hit_idx].max(0)
                 etps.append(etp)
@@ -69,8 +69,8 @@ class Metric:
             std_etp = etps.std().item()
             std_efp = efps.std().item() 
 
-            mean_len = hit_idx.mean().item() 
-            std_len = hit_idx.std().item() 
+            mean_len = hit_idxs.float().mean().item() 
+            std_len = hit_idxs.float().std().item() 
             return thp, mean_len, std_len, mean_etp, std_etp, etps.cpu().numpy(), etp_idxs, mean_efp, std_efp, efps.cpu().numpy(), efp_idxs
     
         else:
