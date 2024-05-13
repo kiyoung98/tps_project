@@ -31,6 +31,7 @@ class Logger():
         self.wandb = args.wandb
         self.project = args.project
         self.molecule = args.molecule
+        self.flexible = args.flexible
         self.start_file = md.start_file
         self.num_samples = args.num_samples
         if self.type == "train":
@@ -119,9 +120,7 @@ class Logger():
         mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
 
         if self.molecule == 'alanine':
-            thp = self.metric.target_hit_percentage(last_position, target_position)
-            mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.energy_point(last_position, target_position, potentials, last_idx)
-
+            thp, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(last_position, target_position)
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
@@ -135,9 +134,9 @@ class Logger():
             self.logger.info(f"Plotting for {self.num_samples} samples...")
             if self.molecule == 'alanine':
                 fig_paths_alanine = plot_paths_alanine(positions, target_position, last_idx)
-            if len(etps)>0:
-                fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
-                fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
+                if thp > 0:
+                    fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
+                    fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
             fig_potentials = plot_potentials(self.dir+"/potential", rollout, potentials, log_reward, last_idx)
             self.logger.info(f"Plotting Done.!!")
  
@@ -163,6 +162,8 @@ class Logger():
                         'target_hit_percentage (%)': thp,
                         'energy_transition_point (kJ/mol)': mean_etp,
                         'energy_final_point (kJ/mol)': mean_efp,
+                        'mean_length': mean_len,
+                        'std_length': std_len,
                     }
                 wandb.log(log, step=rollout)
 
@@ -191,14 +192,14 @@ class Logger():
                         step=rollout
                     )
                 
-                if len(etps)>0:
-                    wandb.log(
-                        {
-                            'etps': wandb.Image(fig_etps),
-                            'efps': wandb.Image(fig_efps)
-                        }, 
-                        step=rollout
-                    )
+                    if thp > 0:
+                        wandb.log(
+                            {
+                                'etps': wandb.Image(fig_etps),
+                                'efps': wandb.Image(fig_efps)
+                            }, 
+                            step=rollout
+                        )
 
                 wandb.log(
                     {
@@ -230,6 +231,8 @@ class Logger():
                 self.logger.info(f"target_hit_percentage (%): {thp}")
                 self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
                 self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
+                self.logger.info(f"mean_length: {mean_len}")
+                self.logger.info(f"std_length: {std_len}")
                 self.logger.info(f"std_etp: {std_etp}")
                 self.logger.info(f"std_etp: {std_efp}")
     
