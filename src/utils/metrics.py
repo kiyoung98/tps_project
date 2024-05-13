@@ -71,10 +71,10 @@ class Metric:
 
             mean_len = hit_idxs.float().mean().item() 
             std_len = hit_idxs.float().std().item() 
-            return thp, mean_len, std_len, mean_etp, std_etp, etps.cpu().numpy(), etp_idxs, mean_efp, std_efp, efps.cpu().numpy(), efp_idxs
+            return thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps.cpu().numpy(), etp_idxs, mean_efp, std_efp, efps.cpu().numpy(), efp_idxs
     
         else:
-            return thp, None, None, None, None, None, None, None, None, None, None
+            return thp, None, None, None, None, None, None, None, None, None, None, None
     
     # def energy_point(self, last_position, target_position, potentials, last_idx):
     #     etps, efps, etp_idxs, efp_idxs = [], [], [], []

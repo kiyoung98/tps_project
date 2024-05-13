@@ -50,10 +50,9 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(positions, target_position, last_idx):
+def plot_paths_alanine(dir_path, positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
-    last_idx = last_idx.detach().cpu().numpy()
     
     plt.clf()
     plt.close()
@@ -104,6 +103,7 @@ def plot_paths_alanine(positions, target_position, last_idx):
     plt.xlabel('phi')
     plt.ylabel('psi')
     plt.show()
+    plt.savefig(f'{dir_path}/paths.png')
     plt.close()
     return fig
 
@@ -160,32 +160,36 @@ def plot_path(dir_path, positions, target_position, last_idx):
 def plot_3D_view(dir_path, start_file, positions, last_idx):
     positions = positions.detach().cpu().numpy()
     for i in tqdm(range(positions.shape[0])):
-        for j in range(last_idx[i]):
-            traj = md.load_pdb(start_file)
-            traj.xyz = positions[i, j]
-            
-            if j == 0:
-                trajs = traj
-            else:
-                trajs = trajs.join(traj)
-        trajs.save(f'{dir_path}/3D_view_{i}.h5')
+        if last_idx[i] > 0:
+            for j in range(last_idx[i]):
+                traj = md.load_pdb(start_file)
+                traj.xyz = positions[i, j]
+                
+                if j == 0:
+                    trajs = traj
+                else:
+                    trajs = trajs.join(traj)
+            trajs.save(f'{dir_path}/3D_view_{i}.h5')
     
 def plot_potential(dir_path, potentials, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
     for i in range(potentials.shape[0]):
-        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
-        plt.xlabel('Time (fs)')
-        plt.ylabel("Potential Energy (kJ/mol)")
-        plt.legend()
-        plt.show()
-        plt.savefig(f'{dir_path}/potential_{i}.png')
-        plt.close()
+        if last_idx[i] > 0:
+            plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
+            plt.xlabel('Time (fs)')
+            plt.ylabel("Potential Energy (kJ/mol)")
+            plt.legend()
+            plt.show()
+            plt.savefig(f'{dir_path}/potential_{i}.png')
+            plt.close()
 
 def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
     fig = plt.figure(figsize=(20, 5))
     for i in range(potentials.shape[0]):
-        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
+        if last_idx[i] > 0:
+            plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
+            
     plt.xlabel('Time (fs)')
     plt.ylabel("Potential Energy (kJ/mol)")
     plt.legend()
