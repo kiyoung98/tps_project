@@ -66,5 +66,5 @@ if __name__ == '__main__':
     
     logger.info(f"Evaluating results...")
 
-    logger.log(agent.policy, None, 0, **log, True)
+    logger.log(agent.policy, None, 0, **log, plot=True)
     logger.info(f"Evaluation done..!")

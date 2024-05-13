@@ -35,6 +35,11 @@ class Metric:
         mean_pcd, std_pcd = pcd.mean().item(), pcd.std().item()
         return mean_pcd, std_pcd
 
+    def expected_pairwise_path_distance(self, positions):
+        eppd = self.dist(positions.reshape(positions.shape[0], -1)) / positions.shape[1]
+        mean_eppd, std_eppd = eppd.mean().item(), eppd.std().item()
+        return mean_eppd, std_eppd
+
     def alanine(self, positions, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
