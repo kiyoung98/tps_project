@@ -135,9 +135,9 @@ class Logger():
             self.logger.info(f"Plotting for {self.num_samples} samples...")
             if self.molecule == 'alanine':
                 fig_paths_alanine = plot_paths_alanine(positions, target_position, last_idx)
-            if len(etps)>0:
-                fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
-                fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
+                if len(etps)>0:
+                    fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
+                    fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
             fig_potentials = plot_potentials(self.dir+"/potential", rollout, potentials, log_reward, last_idx)
             self.logger.info(f"Plotting Done.!!")
  
