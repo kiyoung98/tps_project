@@ -104,6 +104,7 @@ def plot_paths_alanine(positions, target_position, last_idx):
     plt.xlabel('phi')
     plt.ylabel('psi')
     plt.show()
+    plt.close()
     return fig
 
 def plot_path(dir_path, positions, target_position, last_idx):
@@ -154,6 +155,7 @@ def plot_path(dir_path, positions, target_position, last_idx):
         plt.ylabel('psi')
         plt.show()
         plt.savefig(f'{dir_path}/paths_{i}.png')
+        plt.close()
 
 def plot_3D_view(dir_path, start_file, positions, last_idx):
     positions = positions.detach().cpu().numpy()
@@ -200,6 +202,7 @@ def plot_etps(dir_path, rollout, etps, etp_idxs):
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/etps_rollout_{rollout}.png')
+    plt.close()
     return fig
 
 def plot_efps(dir_path, rollout, efps, efp_idxs):
@@ -210,4 +213,5 @@ def plot_efps(dir_path, rollout, efps, efp_idxs):
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/efps_rollout_{rollout}.png')
+    plt.close()
     return fig
