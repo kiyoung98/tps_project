@@ -177,6 +177,7 @@ def plot_potential(dir_path, potentials, log_reward, last_idx):
         plt.legend()
         plt.show()
         plt.savefig(f'{dir_path}/potential_{i}.png')
+        plt.close()
 
 def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
@@ -188,18 +189,7 @@ def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/potential_rollout_{rollout}.png')
-    return fig
-
-def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
-    potentials = potentials.detach().cpu().numpy()
-    fig = plt.figure(figsize=(20, 5))
-    for i in range(4):
-        plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
-    plt.xlabel('Time (fs)')
-    plt.ylabel("Potential Energy (kJ/mol)")
-    plt.legend()
-    plt.show()
-    plt.savefig(f'{dir_path}/potential_rollout_{rollout}.png')
+    plt.close()
     return fig
 
 def plot_etps(dir_path, rollout, etps, etp_idxs):
@@ -210,6 +200,7 @@ def plot_etps(dir_path, rollout, etps, etp_idxs):
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/etps_rollout_{rollout}.png')
+    plt.close()
     return fig
 
 def plot_efps(dir_path, rollout, efps, efp_idxs):
@@ -220,4 +211,5 @@ def plot_efps(dir_path, rollout, efps, efp_idxs):
     plt.legend()
     plt.show()
     plt.savefig(f'{dir_path}/efps_rollout_{rollout}.png')
+    plt.close()
     return fig
