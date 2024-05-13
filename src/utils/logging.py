@@ -112,7 +112,7 @@ class Logger():
         mean_bias_norm = torch.norm(biases, dim=-1).mean()
         mean_nll, std_nll = -log_md_reward.mean().item(), log_md_reward.std().item()
         ess_ratio = self.metric.effective_sample_size(log_likelihood, log_reward) / self.num_samples
-        mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(log_likelihood, log_reward) / self.num_samples
+        mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(positions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
         mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
         mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
