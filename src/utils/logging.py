@@ -120,7 +120,7 @@ class Logger():
         mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
 
         if self.molecule == 'alanine':
-            thp, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(last_position, target_position)
+            thp, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
