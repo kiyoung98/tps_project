@@ -105,6 +105,7 @@ class Logger():
             log_md_reward, 
             log_target_reward,
             log_likelihood,  
+            plot=False,
         ):
         last_position = positions[torch.arange(self.num_samples), last_idx]
 
@@ -120,7 +121,7 @@ class Logger():
         mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
 
         if self.molecule == 'alanine':
-            thp, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
+            thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
@@ -133,7 +134,7 @@ class Logger():
         if rollout % self.save_freq == 0:
             self.logger.info(f"Plotting for {self.num_samples} samples...")
             if self.molecule == 'alanine':
-                fig_paths_alanine = plot_paths_alanine(positions, target_position, last_idx)
+                fig_paths_alanine = plot_paths_alanine(self.dir, positions, target_position, last_idx)
                 if thp > 0:
                     fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
                     fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
@@ -235,14 +236,23 @@ class Logger():
                 self.logger.info(f"std_length: {std_len}")
                 self.logger.info(f"std_etp: {std_etp}")
                 self.logger.info(f"std_etp: {std_efp}")
-    
-    def plot(self, positions, target_position, potentials, log_reward, last_idx, **kwargs):
-        self.logger.info(f"[Plot] Plotting potentials")
-        plot_potential(self.dir, potentials, log_reward, last_idx)
-        
-        self.logger.info(f"[Plot] Plotting 3D view")
-        plot_3D_view(self.dir, self.start_file, positions, last_idx)
-        
-        if self.molecule == 'alanine':
-            self.logger.info(f"[Plot] Plotting paths")
-            plot_path(self.dir, positions, target_position, last_idx)
+
+        if plot:            
+            if self.molecule == 'alanine':
+                plot_paths_alanine(self.dir, positions, target_position, hit_idxs)
+                plot_potentials(self.dir, rollout, potentials, log_reward, hit_idxs)
+                
+                self.logger.info(f"[Plot] Plotting paths")
+                plot_path(self.dir, positions, target_position, hit_idxs)
+
+                self.logger.info(f"[Plot] Plotting potentials")
+                plot_potential(self.dir, potentials, log_reward, hit_idxs)
+                
+                self.logger.info(f"[Plot] Plotting 3D view")
+                plot_3D_view(self.dir, self.start_file, positions, hit_idxs)
+            else:
+                self.logger.info(f"[Plot] Plotting potentials")
+                plot_potential(self.dir, potentials, log_reward, last_idx)
+                
+                self.logger.info(f"[Plot] Plotting 3D view")
+                plot_3D_view(self.dir, self.start_file, positions, last_idx)
