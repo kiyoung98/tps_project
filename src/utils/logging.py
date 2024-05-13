@@ -191,14 +191,14 @@ class Logger():
                         step=rollout
                     )
                 
-                if len(etps)>0:
-                    wandb.log(
-                        {
-                            'etps': wandb.Image(fig_etps),
-                            'efps': wandb.Image(fig_efps)
-                        }, 
-                        step=rollout
-                    )
+                    if len(etps)>0:
+                        wandb.log(
+                            {
+                                'etps': wandb.Image(fig_etps),
+                                'efps': wandb.Image(fig_efps)
+                            }, 
+                            step=rollout
+                        )
 
                 wandb.log(
                     {
