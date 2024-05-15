@@ -111,7 +111,7 @@ class Logger():
 
         mean_bias_norm = torch.norm(biases, dim=-1).mean()
         mean_nll, std_nll = -log_md_reward.mean().item(), log_md_reward.std().item()
-        ess_ratio = self.metric.effective_sample_size(log_likelihood, log_reward) / self.num_samples
+
         mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(positions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
         mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
@@ -122,7 +122,9 @@ class Logger():
         mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
 
         if self.molecule == 'alanine':
-            thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
+            hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
+            true_reward = log_md_reward.exp() * hit
+            ess_ratio = self.metric.effective_sample_size(log_likelihood, true_reward) / self.num_samples
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
@@ -147,7 +149,6 @@ class Logger():
             log = {
                     'loss': loss,
                     'log_z': policy.log_z.item(),
-                    'effective_sample_size_ratio': ess_ratio,
                     'expected_pairwise_path_distance': mean_ppd,
                     'mean_bias_norm': mean_bias_norm,
                     'negative_log_likelihood': mean_nll,
@@ -163,6 +164,7 @@ class Logger():
             if self.molecule == 'alanine':
                 log = {
                         'target_hit_percentage (%)': thp,
+                        'effective_sample_size_ratio': ess_ratio,
                         'energy_transition_point (kJ/mol)': mean_etp,
                         'energy_final_point (kJ/mol)': mean_efp,
                         'mean_length': mean_len,
@@ -220,7 +222,6 @@ class Logger():
                 self.logger.info(f"loss: {loss}")
             self.logger.info("")
             self.logger.info(f"log_z: {policy.log_z.item()}")
-            self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
             self.logger.info(f"expected_pairwise_path_distance: {mean_ppd}")
             self.logger.info(f"negative_log_likelihood: {mean_nll}")
             self.logger.info(f"expected_log_reward: {mean_reward}")
@@ -236,6 +237,7 @@ class Logger():
             self.logger.info(f"std_ppd: {std_ppd}")
             if self.molecule == 'alanine':
                 self.logger.info(f"target_hit_percentage (%): {thp}")
+                self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
                 self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
                 self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
                 self.logger.info(f"mean_length: {mean_len}")
@@ -244,7 +246,7 @@ class Logger():
                 self.logger.info(f"std_etp: {std_efp}")
 
         if plot:            
-            if self.molecule == 'alanine':
+            if self.molecule == 'alanine' and hit_idxs is not None:
                 plot_paths_alanine(self.dir, positions, target_position, hit_idxs)
                 plot_potentials(self.dir, rollout, potentials, log_reward, hit_idxs)
                 

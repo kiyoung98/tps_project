@@ -76,10 +76,10 @@ class Metric:
 
             mean_len = hit_idxs.float().mean().item() 
             std_len = hit_idxs.float().std().item() 
-            return thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps.cpu().numpy(), etp_idxs, mean_efp, std_efp, efps.cpu().numpy(), efp_idxs
+            return hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps.cpu().numpy(), etp_idxs, mean_efp, std_efp, efps.cpu().numpy(), efp_idxs
     
         else:
-            return thp, None, None, None, None, None, None, None, None, None, None, None
+            return hit, thp, None, None, None, None, None, None, None, None, None, None, None
     
     # def energy_point(self, last_position, target_position, potentials, last_idx):
     #     etps, efps, etp_idxs, efp_idxs = [], [], [], []
@@ -115,9 +115,7 @@ class Metric:
     #     else:
     #         return None, None, etps, etp_idxs, None, None, efps, efp_idxs
         
-    def effective_sample_size(self, log_likelihood, log_reward):
-        likelihood = log_likelihood.exp()
-        reward = log_reward.exp()
+    def effective_sample_size(self, likelihood, reward):
         weight = reward / likelihood
         ess = weight.sum().square() / weight.square().sum()
         return ess
