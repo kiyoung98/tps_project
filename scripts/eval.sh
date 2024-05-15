@@ -1,4 +1,4 @@
-date=0502-152513
+date=pot_flex
 
 for seed in {0..7}
 do
@@ -6,8 +6,9 @@ do
   CUDA_VISIBLE_DEVICES=$seed python src/eval.py \
     --date $date \
     --seed $seed \
-    --force \
-    --bias_scale 1 \
+    --num_steps 1000 \
+    --flexible \
+    --project mode \
     --wandb &
 done
 
