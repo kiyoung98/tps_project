@@ -24,7 +24,7 @@ class BaseDynamics(ABC):
 
         self.temperature = args.temperature * unit.kelvin
         self.friction_coefficient = 1 / unit.picoseconds
-        self.timestep = 1 * unit.femtoseconds
+        self.timestep = args.timestep * unit.femtoseconds
 
         self.pdb, self.integrator, self.simulation, self.external_force = self.setup()
 
