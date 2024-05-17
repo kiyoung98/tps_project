@@ -49,7 +49,8 @@ class Metric:
         psi = self.compute_dihedral(positions[:, :, self.angle_1])
         phi = self.compute_dihedral(positions[:, :, self.angle_2])
 
-        hit_mask = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
+        MASK_RATE = 0.3
+        hit_mask = (torch.abs(psi-target_psi) < MASK_RATE) & (torch.abs(phi-target_phi) < MASK_RATE)
         hit, hit_idxs = hit_mask.max(-1)
 
         thp = 100 * hit.sum().float() / hit.shape[0]

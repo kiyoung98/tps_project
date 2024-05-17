@@ -73,7 +73,7 @@ def plot_paths_alanine(dir_path, positions, target_position, last_idx):
     z = potential.potential(inp)
     z = z.view(y.shape[0], y.shape[1])
 
-    plt.contourf(xs, ys, z, levels=100, zorder=0)
+    plt.contourf(xs, ys, z, levels=32, zorder=0)
 
     cm = plt.get_cmap('gist_rainbow')
     ax.set_prop_cycle(color=[cm(1. * i / positions.shape[0]) for i in range(positions.shape[0])])

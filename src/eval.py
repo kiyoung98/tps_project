@@ -52,7 +52,7 @@ if __name__ == '__main__':
     if os.path.exists(policy_file):
         agent.policy.load_state_dict(torch.load(policy_file))
     else:
-        raise FileNotFoundError("Policy checkpoint not found")
+        raise FileNotFoundError(f"Policy checkpoint not found for {policy_file}")
     
     # Sampling and obtain results for evaluation (positions, potentials)
     log = agent.sample(args, mds, args.temperature)

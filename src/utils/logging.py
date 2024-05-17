@@ -250,14 +250,14 @@ class Logger():
                 plot_paths_alanine(self.dir, positions, target_position, hit_idxs)
                 plot_potentials(self.dir, rollout, potentials, log_reward, hit_idxs)
                 
-                self.logger.info(f"[Plot] Plotting paths")
-                plot_path(self.dir, positions, target_position, hit_idxs)
+                # self.logger.info(f"[Plot] Plotting paths")
+                # plot_path(self.dir, positions, target_position, hit_idxs)
 
-                self.logger.info(f"[Plot] Plotting potentials")
-                plot_potential(self.dir, potentials, log_reward, hit_idxs)
+                # self.logger.info(f"[Plot] Plotting potentials")
+                # plot_potential(self.dir, potentials, log_reward, hit_idxs)
                 
-                self.logger.info(f"[Plot] Plotting 3D view")
-                plot_3D_view(self.dir, self.start_file, positions, hit_idxs)
+                # self.logger.info(f"[Plot] Plotting 3D view")
+                # plot_3D_view(self.dir, self.start_file, positions, hit_idxs)
             else:
                 self.logger.info(f"[Plot] Plotting potentials")
                 plot_potential(self.dir, potentials, log_reward, last_idx)

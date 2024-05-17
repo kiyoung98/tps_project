@@ -13,3 +13,7 @@ openmmforcefields/
 cluster/
 img/
 *.png
+
+# Visualization models
+deeptime/
+tltsne/
