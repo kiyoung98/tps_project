@@ -61,14 +61,14 @@ class FlowNetAgent:
         target_matrix = getattr(self, args.reward_matrix)(mds.target_position)
 
         if args.flexible:
-            if args.type == 'eval':
-                log_target_reward = torch.zeros(args.num_samples*(args.num_steps+1), device=args.device)
-                for i in range(args.num_samples):
-                    matrix = getattr(self, args.reward_matrix)(positions[i])
-                    log_target_reward[i*(args.num_steps+1):(i+1)*(args.num_steps+1)] = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
-            else:
-                matrix = getattr(self, args.reward_matrix)(positions.reshape(-1, *positions.shape[-2:]))
-                log_target_reward = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
+            # if args.type == 'eval':
+            log_target_reward = torch.zeros(args.num_samples*(args.num_steps+1), device=args.device)
+            for i in range(args.num_samples):
+                matrix = getattr(self, args.reward_matrix)(positions[i])
+                log_target_reward[i*(args.num_steps+1):(i+1)*(args.num_steps+1)] = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
+            # else:
+            #     matrix = getattr(self, args.reward_matrix)(positions.reshape(-1, *positions.shape[-2:]))
+            #     log_target_reward = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
             log_target_reward, last_idx = log_target_reward.view(args.num_samples, -1).max(1)
         else:
             matrix = getattr(self, args.reward_matrix)(position)
