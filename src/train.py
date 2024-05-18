@@ -1,7 +1,7 @@
-import tqdm
 import torch
 import argparse
 
+from tqdm import tqdm
 from flow import FlowNetAgent
 from dynamics.mds import MDs
 from dynamics import dynamics
@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--seed', default=0, type=int)
 parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
-parser.add_argument('--save_dir', default='results/', type=str)
+parser.add_argument('--save_dir', default='results/alanine/', type=str)
 
 # Policy Config
 parser.add_argument('--force', action='store_true', help='Predict force otherwise potential')
@@ -22,11 +22,11 @@ parser.add_argument('--force', action='store_true', help='Predict force otherwis
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
 parser.add_argument('--num_steps', default=1000, type=int, help='Length of paths')
-parser.add_argument('--bias_scale', default=1, type=float, help='Scale factor of bias')
+parser.add_argument('--bias_scale', default=0.01, type=float, help='Scale factor of bias')
 parser.add_argument('--timestep', default=1, type=float, help='Timestep of integrator')
-parser.add_argument('--num_samples', default=64, type=int, help='Number of paths to sample')
+parser.add_argument('--sigma', default=0.05, type=float, help='Control reward of arrival')
+parser.add_argument('--num_samples', default=16, type=int, help='Number of paths to sample')
 parser.add_argument('--temperature', default=300, type=float, help='Temperature for evaluation')
-parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
 
 # Training Config
 parser.add_argument('--train_temperature', default=600, type=float, help='Temperature for training')
@@ -40,6 +40,8 @@ parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number
 args = parser.parse_args()
 
 if __name__ == '__main__':
+    args.train = True
+
     torch.manual_seed(args.seed)
 
     md = getattr(dynamics, args.molecule.title())(args, args.start_state)

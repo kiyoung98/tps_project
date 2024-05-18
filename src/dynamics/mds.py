@@ -11,7 +11,7 @@ class MDs:
         self.start_state = args.start_state
 
         self.mds = self._init_mds(args)
-        self.target_position = self._init_target_position()
+        self.target_position = self._init_target_position(args)
 
     def _init_mds(self, args):
         mds = []

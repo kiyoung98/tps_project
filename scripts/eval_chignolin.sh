@@ -1,0 +1,1 @@
+CUDA_VISIBLE_DEVICES=0 python src/eval.py --molecule chignolin --start_state unfolded --end_state folded --num_steps 5000 --sigma 0.2

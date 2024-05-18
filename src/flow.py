@@ -15,7 +15,7 @@ class FlowNetAgent:
         self.policy = getattr(proxy, args.molecule.title())(args, md)
         self.normal = Normal(0, self.std)
 
-        if args.type == 'train':
+        if args.train:
             self.replay = ReplayBuffer(args, md)
 
     def sample(self, args, mds, temperature):
@@ -55,12 +55,12 @@ class FlowNetAgent:
         target_pd = pairwise_dist(mds.target_position)
         pd = pairwise_dist(positions.reshape(-1, *positions.shape[-2:]))
 
-        log_target_reward = - torch.square((pd-target_pd)/args.target_std).mean((1, 2))
+        log_target_reward = - torch.square((pd-target_pd)/args.sigma).mean((1, 2))
         log_target_reward, last_idx = log_target_reward.view(args.num_samples, -1).max(1)
         
         log_reward = log_md_reward + log_target_reward
 
-        if args.type == 'train':
+        if args.train:
             self.replay.add((positions, actions, log_reward))
         
         log = {
@@ -69,7 +69,7 @@ class FlowNetAgent:
             'potentials': potentials,
             'log_likelihood': log_md_reward,
             'target_position': mds.target_position,
-            'last_position': positions[torch.arange(self.num_samples), last_idx],
+            'last_position': positions[torch.arange(args.num_samples), last_idx],
             'biased_log_likelihood': self.normal.log_prob(noises).mean((1, 2, 3)),
         }
         return log
@@ -81,7 +81,7 @@ class FlowNetAgent:
         positions, actions, log_reward = self.replay.sample()
 
         biases = args.bias_scale * self.policy(positions[:, :-1])
-        bias = 1e-6 * bias # kJ/(mol*nm) -> (da*nm)/fs**2
+        biases = 1e-6 * biases # kJ/(mol*nm) -> (da*nm)/fs**2
         biases = self.f_scale * biases / self.masses
         
         log_z = self.policy.log_z
