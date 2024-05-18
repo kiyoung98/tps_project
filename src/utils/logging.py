@@ -138,7 +138,7 @@ class Logger():
 
         if rollout % self.save_freq == 0:
             self.logger.info(f"Plotting for {self.num_samples} samples...")
-            if self.molecule == 'alanine':
+            if self.molecule in ['alanine', 'aspartic', 'cysteine']:
                 fig_paths_alanine = plot_paths_cv(self.molecule, self.dir, positions, target_position, last_idx)
                 if thp > 0:
                     fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
