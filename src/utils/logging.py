@@ -123,8 +123,8 @@ class Logger():
         mean_md_reward, std_md_reward = log_md_reward.mean().item(), log_md_reward.std().item()
         mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
 
-        if self.molecule == 'alanine':
-            hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
+        if self.molecule in ['alanine', 'aspartic', 'cysteine']:
+            hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.cv_metrics(positions, target_position, potentials)
             true_reward = log_md_reward.exp() * hit
             ess_ratio = self.metric.effective_sample_size(log_likelihood, true_reward) / self.num_samples
         # In case of training logger
@@ -139,7 +139,7 @@ class Logger():
         if rollout % self.save_freq == 0:
             self.logger.info(f"Plotting for {self.num_samples} samples...")
             if self.molecule == 'alanine':
-                fig_paths_alanine = plot_paths_alanine(self.dir, positions, target_position, last_idx)
+                fig_paths_alanine = plot_paths_cv(self.molecule, self.dir, positions, target_position, last_idx)
                 if thp > 0:
                     fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
                     fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
@@ -163,7 +163,7 @@ class Logger():
                 }
             wandb.log(log, step=rollout)
 
-            if self.molecule == 'alanine':
+            if self.molecule in ['alanine', 'aspartic', 'cysteine']:
                 log = {
                         'target_hit_percentage (%)': thp,
                         'effective_sample_size_ratio': ess_ratio,
@@ -184,7 +184,7 @@ class Logger():
                     }  
                 wandb.log(log, step=rollout)
 
-                if self.molecule == 'alanine':
+                if self.molecule in ['alanine', 'aspartic', 'cysteine']:
                     log = {
                             'std_etp': std_etp,
                             'std_efp': std_efp,
@@ -193,7 +193,7 @@ class Logger():
                     wandb.log(log, step=rollout)
 
             if rollout % self.save_freq==0:
-                if self.molecule == 'alanine':
+                if self.molecule in ['alanine', 'aspartic', 'cysteine']:
                     wandb.log(
                         {
                             'paths': wandb.Image(fig_paths_alanine)
@@ -248,8 +248,8 @@ class Logger():
                 self.logger.info(f"std_etp: {std_efp}")
 
         if plot:            
-            if self.molecule == 'alanine' and hit_idxs is not None:
-                plot_paths_alanine(self.dir, positions, target_position, hit_idxs)
+            if self.molecule in ['alanine', 'aspartic', 'cysteine'] and hit_idxs is not None:
+                plot_paths_cv(self.dir, positions, target_position, hit_idxs)
                 plot_potentials(self.dir, rollout, potentials, log_reward, hit_idxs)
                 
                 self.logger.info(f"[Plot] Plotting paths")

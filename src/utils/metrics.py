@@ -11,6 +11,14 @@ class Metric:
             self.angle_2 = torch.tensor([1, 6, 8, 14], dtype=torch.long, device=args.device)
             self.angle_1 = torch.tensor([6, 8, 14, 16], dtype=torch.long, device=args.device)
 
+        elif args.molecule == 'aspartic':
+            self.angle_2 = torch.tensor([22, 14, 12, 11], dtype=torch.long, device=args.device)
+            self.angle_1 = torch.tensor([14, 12, 11, 0], dtype=torch.long, device=args.device)
+
+        elif args.molecule == 'cysteine':
+            self.angle_2 = torch.tensor([18, 12, 10, 9], dtype=torch.long, device=args.device)
+            self.angle_1 = torch.tensor([12, 10, 9, 0], dtype=torch.long, device=args.device)
+
     def expected_pairwise_distance(self, last_position, target_position):
         last_dist_matrix = self.dist(last_position)
         target_dist_matrix = self.dist(target_position)
@@ -40,7 +48,7 @@ class Metric:
         mean_eppd, std_eppd = eppd.mean().item(), eppd.std().item()
         return mean_eppd, std_eppd
 
-    def alanine(self, positions, target_position, potentials):
+    def cv_metrics(self, positions, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
         target_psi = self.compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))

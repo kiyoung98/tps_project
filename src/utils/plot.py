@@ -50,7 +50,7 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(dir_path, positions, target_position, last_idx):
+def plot_paths_cv(molecule, dir_path, positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     
@@ -61,8 +61,23 @@ def plot_paths_alanine(dir_path, positions, target_position, last_idx):
     plt.xlim([-np.pi, np.pi])
     plt.ylim([-np.pi, np.pi])
 
-    angle_2 = [1, 6, 8, 14]
-    angle_1 = [6, 8, 14, 16]
+    if molecule == 'alanine':
+        angle_2 = [1, 6, 8, 14]
+        angle_1 = [6, 8, 14, 16]
+
+    elif molecule == 'aspartic':
+        angle_2 = [22, 14, 12, 11]
+        angle_1 = [14, 12, 11, 0]
+
+        # angle_2 = [12, 11, 0, 2]
+        # angle_1 = [11, 0, 2, 5]
+
+    elif molecule == 'cysteine':
+        angle_2 = [18, 12, 10, 9]
+        angle_1 = [12, 10, 9, 0]
+
+        # angle_2 = [10, 9, 0, 2]
+        # angle_1 = [9, 0, 2, 5]
 
     potential = AlaninePotential()
     xs = np.arange(-np.pi, np.pi + .1, .1)
