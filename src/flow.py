@@ -89,6 +89,7 @@ class FlowNetAgent:
         loss = (log_z+log_forward-log_reward).square().mean() 
         
         loss.backward()
+        
         torch.nn.utils.clip_grad_norm_(self.policy.log_z, args.max_grad_norm)
         torch.nn.utils.clip_grad_norm_(self.policy.mlp.parameters(), args.max_grad_norm)
         
