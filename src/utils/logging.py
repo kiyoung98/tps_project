@@ -116,7 +116,7 @@ class Logger():
 
         mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(positions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
-        mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
+        # mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
         mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
 
         mean_reward, std_reward = log_reward.mean().item(), log_reward.std().item()
@@ -158,7 +158,7 @@ class Logger():
                     'expected_log_md_reward': mean_md_reward,
                     'expected_log_target_reward': mean_target_reward,
                     'expected_pairwise_distance (pm)': mean_pd,
-                    'expected_pairwise_scaled_distance': mean_psd,
+                    # 'expected_pairwise_scaled_distance': mean_psd,
                     'expected_pairwise_coulomb_distance': mean_pcd,
                 }
             wandb.log(log, step=rollout)
@@ -178,7 +178,7 @@ class Logger():
                 log = {
                         'std_nll': std_nll,
                         'std_pd': std_pd,
-                        'std_psd': std_psd,
+                        # 'std_psd': std_psd,
                         'std_pcd': std_pcd,
                         'std_ppd': std_ppd,
                     }  
@@ -230,11 +230,11 @@ class Logger():
             self.logger.info(f"expected_log_md_reward: {mean_md_reward}")
             self.logger.info(f"expected_log_target_reward: {mean_target_reward}")
             self.logger.info(f"expected_pairwise_distance (pm): {mean_pd}")
-            self.logger.info(f"expected_pairwise_scaled_distance: {mean_psd}")
+            # self.logger.info(f"expected_pairwise_scaled_distance: {mean_psd}")
             self.logger.info(f"expected_pairwise_coulomb_distance: {mean_pcd}")
             self.logger.info(f"std_nll: {std_nll}")
             self.logger.info(f"std_pd: {std_pd}")
-            self.logger.info(f"std_psd: {std_psd}")
+            # self.logger.info(f"std_psd: {std_psd}")
             self.logger.info(f"std_pcd: {std_pcd}")
             self.logger.info(f"std_ppd: {std_ppd}")
             if self.molecule == 'alanine':
