@@ -1,26 +1,20 @@
-# alanine potential
 current_date=$(date +"%m%d-%H%M%S")
-bias_scales=(0.01 0.1 1 10 20 50 100 200)
-num_gpus=8
-idx=0
-for gpu in $(seq 0 $((num_gpus-1))); do
-  bias_scale=${bias_scales[$idx]}
-  CUDA_VISIBLE_DEVICES=$gpu python src/train.py \
-    --project alanine_bias_scale \
+for seed in {0..0}; do
+  CUDA_VISIBLE_DEVICES=$seed python src/train.py \
+    --project cysteine \
+    --molecule cysteine \
     --date $current_date \
+    --seed $seed \
+    --wandb \
     --flexible \
-    --bias_scale $bias_scale \
-    --num_steps 1000 \
     --save_freq 10 \
-    --wandb &
-  idx=$((idx+1))
-  if [ $idx -eq ${#bias_scales[@]} ]; then
-    idx=0
-  fi
+    --target_std 0.1 \
+    --num_steps 2000 \
+    --buffer_size 1024 \
+    --trains_per_rollout 1000 
 done
 
 wait
-
 
 
 # # alanine potential with flexible length

@@ -16,7 +16,7 @@ class FlowNetAgent:
         self.normal = Normal(0, self.std)
         self.eye = torch.eye(self.num_particles, device=args.device).unsqueeze(0)
         self.charge_matrix = torch.tensor(md.charge_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
-        self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
+        # self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
 
         if args.type == 'train':
             self.replay = ReplayBuffer(args, md)
@@ -123,10 +123,10 @@ class FlowNetAgent:
         dist_matrix = torch.cdist(x, x)
         return dist_matrix
 
-    def scaled_dist(self, x):
-        dist_matrix = torch.cdist(x, x) + self.eye
-        scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
-        return scaled_dist_matrix
+    # def scaled_dist(self, x):
+    #     dist_matrix = torch.cdist(x, x) + self.eye
+    #     scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
+    #     return scaled_dist_matrix
 
     def coulomb(self, x):
         dist_matrix = torch.cdist(x, x) + self.eye
