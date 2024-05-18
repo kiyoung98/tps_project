@@ -72,8 +72,8 @@ class FlowNetAgent:
         return log
 
     def train(self, args):
-        log_z_optimizer = torch.optim.Adam([self.policy.log_z], lr=args.log_z_lr)
-        mlp_optimizer = torch.optim.Adam(self.policy.mlp.parameters(), lr=args.mlp_lr)
+        log_z_optimizer = torch.optim.SGD([self.policy.log_z], lr=args.log_z_lr)
+        mlp_optimizer = torch.optim.SGD(self.policy.mlp.parameters(), lr=args.mlp_lr)
 
         positions, actions, log_reward = self.replay.sample()
 
