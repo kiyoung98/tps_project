@@ -4,29 +4,26 @@ from dynamics import dynamics
 
 class MDs:
     def __init__(self, args):
-        self.args = args
         self.device = args.device
         self.molecule = args.molecule
+        self.end_state = args.end_state
         self.num_samples = args.num_samples
         self.start_state = args.start_state
-        self.end_state = args.end_state
 
-        self.mds = self._init_mds()
+        self.mds = self._init_mds(args)
         self.target_position = self._init_target_position()
 
-    def _init_mds(self):
-        print(f"Initialize dynamics starting at {self.start_state} of {self.molecule}")
-
+    def _init_mds(self, args):
         mds = []
         for _ in tqdm(range(self.num_samples)):
-            md = getattr(dynamics, self.molecule.title())(self.args, self.start_state)
+            md = getattr(dynamics, self.molecule.title())(args, self.start_state)
             mds.append(md)
         return mds
 
-    def _init_target_position(self):
+    def _init_target_position(self, args):
         print(f"Get position of {self.end_state} of {self.molecule}")
 
-        target_position = getattr(dynamics, self.molecule.title())(self.args, self.end_state).position
+        target_position = getattr(dynamics, self.molecule.title())(args, self.end_state).position
         target_position = torch.tensor(target_position, dtype=torch.float, device=self.device).unsqueeze(0)
         return target_position
 

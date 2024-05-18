@@ -1,15 +1,4 @@
-htop
-wandb/
-notebooks/
 results/
 openmmforcefields/
-**/*.h5
-**/*.png
 **/__pycache__/
 .ipynb_checkpoints/
-
-**hyun**
-.vscode
-cluster/
-img/
-*.png

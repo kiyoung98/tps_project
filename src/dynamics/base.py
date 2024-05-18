@@ -3,13 +3,6 @@ import openmm.unit as unit
 from abc import abstractmethod, ABC
 from scipy.constants import physical_constants
 
-covalent_radii = {
-    'H': 31 * unit.picometer / unit.nanometer,
-    'C': 76 * unit.picometer / unit.nanometer,
-    'N': 71 * unit.picometer / unit.nanometer,
-    'O': 66 * unit.picometer / unit.nanometer,
-}
-
 nuclear_charge = {
     'H': 1,
     'C': 6,
@@ -35,7 +28,6 @@ class BaseDynamics(ABC):
         self.num_particles = self.simulation.system.getNumParticles()
 
         self.v_scale, self.f_scale, self.masses, self.std = self.get_md_info()
-        self.covalent_radii_matrix = self.get_covalent_radii_matrix()
         self.charge_matrix = self.get_charge_matrix()
         
     @abstractmethod
@@ -53,14 +45,6 @@ class BaseDynamics(ABC):
         std_SI_units = 1 / physical_constants['unified atomic mass unit'][0] * unadjusted_variance.value_in_unit(unit.joule / unit.dalton)
         std = unit.Quantity(np.sqrt(std_SI_units), unit.meter / unit.second)
         return v_scale, f_scale, masses, std
-
-    def get_covalent_radii_matrix(self):
-        covalent_radii_matrix = np.zeros((self.num_particles, self.num_particles))
-        topology = self.pdb.getTopology()
-        for i, atom_i in enumerate(topology.atoms()):
-            for j, atom_j in enumerate(topology.atoms()):
-                covalent_radii_matrix[i, j] = covalent_radii[atom_i.element.symbol] + covalent_radii[atom_j.element.symbol]
-        return covalent_radii_matrix
 
     def get_charge_matrix(self):
         charge_matrix = np.zeros((self.num_particles, self.num_particles))

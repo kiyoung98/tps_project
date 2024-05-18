@@ -1,10 +1,19 @@
 import torch
 import numpy as np
-import mdtraj as md
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 
-from .utils import compute_dihedral
+def compute_dihedral(p): 
+    b = p[:-1] - p[1:]
+    b[0] *= -1
+    v = np.array(
+        [v - (v.dot(b[1]) / b[1].dot(b[1])) * b[1] for v in [b[0], b[2]]])
+
+    v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1, 1)
+    b1 = b[1] / np.linalg.norm(b[1])
+    x = np.dot(v[0], v[1])
+    m = np.cross(v[0], b1)
+    y = np.dot(m, v[1])
+    return np.arctan2(y, x)
 
 class AlaninePotential():
     def __init__(self):
@@ -50,7 +59,7 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(dir_path, positions, target_position, last_idx):
+def plot_paths_alanine(dir_path, rollout, positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     
@@ -103,119 +112,6 @@ def plot_paths_alanine(dir_path, positions, target_position, last_idx):
     plt.xlabel('phi')
     plt.ylabel('psi')
     plt.show()
-    plt.savefig(f'{dir_path}/paths.png')
-    plt.close()
-    return fig
-
-def plot_path(dir_path, positions, target_position, last_idx):
-    positions = positions.detach().cpu().numpy()
-    target_position = target_position.detach().cpu().numpy()
-
-    angle_2 = [1, 6, 8, 14]
-    angle_1 = [6, 8, 14, 16]
-    
-    for i in range(positions.shape[0]):
-        fig = plt.figure(figsize=(7, 7))
-        ax = fig.add_subplot(111)
-        plt.xlim([-np.pi, np.pi])
-        plt.ylim([-np.pi, np.pi])
-        potential = AlaninePotential()
-        xs = np.arange(-np.pi, np.pi + .1, .1)
-        ys = np.arange(-np.pi, np.pi + .1, .1)
-        x, y = np.meshgrid(xs, ys)
-        inp = torch.tensor(np.array([x, y])).view(2, -1).T
-
-        z = potential.potential(inp)
-        z = z.view(y.shape[0], y.shape[1])
-
-        plt.contourf(xs, ys, z, levels=100, zorder=0)
-        
-        psis_start = []
-        phis_start = []
-
-        psis_start.append(compute_dihedral(positions[i, 0, angle_1, :]))
-        phis_start.append(compute_dihedral(positions[i, 0, angle_2, :]))
-
-        psi = []
-        phi = []
-        for j in range(last_idx[i]):
-            psi.append(compute_dihedral(positions[i, j, angle_1, :]))
-            phi.append(compute_dihedral(positions[i, j, angle_2, :]))
-        ax.plot(phi, psi, marker='o', linestyle='None', markersize=2, alpha=1.)
-
-        ax.scatter(phis_start, psis_start, edgecolors='black', c='w', zorder=100, s=100, marker='*')
-        
-        psis_target = []
-        phis_target = []
-        psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
-        phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
-        ax.scatter(phis_target, psis_target, edgecolors='w', c='w', zorder=100, s=10)
-
-        plt.xlabel('phi')
-        plt.ylabel('psi')
-        plt.show()
-        plt.savefig(f'{dir_path}/paths_{i}.png')
-        plt.close()
-
-def plot_3D_view(dir_path, start_file, positions, last_idx):
-    positions = positions.detach().cpu().numpy()
-    for i in tqdm(range(positions.shape[0])):
-        if last_idx[i] > 0:
-            for j in range(last_idx[i]):
-                traj = md.load_pdb(start_file)
-                traj.xyz = positions[i, j]
-                
-                if j == 0:
-                    trajs = traj
-                else:
-                    trajs = trajs.join(traj)
-            trajs.save(f'{dir_path}/3D_view_{i}.h5')
-    
-def plot_potential(dir_path, potentials, log_reward, last_idx):
-    potentials = potentials.detach().cpu().numpy()
-    for i in range(potentials.shape[0]):
-        if last_idx[i] > 0:
-            plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
-            plt.xlabel('Time (fs)')
-            plt.ylabel("Potential Energy (kJ/mol)")
-            plt.legend()
-            plt.show()
-            plt.savefig(f'{dir_path}/potential_{i}.png')
-            plt.close()
-
-def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
-    potentials = potentials.detach().cpu().numpy()
-    fig = plt.figure(figsize=(20, 5))
-    for i in range(potentials.shape[0]):
-        if last_idx[i] > 0:
-            plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
-            
-    plt.xlabel('Time (fs)')
-    plt.ylabel("Potential Energy (kJ/mol)")
-    plt.legend()
-    plt.show()
-    plt.savefig(f'{dir_path}/potential_rollout_{rollout}.png')
-    plt.close()
-    return fig
-
-def plot_etps(dir_path, rollout, etps, etp_idxs):
-    fig = plt.figure(figsize=(20, 5))
-    plt.scatter(etp_idxs, etps)
-    plt.xlabel('Time (fs)')
-    plt.ylabel("Potential Energy (kJ/mol)")
-    plt.legend()
-    plt.show()
-    plt.savefig(f'{dir_path}/etps_rollout_{rollout}.png')
-    plt.close()
-    return fig
-
-def plot_efps(dir_path, rollout, efps, efp_idxs):
-    fig = plt.figure(figsize=(20, 5))
-    plt.scatter(efp_idxs, efps)
-    plt.xlabel('Time (fs)')
-    plt.ylabel("Potential Energy (kJ/mol)")
-    plt.legend()
-    plt.show()
-    plt.savefig(f'{dir_path}/efps_rollout_{rollout}.png')
+    plt.savefig(f'{dir_path}/paths_{rollout}.png')
     plt.close()
     return fig
