@@ -39,6 +39,8 @@ class Logger():
             self.save_freq = args.save_freq
         else:
             self.save_freq = 1
+
+        self.best_loss = float('inf')
             
         self.seed = args.seed
         if not hasattr(args, 'date'):
@@ -130,8 +132,8 @@ class Logger():
             # Save policy at save_freq and last rollout
             if rollout % self.save_freq == 0:
                 torch.save(policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
-                torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
-            if rollout == self.num_rollouts - 1 :
+            if loss < self.best_loss:
+                self.best_loss = loss
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
 
         if rollout % self.save_freq == 0:
