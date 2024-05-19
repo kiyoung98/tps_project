@@ -71,10 +71,10 @@ def plot_paths_cv(molecule, dir_path, positions, target_position, last_idx):
 
         # angle_2 = [12, 11, 0, 2]
         # angle_1 = [11, 0, 2, 5]
-
+        
     elif molecule == 'cysteine':
-        angle_2 = [0, 6, 7, 8]
-        angle_1 = [6, 7, 8, 17]
+        angle_2 = [0, 9, 7, 6]
+        angle_1 = [9, 7, 6, 17]
 
         # angle_2 = [10, 9, 0, 2]
         # angle_1 = [9, 0, 2, 5]
