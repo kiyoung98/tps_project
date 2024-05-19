@@ -37,7 +37,7 @@ class FlowNetAgent:
             next_position, velocity, force, potential = mds.report()
 
             # extract noise
-            noise = (next_position - position) - (self.v_scale * velocity + self.f_scale * force / self.masses)
+            noise = (next_position - position) / args.timestep - (self.v_scale * velocity + self.f_scale * force / self.masses)
 
             positions[:, s+1] = next_position
             potentials[:, s+1] = potential - (bias*next_position).sum((1, 2)) # Subtract bias potential to get true potential
