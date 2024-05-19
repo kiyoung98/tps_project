@@ -79,6 +79,11 @@ def plot_paths_cv(molecule, dir_path, positions, target_position, last_idx):
         # angle_2 = [10, 9, 0, 2]
         # angle_1 = [9, 0, 2, 5]
 
+    elif molecule == 'histidine':
+        # 1, 7 ,9, 12, 24
+        angle_2 = [0, 6, 8, 11]
+        angle_1 = [6, 8, 11, 23]
+
     potential = AlaninePotential()
     xs = np.arange(-np.pi, np.pi + .1, .1)
     ys = np.arange(-np.pi, np.pi + .1, .1)
