@@ -1,8 +1,8 @@
 current_date=$(date +"%m%d-%H%M%S")
 for seed in {0..7}; do
   CUDA_VISIBLE_DEVICES=$seed python src/train.py \
-    --project cysteine \
-    --molecule cysteine \
+    --project histidine \
+    --molecule histidine \
     --date $current_date \
     --seed $seed \
     --wandb \
@@ -19,14 +19,18 @@ wait
 
 # # alanine potential with flexible length
 # current_date=$(date +"%m%d-%H%M%S")
-# for seed in {0..7}; do
+# for seed in {0..0}; do
 #   CUDA_VISIBLE_DEVICES=$seed python src/train.py \
-#     --project alanine_trajectory_balance_potential \
+#     --project histidine \
+#     --molecule histidine \
 #     --date $current_date \
 #     --seed $seed \
 #     --wandb \
 #     --flexible \
-#     --num_steps 1000 &
+#     --save_freq 1 \
+#     --temperature 0.1 \
+#     --trains_per_rollout 1000 \
+#     --num_steps 500 
 # done
 
 # wait
