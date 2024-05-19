@@ -67,6 +67,8 @@ class Logger():
             true_likelihood = log_likelihood.exp() * hit
             biased_likelihood = biased_log_likelihood.exp()
             ess_ratio = self.metric.effective_sample_size(biased_likelihood, true_likelihood) / self.num_samples
+        else:
+            mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
 
         mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
@@ -85,8 +87,6 @@ class Logger():
             self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
             self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
             self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
-            self.logger.info(f"mean_length: {mean_len}")
-            self.logger.info(f"std_length: {std_len}")
             self.logger.info(f"std_etp: {std_etp}")
             self.logger.info(f"std_etp: {std_efp}")
 
@@ -94,9 +94,11 @@ class Logger():
         self.logger.info(f"log_likelihood: {mean_ll}")
         self.logger.info(f"expected_pairwise_distance (nm): {mean_pd}")
         self.logger.info(f"expected_pairwise_coulomb_distance: {mean_pcd}")
+        self.logger.info(f"mean_length: {mean_len}")
         self.logger.info(f"std_ll: {std_ll}")
         self.logger.info(f"std_pd: {std_pd}")
         self.logger.info(f"std_pcd: {std_pcd}")
+        self.logger.info(f"std_length: {std_len}")
 
         if self.molecule == 'alanine' and rollout % 10 == 0:
             plot_paths_alanine(self.save_dir, rollout, positions, target_position, last_idx)

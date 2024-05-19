@@ -53,10 +53,12 @@ class FlowNetAgent:
         log_md_reward = self.normal.log_prob(actions).mean((1, 2, 3))
         
         target_pd = pairwise_dist(mds.target_position)
-        pd = pairwise_dist(positions.reshape(-1, *positions.shape[-2:]))
 
-        log_target_reward = - torch.square((pd-target_pd)/args.sigma).mean((1, 2))
-        log_target_reward, last_idx = log_target_reward.view(args.num_samples, -1).max(1)
+        log_target_reward = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
+        for i in range(args.num_samples):
+            pd = pairwise_dist(positions[i])
+            log_target_reward[i] = - torch.square((pd-target_pd)/args.sigma).mean((1, 2))
+        log_target_reward, last_idx = log_target_reward.max(1)
         
         log_reward = log_md_reward + log_target_reward
 
