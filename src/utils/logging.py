@@ -127,6 +127,8 @@ class Logger():
             hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.cv_metrics(positions, target_position, potentials)
             true_reward = log_md_reward.exp() * hit
             ess_ratio = self.metric.effective_sample_size(log_likelihood, true_reward) / self.num_samples
+        else:
+            mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
@@ -160,6 +162,8 @@ class Logger():
                     'expected_pairwise_distance (pm)': mean_pd,
                     # 'expected_pairwise_scaled_distance': mean_psd,
                     'expected_pairwise_coulomb_distance': mean_pcd,
+                    'mean_length': mean_len,
+                    'std_length': std_len,
                 }
             wandb.log(log, step=rollout)
 
@@ -169,8 +173,6 @@ class Logger():
                         'effective_sample_size_ratio': ess_ratio,
                         'energy_transition_point (kJ/mol)': mean_etp,
                         'energy_final_point (kJ/mol)': mean_efp,
-                        'mean_length': mean_len,
-                        'std_length': std_len,
                     }
                 wandb.log(log, step=rollout)
 
@@ -237,13 +239,13 @@ class Logger():
             # self.logger.info(f"std_psd: {std_psd}")
             self.logger.info(f"std_pcd: {std_pcd}")
             self.logger.info(f"std_ppd: {std_ppd}")
+            self.logger.info(f"mean_length: {mean_len}")
+            self.logger.info(f"std_length: {std_len}")
             if self.molecule == 'alanine':
                 self.logger.info(f"target_hit_percentage (%): {thp}")
                 self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
                 self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
                 self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
-                self.logger.info(f"mean_length: {mean_len}")
-                self.logger.info(f"std_length: {std_len}")
                 self.logger.info(f"std_etp: {std_etp}")
                 self.logger.info(f"std_etp: {std_efp}")
 
