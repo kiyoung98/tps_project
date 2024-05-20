@@ -1,4 +1,6 @@
+import os
 import torch
+import pickle
 import numpy as np
 import mdtraj as md
 from tqdm import tqdm
@@ -49,6 +51,18 @@ class AlaninePotential():
 
         z = self.data[x, y]
         return z
+
+def expected_pairwise_distance(last_position, target_position):
+    def dist(x):
+        x = torch.Tensor(x)
+        dist_matrix = torch.cdist(x, x)
+        return dist_matrix
+    
+    last_dist_matrix = dist(last_position).to(target_position.device)
+    target_dist_matrix = dist(target_position)
+    
+    pd = torch.mean((last_dist_matrix-target_dist_matrix)**2, dim=(1, 2)).detach().cpu().numpy()
+    return pd
 
 def plot_paths_alanine(dir_path, positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
@@ -175,12 +189,39 @@ def plot_potential(dir_path, potentials, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()
     for i in range(potentials.shape[0]):
         if last_idx[i] > 0:
+            plt.figure(figsize=(16, 2))
             plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
+            # plt.plot(potentials[i][:last_idx[i]])
             plt.xlabel('Time (fs)')
             plt.ylabel("Potential Energy (kJ/mol)")
             plt.legend()
             plt.show()
             plt.savefig(f'{dir_path}/potential_{i}.png')
+            plt.close()
+            
+            np.save(f'{dir_path}/potential/potential_values_{i}.npy', potentials[i][:last_idx[i]])
+            # with open(f"{dir_path}/potential/potential_{i}_values.pkl", "w") as potential_file:
+                # pickle.dump(potentials[i][:last_idx[i]], potential_file)
+                # my_list = pickle.load(file)
+
+def plot_epd(dir_path, positions, last_idx, target_position):
+    if not os.path.exists(dir_path+"/epd"):
+        os.makedirs(dir_path+"/epd")
+    positions = positions.detach().cpu().numpy()
+    for i in tqdm(range(positions.shape[0])):
+        if last_idx[i] > 0:
+            path_epd = []
+            for j in range(last_idx[i]):
+                xyz = positions[i, j]
+                epd = expected_pairwise_distance(xyz, target_position)
+                path_epd.append(epd)
+            plt.figure(figsize=(16, 2))
+            plt.plot(path_epd, label=f"Path {i}")
+            plt.xlabel('Time (fs)')
+            plt.ylabel("EPD")
+            # plt.legend()
+            plt.show()
+            plt.savefig(f'{dir_path}/epd/epd_{i}.png', dpi=300)
             plt.close()
 
 def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
@@ -189,7 +230,7 @@ def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
     for i in range(potentials.shape[0]):
         if last_idx[i] > 0:
             plt.plot(potentials[i][:last_idx[i]], label=f"Sample {i}: log reward {log_reward[i]:.4f}")
-            
+    
     plt.xlabel('Time (fs)')
     plt.ylabel("Potential Energy (kJ/mol)")
     plt.legend()

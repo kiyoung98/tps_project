@@ -264,3 +264,6 @@ class Logger():
                 
                 self.logger.info(f"[Plot] Plotting 3D view")
                 plot_3D_view(self.dir, self.start_file, positions, last_idx)
+                
+                self.logger.info(f"[Plot] Plotting EPD")
+                plot_epd(self.dir, positions, last_idx, target_position)
