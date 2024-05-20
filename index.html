@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transition Path Sampling</title>
+    <title>CV-free TPS by GFlowNet</title>
     <style>
         body {
             display: flex;
@@ -21,7 +21,7 @@
         }
         p.intro {
             font-size: 1.2em;
-            max-width: 800px;
+            max-width: 1000px;
             margin-bottom: 30px;
         }
         .gif-container {
@@ -45,7 +45,7 @@
     </style>
 </head>
 <body>
-    <h1>Transition Path Sampling</h1>
+    <h1>Collective Variable-Free Transition Path Sampling with Generative Flow Network</h1>
     <p class="intro">In this work, we propose a generative flow network to sample molecular transition paths between a pair of metastable states. This problem is of critical interest in understanding chemical reactions, e.g., protein folding process. Our framework does not require the knowledge of collective variables (CVs), which can be expensive to derive from novel large-scale molecular systems. Furthermore, compared to prior CV free approaches using machine learning, our framework is sample-efficient by using off-policy training and does not suffer from the mode-seeking behaviour. We evaluate our framework on Alanine Dipeptide, Polyproline and Chignolin proteins. Our framework is able to find a diverse set of transition states while obtaining higher-quality transition paths.</p>
     <div class="gif-container">
         <div class="gif-item">
