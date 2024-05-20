@@ -47,16 +47,16 @@ if __name__ == '__main__':
 
     mds = MDs(args)
 
-    train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/{args.seed}"
-    filename = "policy.pt"
-    policy_file = f"{train_log_dir}/{filename}"
-    if os.path.exists(policy_file):
-        agent.policy.load_state_dict(torch.load(policy_file))
-    else:
-        raise FileNotFoundError("Policy checkpoint not found")
+    # train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/{args.seed}"
+    # filename = "policy.pt"
+    # policy_file = f"{train_log_dir}/{filename}"
+    # if os.path.exists(policy_file):
+    #     agent.policy.load_state_dict(torch.load(policy_file))
+    # else:
+    #     raise FileNotFoundError("Policy checkpoint not found")
     
     # Sampling and obtain results for evaluation (positions, potentials)
-    log = agent.sample(args, mds, args.temperature)
+    log = agent.sample(args, mds, 300)
 
     logger.info(f"Sampling done..!")
     

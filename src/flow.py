@@ -36,7 +36,8 @@ class FlowNetAgent:
 
         mds.set_temperature(temperature)
         for s in tqdm(range(args.num_steps), desc='Sampling'):
-            bias = args.bias_scale * self.policy(position.detach()).squeeze().detach() # kJ/(mol*nm)
+            # bias = args.bias_scale * self.policy(position.detach()).squeeze().detach() # kJ/(mol*nm)
+            bias = biases[:, s]
             mds.step(bias)
             
             next_position, velocity, force, potential = mds.report()
@@ -48,10 +49,10 @@ class FlowNetAgent:
             potentials[:, s+1] = potential - (bias*next_position).sum((1, 2))
 
             position = next_position
-            bias = 1e-6 * bias # kJ/(mol*nm) -> (da*nm)/fs**2
-            action = self.f_scale * bias / self.masses + noise
+            # bias = 1e-6 * bias # kJ/(mol*nm) -> (da*nm)/fs**2
+            # action = self.f_scale * bias / self.masses + noise
             
-            actions[:, s] = action
+            actions[:, s] = noise
             biases[:, s] = bias
             noises[:, s] = noise
 
@@ -105,7 +106,7 @@ class FlowNetAgent:
         biases = self.f_scale * biases / self.masses
         
         log_z = self.policy.log_z
-        log_forward = get_log_likelihood(biases-actions, self.std).mean(1) / self.num_particles / 3
+        log_forward = -0.5 * torch.square((biases-actions)/self.std).mean((1, 2, 3))
         loss = (log_z+log_forward-log_reward).square().mean() 
         
         loss.backward()

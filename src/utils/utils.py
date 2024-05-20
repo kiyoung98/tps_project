@@ -15,6 +15,7 @@ def compute_dihedral(p):
     return np.arctan2(y, x)
 
 def get_log_likelihood(diff, std):
+    print(diff.size(2) * diff.size(3))
     D = diff.size(2) * diff.size(3)
     log_det_cov = diff.size(3) * std.log().sum()
     exp_term = -0.5 * torch.sum(diff.square()/std, dim=(2, 3))
