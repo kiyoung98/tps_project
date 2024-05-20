@@ -54,13 +54,13 @@ class Logger():
             loss, 
             policy, 
             rollout, 
+            noises,
+            actions,
             last_idx, 
             positions, 
             potentials, 
             last_position,
-            log_likelihood, 
             target_position,
-            biased_log_likelihood,  
         ):
         # Calculate metrics
         if self.molecule == 'alanine':
