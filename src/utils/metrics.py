@@ -5,11 +5,23 @@ class Metric:
         self.num_particles = md.num_particles
         self.eye = torch.eye(self.num_particles, device=args.device).unsqueeze(0)
         self.charge_matrix = torch.tensor(md.charge_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
-        self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
+        # self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
 
         if args.molecule == 'alanine':
             self.angle_2 = torch.tensor([1, 6, 8, 14], dtype=torch.long, device=args.device)
             self.angle_1 = torch.tensor([6, 8, 14, 16], dtype=torch.long, device=args.device)
+
+        elif args.molecule == 'aspartic':
+            self.angle_2 = torch.tensor([22, 14, 12, 11], dtype=torch.long, device=args.device)
+            self.angle_1 = torch.tensor([14, 12, 11, 0], dtype=torch.long, device=args.device)
+
+        elif args.molecule == 'cysteine':
+            self.angle_2 = torch.tensor([0, 9, 7, 6], dtype=torch.long, device=args.device)
+            self.angle_1 = torch.tensor([9, 7, 6, 17], dtype=torch.long, device=args.device)
+
+        elif args.molecule == 'histidine':
+            self.angle_2 = torch.tensor([0, 6, 8, 11], dtype=torch.long, device=args.device)
+            self.angle_1 = torch.tensor([6, 8, 11, 23], dtype=torch.long, device=args.device)
 
     def expected_pairwise_distance(self, last_position, target_position):
         last_dist_matrix = self.dist(last_position)
@@ -19,13 +31,13 @@ class Metric:
         mean_pd, std_pd = pd.mean().item(), pd.std().item()
         return mean_pd, std_pd
 
-    def expected_pairwise_scaled_distance(self, last_position, target_position):
-        last_dist_matrix = self.scaled_dist(last_position)
-        target_dist_matrix = self.scaled_dist(target_position)
+    # def expected_pairwise_scaled_distance(self, last_position, target_position):
+    #     last_dist_matrix = self.scaled_dist(last_position)
+    #     target_dist_matrix = self.scaled_dist(target_position)
         
-        psd = torch.mean((last_dist_matrix-target_dist_matrix)**2, dim=(1, 2))
-        mean_psd, std_psd = psd.mean().item(), psd.std().item()
-        return mean_psd, std_psd
+    #     psd = torch.mean((last_dist_matrix-target_dist_matrix)**2, dim=(1, 2))
+    #     mean_psd, std_psd = psd.mean().item(), psd.std().item()
+    #     return mean_psd, std_psd
 
     def expected_pairwise_coulomb_distance(self, last_position, target_position):
         last_dist_matrix = self.coulomb(last_position)
@@ -40,7 +52,7 @@ class Metric:
         mean_eppd, std_eppd = eppd.mean().item(), eppd.std().item()
         return mean_eppd, std_eppd
 
-    def alanine(self, positions, target_position, potentials):
+    def cv_metrics(self, positions, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
         target_psi = self.compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
@@ -125,10 +137,10 @@ class Metric:
         dist_matrix = torch.cdist(x, x)
         return dist_matrix
 
-    def scaled_dist(self, x):
-        dist_matrix = torch.cdist(x, x) + self.eye
-        scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
-        return scaled_dist_matrix
+    # def scaled_dist(self, x):
+    #     dist_matrix = torch.cdist(x, x) + self.eye
+    #     scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
+    #     return scaled_dist_matrix
 
     def coulomb(self, x):
         dist_matrix = torch.cdist(x, x) + self.eye

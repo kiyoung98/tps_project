@@ -16,7 +16,7 @@ class FlowNetAgent:
         self.normal = Normal(0, self.std)
         self.eye = torch.eye(self.num_particles, device=args.device).unsqueeze(0)
         self.charge_matrix = torch.tensor(md.charge_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
-        self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
+        # self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
 
         if args.type == 'train':
             self.replay = ReplayBuffer(args, md)
@@ -43,7 +43,7 @@ class FlowNetAgent:
             next_position, velocity, force, potential = mds.report()
 
             # extract noise which openmm does not provide
-            noise = (next_position - position) - (self.v_scale * velocity + self.f_scale * force / self.masses)
+            noise = (next_position - position) / args.timestep - (self.v_scale * velocity + self.f_scale * force / self.masses)
 
             positions[:, s+1] = next_position
             potentials[:, s+1] = potential - (bias*next_position).sum((1, 2))
@@ -61,14 +61,14 @@ class FlowNetAgent:
         target_matrix = getattr(self, args.reward_matrix)(mds.target_position)
 
         if args.flexible:
-            if args.type == 'eval':
-                log_target_reward = torch.zeros(args.num_samples*(args.num_steps+1), device=args.device)
-                for i in range(args.num_samples):
-                    matrix = getattr(self, args.reward_matrix)(positions[i])
-                    log_target_reward[i*(args.num_steps+1):(i+1)*(args.num_steps+1)] = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
-            else:
-                matrix = getattr(self, args.reward_matrix)(positions.reshape(-1, *positions.shape[-2:]))
-                log_target_reward = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
+            # if args.type == 'eval':
+            log_target_reward = torch.zeros(args.num_samples*(args.num_steps+1), device=args.device)
+            for i in range(args.num_samples):
+                matrix = getattr(self, args.reward_matrix)(positions[i])
+                log_target_reward[i*(args.num_steps+1):(i+1)*(args.num_steps+1)] = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
+            # else:
+            #     matrix = getattr(self, args.reward_matrix)(positions.reshape(-1, *positions.shape[-2:]))
+            #     log_target_reward = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
             log_target_reward, last_idx = log_target_reward.view(args.num_samples, -1).max(1)
         else:
             matrix = getattr(self, args.reward_matrix)(position)
@@ -123,10 +123,10 @@ class FlowNetAgent:
         dist_matrix = torch.cdist(x, x)
         return dist_matrix
 
-    def scaled_dist(self, x):
-        dist_matrix = torch.cdist(x, x) + self.eye
-        scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
-        return scaled_dist_matrix
+    # def scaled_dist(self, x):
+    #     dist_matrix = torch.cdist(x, x) + self.eye
+    #     scaled_dist_matrix = torch.exp(-1.7*(dist_matrix-self.covalent_radii_matrix)/self.covalent_radii_matrix) + 0.01 * self.covalent_radii_matrix / dist_matrix
+    #     return scaled_dist_matrix
 
     def coulomb(self, x):
         dist_matrix = torch.cdist(x, x) + self.eye

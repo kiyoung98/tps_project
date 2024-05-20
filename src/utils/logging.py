@@ -39,6 +39,8 @@ class Logger():
             self.save_freq = args.save_freq
         else:
             self.save_freq = 1
+
+        self.best_loss = float('inf')
             
         self.seed = args.seed
         if not hasattr(args, 'date'):
@@ -114,30 +116,32 @@ class Logger():
 
         mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(positions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
-        mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
+        # mean_psd, std_psd = self.metric.expected_pairwise_scaled_distance(last_position, target_position)
         mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
 
         mean_reward, std_reward = log_reward.mean().item(), log_reward.std().item()
         mean_md_reward, std_md_reward = log_md_reward.mean().item(), log_md_reward.std().item()
         mean_target_reward, std_target_reward = log_target_reward.mean().item(), log_target_reward.std().item()
 
-        if self.molecule == 'alanine':
-            hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.alanine(positions, target_position, potentials)
+        if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
+            hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.cv_metrics(positions, target_position, potentials)
             true_reward = log_md_reward.exp() * hit
             ess_ratio = self.metric.effective_sample_size(log_likelihood, true_reward) / self.num_samples
+        else:
+            mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
         # In case of training logger
         if self.type == "train":
             # Save policy at save_freq and last rollout
             if rollout % self.save_freq == 0:
                 torch.save(policy.state_dict(), f'{self.dir}/policy/policy_{rollout}.pt')
-                torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
-            if rollout == self.num_rollouts - 1 :
+            if loss < self.best_loss:
+                self.best_loss = loss
                 torch.save(policy.state_dict(), f'{self.dir}/policy.pt')
 
         if rollout % self.save_freq == 0:
             self.logger.info(f"Plotting for {self.num_samples} samples...")
-            if self.molecule == 'alanine':
-                fig_paths_alanine = plot_paths_alanine(self.dir, positions, target_position, last_idx)
+            if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
+                fig_paths_alanine = plot_paths_cv(self.molecule, self.dir, positions, target_position, last_idx)
                 if thp > 0:
                     fig_etps = plot_etps(self.dir+"/etp", rollout, etps, etp_idxs)
                     fig_efps = plot_efps(self.dir+"/efp", rollout, efps, efp_idxs)
@@ -156,19 +160,19 @@ class Logger():
                     'expected_log_md_reward': mean_md_reward,
                     'expected_log_target_reward': mean_target_reward,
                     'expected_pairwise_distance (pm)': mean_pd,
-                    'expected_pairwise_scaled_distance': mean_psd,
+                    # 'expected_pairwise_scaled_distance': mean_psd,
                     'expected_pairwise_coulomb_distance': mean_pcd,
+                    'mean_length': mean_len,
+                    'std_length': std_len,
                 }
             wandb.log(log, step=rollout)
 
-            if self.molecule == 'alanine':
+            if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
                 log = {
                         'target_hit_percentage (%)': thp,
                         'effective_sample_size_ratio': ess_ratio,
                         'energy_transition_point (kJ/mol)': mean_etp,
                         'energy_final_point (kJ/mol)': mean_efp,
-                        'mean_length': mean_len,
-                        'std_length': std_len,
                     }
                 wandb.log(log, step=rollout)
 
@@ -176,13 +180,13 @@ class Logger():
                 log = {
                         'std_nll': std_nll,
                         'std_pd': std_pd,
-                        'std_psd': std_psd,
+                        # 'std_psd': std_psd,
                         'std_pcd': std_pcd,
                         'std_ppd': std_ppd,
                     }  
                 wandb.log(log, step=rollout)
 
-                if self.molecule == 'alanine':
+                if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
                     log = {
                             'std_etp': std_etp,
                             'std_efp': std_efp,
@@ -191,7 +195,7 @@ class Logger():
                     wandb.log(log, step=rollout)
 
             if rollout % self.save_freq==0:
-                if self.molecule == 'alanine':
+                if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
                     wandb.log(
                         {
                             'paths': wandb.Image(fig_paths_alanine)
@@ -228,26 +232,26 @@ class Logger():
             self.logger.info(f"expected_log_md_reward: {mean_md_reward}")
             self.logger.info(f"expected_log_target_reward: {mean_target_reward}")
             self.logger.info(f"expected_pairwise_distance (pm): {mean_pd}")
-            self.logger.info(f"expected_pairwise_scaled_distance: {mean_psd}")
+            # self.logger.info(f"expected_pairwise_scaled_distance: {mean_psd}")
             self.logger.info(f"expected_pairwise_coulomb_distance: {mean_pcd}")
             self.logger.info(f"std_nll: {std_nll}")
             self.logger.info(f"std_pd: {std_pd}")
-            self.logger.info(f"std_psd: {std_psd}")
+            # self.logger.info(f"std_psd: {std_psd}")
             self.logger.info(f"std_pcd: {std_pcd}")
             self.logger.info(f"std_ppd: {std_ppd}")
+            self.logger.info(f"mean_length: {mean_len}")
+            self.logger.info(f"std_length: {std_len}")
             if self.molecule == 'alanine':
                 self.logger.info(f"target_hit_percentage (%): {thp}")
                 self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
                 self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
                 self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
-                self.logger.info(f"mean_length: {mean_len}")
-                self.logger.info(f"std_length: {std_len}")
                 self.logger.info(f"std_etp: {std_etp}")
                 self.logger.info(f"std_etp: {std_efp}")
 
         if plot:            
-            if self.molecule == 'alanine' and hit_idxs is not None:
-                plot_paths_alanine(self.dir, positions, target_position, hit_idxs)
+            if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine'] and hit_idxs is not None:
+                plot_paths_cv(self.dir, positions, target_position, hit_idxs)
                 plot_potentials(self.dir, rollout, potentials, log_reward, hit_idxs)
                 
                 # self.logger.info(f"[Plot] Plotting paths")
