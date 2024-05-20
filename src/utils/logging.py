@@ -14,6 +14,7 @@ class Logger():
         self.train = args.train
         self.save_dir = args.save_dir
         self.molecule = args.molecule
+        self.num_steps = args.num_steps
         self.num_samples = args.num_samples
             
         if not os.path.exists(f'{self.save_dir}'):
@@ -70,7 +71,8 @@ class Logger():
         else:
             mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
 
-        mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
+        ll = log_likelihood / self.num_steps
+        mean_ll, std_ll = ll.mean().item(), ll.std().item()
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
         mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
 
