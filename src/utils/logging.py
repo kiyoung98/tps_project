@@ -4,10 +4,12 @@ import pytz
 import wandb
 import logging
 import datetime
+import openmm.unit as unit
 
 from .plot import *
-from .metrics import Metric
 from tqdm import tqdm
+from .metrics import Metric
+from .utils import get_log_likelihood
 
 class TqdmLoggingHandler(logging.StreamHandler):
     """Avoid tqdm progress bar interruption by logger's output to console"""
@@ -34,6 +36,8 @@ class Logger():
         self.flexible = args.flexible
         self.start_file = md.start_file
         self.num_samples = args.num_samples
+        self.std = torch.tensor(md.std.value_in_unit(unit.nanometer/unit.femtosecond), dtype=torch.float, device=args.device)
+
         if self.type == "train":
             self.num_rollouts = args.num_rollouts
             self.save_freq = args.save_freq
@@ -99,20 +103,26 @@ class Logger():
             loss, 
             rollout, 
             positions, 
+            actions,
             biases, 
+            noises,
             potentials, 
             last_idx, 
             target_position, 
             log_reward, 
             log_md_reward, 
             log_target_reward,
-            log_likelihood,  
             plot=False,
         ):
         last_position = positions[torch.arange(self.num_samples), last_idx]
 
         mean_bias_norm = torch.norm(biases, dim=-1).mean()
-        mean_nll, std_nll = -log_md_reward.mean().item(), log_md_reward.std().item()
+
+        log_likelihood = get_log_likelihood(actions, self.std)
+        biased_log_likelihood = get_log_likelihood(noises, self.std)
+
+        ll = log_likelihood.mean(1)
+        mean_ll, std_ll = ll.mean(), ll.std()
 
         mean_ppd, std_ppd = self.metric.expected_pairwise_path_distance(positions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
@@ -125,8 +135,9 @@ class Logger():
 
         if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
             hit, thp, hit_idxs, mean_len, std_len, mean_etp, std_etp, etps, etp_idxs, mean_efp, std_efp, efps, efp_idxs = self.metric.cv_metrics(positions, target_position, potentials)
-            true_reward = log_md_reward.exp() * hit
-            ess_ratio = self.metric.effective_sample_size(log_likelihood, true_reward) / self.num_samples
+            true_reward = log_likelihood.sum(1).exp() * hit
+            biased_likelihood = biased_log_likelihood.sum(1).exp()
+            ess_ratio = self.metric.effective_sample_size(biased_likelihood, true_reward) / self.num_samples
         else:
             mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
         # In case of training logger
@@ -155,7 +166,7 @@ class Logger():
                     'log_z': policy.log_z.item(),
                     'expected_pairwise_path_distance': mean_ppd,
                     'mean_bias_norm': mean_bias_norm,
-                    'negative_log_likelihood': mean_nll,
+                    'log_likelihood': mean_ll,
                     'expected_log_reward': mean_reward,
                     'expected_log_md_reward': mean_md_reward,
                     'expected_log_target_reward': mean_target_reward,
@@ -178,7 +189,7 @@ class Logger():
 
             if self.type == 'eval':
                 log = {
-                        'std_nll': std_nll,
+                        'std_ll': std_ll,
                         'std_pd': std_pd,
                         # 'std_psd': std_psd,
                         'std_pcd': std_pcd,
@@ -227,14 +238,14 @@ class Logger():
             self.logger.info("")
             self.logger.info(f"log_z: {policy.log_z.item()}")
             self.logger.info(f"expected_pairwise_path_distance: {mean_ppd}")
-            self.logger.info(f"negative_log_likelihood: {mean_nll}")
+            self.logger.info(f"log_likelihood: {mean_ll}")
             self.logger.info(f"expected_log_reward: {mean_reward}")
             self.logger.info(f"expected_log_md_reward: {mean_md_reward}")
             self.logger.info(f"expected_log_target_reward: {mean_target_reward}")
             self.logger.info(f"expected_pairwise_distance (pm): {mean_pd}")
             # self.logger.info(f"expected_pairwise_scaled_distance: {mean_psd}")
             self.logger.info(f"expected_pairwise_coulomb_distance: {mean_pcd}")
-            self.logger.info(f"std_nll: {std_nll}")
+            self.logger.info(f"std_ll: {std_ll}")
             self.logger.info(f"std_pd: {std_pd}")
             # self.logger.info(f"std_psd: {std_psd}")
             self.logger.info(f"std_pcd: {std_pcd}")

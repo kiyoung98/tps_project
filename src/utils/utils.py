@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 
 def compute_dihedral(p): 
@@ -12,3 +13,11 @@ def compute_dihedral(p):
     m = np.cross(v[0], b1)
     y = np.dot(m, v[1])
     return np.arctan2(y, x)
+
+def get_log_likelihood(diff, std):
+    D = diff.size(2) * diff.size(3)
+    log_det_cov = diff.size(3) * std.log().sum()
+    exp_term = -0.5 * torch.sum(diff.square()/std, dim=(2, 3))
+    normalization_term = -0.5 * (D * torch.log(torch.tensor(2 * torch.pi)) + log_det_cov)
+    log_likelihood = normalization_term + exp_term
+    return log_likelihood

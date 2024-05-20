@@ -2,7 +2,7 @@ import torch
 import proxy
 from tqdm import tqdm
 import openmm.unit as unit
-from torch.distributions import Normal
+from utils.utils import get_log_likelihood
     
 
 class FlowNetAgent:
@@ -13,7 +13,6 @@ class FlowNetAgent:
         self.std = torch.tensor(md.std.value_in_unit(unit.nanometer/unit.femtosecond), dtype=torch.float, device=args.device)
         self.masses = torch.tensor(md.masses.value_in_unit(md.masses.unit), dtype=torch.float, device=args.device).unsqueeze(-1)
 
-        self.normal = Normal(0, self.std)
         self.eye = torch.eye(self.num_particles, device=args.device).unsqueeze(0)
         self.charge_matrix = torch.tensor(md.charge_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
         # self.covalent_radii_matrix = torch.tensor(md.covalent_radii_matrix, dtype=torch.float, device=args.device).unsqueeze(0)
@@ -75,24 +74,24 @@ class FlowNetAgent:
             last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device)
             log_target_reward = - torch.square((matrix-target_matrix)/args.target_std).mean((1, 2))
             
-        log_md_reward = self.normal.log_prob(actions).mean((1, 2, 3))
-        log_reward = log_md_reward + log_target_reward
+        log_md_reward = -0.5 * torch.square(actions/self.std).mean((1, 2, 3))
 
-        log_likelihood = self.normal.log_prob(noises).mean((1, 2, 3))
+        log_reward = log_md_reward + log_target_reward
 
         if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
         
         log = {
             'positions': positions, 
+            'actions': actions,
             'biases': biases,
+            'noises': noises,
             'potentials': potentials,
             'last_idx': last_idx,
             'target_position': mds.target_position,
             'log_target_reward': log_target_reward,
             'log_md_reward': log_md_reward,
             'log_reward': log_reward,
-            'log_likelihood': log_likelihood,
         }
         return log
 
@@ -102,12 +101,12 @@ class FlowNetAgent:
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = 1e-6 * args.bias_scale * self.policy(positions[:, :-1])
+        biases = 1e-6 * args.bias_scale * self.policy(positions[:, :-1]) # kJ/(mol*nm) -> (da*nm)/fs**2
         biases = self.f_scale * biases / self.masses
         
         log_z = self.policy.log_z
-        log_forward = self.normal.log_prob(biases-actions).mean((1, 2, 3))
-        loss = torch.square(log_z+log_forward-log_reward).mean() 
+        log_forward = get_log_likelihood(biases-actions, self.std).mean(1) / self.num_particles / 3
+        loss = (log_z+log_forward-log_reward).square().mean() 
         
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.policy.mlp.parameters(), args.max_grad_norm)
