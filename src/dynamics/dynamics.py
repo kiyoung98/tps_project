@@ -109,7 +109,7 @@ class Poly(BaseDynamics):
         integrator = mm.LangevinIntegrator(
             self.temperature,  
             self.friction_coefficient,  
-            self.timestep * 2,
+            self.timestep,
         ) 
 
         integrator.setConstraintTolerance(0.00001)
