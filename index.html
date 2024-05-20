@@ -3,9 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <title>Transition Path Sampling</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        p.intro {
+            font-size: 1.2em;
+            max-width: 800px;
+            margin-bottom: 30px;
+        }
+        .gif-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+        .gif-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .gif-item p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        .gif-item img {
+            width: 300px;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
-    <h1>Hello World</h1>
+    <h1>Transition Path Sampling</h1>
+    <p class="intro">In this work, we propose a generative flow network to sample molecular transition paths between a pair of metastable states. This problem is of critical interest in understanding chemical reactions, e.g., protein folding process. Our framework does not require the knowledge of collective variables (CVs), which can be expensive to derive from novel large-scale molecular systems. Furthermore, compared to prior CV free approaches using machine learning, our framework is sample-efficient by using off-policy training and does not suffer from the mode-seeking behaviour. We evaluate our framework on Alanine Dipeptide, Polyproline and Chignolin proteins. Our framework is able to find a diverse set of transition states while obtaining higher-quality transition paths.</p>
+    <div class="gif-container">
+        <div class="gif-item">
+            <p>Alanine</p>
+            <img src="./alanine.gif" alt="Alanine transition">
+        </div>
+        <div class="gif-item">
+            <p>Poly</p>
+            <img src="./poly.gif" alt="Poly transition">
+        </div>
+        <div class="gif-item">
+            <p>Chignolin</p>
+            <img src="./chignolin.gif" alt="Chignolin transition">
+        </div>
+    </div>
 </body>
 </html>
