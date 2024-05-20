@@ -1,10 +1,13 @@
 import os
 import sys
+import torch
 import logging
 import datetime
+import openmm.unit as unit
 
-from .plot import *
+from .plot import plot_paths_alanine
 from .metrics import Metric
+from .utils import get_log_likelihood
 
 class Logger():
     def __init__(self, args, md):
@@ -16,6 +19,8 @@ class Logger():
         self.molecule = args.molecule
         self.num_steps = args.num_steps
         self.num_samples = args.num_samples
+
+        self.std = torch.tensor(md.std.value_in_unit(unit.nanometer/unit.femtosecond), dtype=torch.float, device=args.device)
             
         if not os.path.exists(f'{self.save_dir}'):
             os.makedirs(f'{self.save_dir}')
@@ -56,24 +61,35 @@ class Logger():
             rollout, 
             noises,
             actions,
-            last_idx, 
+            last_idx,
             positions, 
             potentials, 
             last_position,
             target_position,
         ):
+        log_likelihood = get_log_likelihood(actions, self.std)
+        biased_log_likelihood = get_log_likelihood(noises, self.std)
+
+        mean_ll, std_ll = log_likelihood.mean(1).mean().item(), log_likelihood.mean(1).std().item()
+        mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
+        mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
+
         # Calculate metrics
-        if self.molecule == 'alanine':
-            hit, thp, mean_len, std_len, mean_etp, std_etp, mean_efp, std_efp = self.metric.alanine(positions, target_position, potentials)
+        if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
+            hit, thp, mean_len, std_len, mean_etp, std_etp, mean_efp, std_efp = self.metric.cv_fix_metrics(last_position, target_position, potentials)
+
+            log_likelihood = log_likelihood.sum(1)
+            biased_log_likelihood = biased_log_likelihood.sum(1)
+            base = torch.maximum(log_likelihood, biased_log_likelihood)
+
+            log_likelihood = log_likelihood - base
+            biased_log_likelihood = biased_log_likelihood - base
+
             true_likelihood = log_likelihood.exp() * hit
             biased_likelihood = biased_log_likelihood.exp()
             ess_ratio = self.metric.effective_sample_size(biased_likelihood, true_likelihood) / self.num_samples
         else:
             mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
-
-        mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
-        mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
-        mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
 
         # Log
         if self.train:

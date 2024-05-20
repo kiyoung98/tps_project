@@ -49,7 +49,7 @@ class FlowNetAgent:
             noises[:, s] = noise
         mds.reset()
 
-        log_md_reward = -0.5 * torch.square((pd-target_pd)/self.std).mean((1, 2, 3))
+        log_md_reward = -0.5 * torch.square(actions/self.std).mean((1, 2, 3))
         
         target_pd = pairwise_dist(mds.target_position)
 

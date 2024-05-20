@@ -35,31 +35,31 @@ class Metric:
     def effective_sample_size(self, likelihood, true_likelihood):
         weight = true_likelihood / likelihood
         ess = weight.sum().square() / weight.square().sum()
-        return ess
+        return ess        
 
-    def alanine(self, positions, target_position, potentials):
+    def cv_metrics(self, last_position, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
         target_psi = compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
         target_phi = compute_dihedral(target_position[:, self.angle_2].unsqueeze(0))
 
-        psi = compute_dihedral(positions[:, :, self.angle_1])
-        phi = compute_dihedral(positions[:, :, self.angle_2])
+        psi = compute_dihedral(last_position[:, self.angle_1].unsqueeze(0))
+        phi = compute_dihedral(last_position[:, self.angle_2].unsqueeze(0))
 
-        hit_mask = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
-        hit, hit_idxs = hit_mask.max(-1)
+        hit = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
+        hit = hit.squeeze().float()
 
         thp = 100 * hit.sum().float() / hit.shape[0]
 
-        for i, hit_idx in enumerate(hit_idxs):
-            if hit_idx > 0:
-                etp, idx = potentials[i][:hit_idx].max(0)
+        for i, h in enumerate(hit):
+            if h > 0.5:
+                etp, idx = potentials[i].max(0)
                 etps.append(etp)
                 etp_idxs.append(idx.item())
 
-                efp = potentials[i][hit_idx]
+                efp = potentials[i][-1]
                 efps.append(efp)
-                efp_idxs.append(hit_idx.item())
+                efp_idxs.append(500)
 
         if len(etps)>0:
             etps = torch.tensor(etps)
@@ -71,9 +71,9 @@ class Metric:
             std_etp = etps.std().item()
             std_efp = efps.std().item() 
 
-            mean_len = hit_idxs.float().mean().item() 
-            std_len = hit_idxs.float().std().item() 
-            return hit, thp, mean_len, std_len, mean_etp, std_etp, mean_efp, std_efp
+            # mean_len = hit_idxs.float().mean().item() 
+            # std_len = hit_idxs.float().std().item() 
+            return hit, thp, 500, 0, mean_etp, std_etp, mean_efp, std_efp
     
         else:
             return hit, thp, None, None, None, None, None, None
