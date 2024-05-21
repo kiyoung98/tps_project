@@ -60,7 +60,6 @@ class FlowNetAgent:
         last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device) # For the fair comparisions, we train on reward for fixed length and take final index as 500.
         
         log = {
-            'noises': noises,
             'actions': actions,
             'last_idx': last_idx,
             'positions': positions, 

@@ -20,7 +20,6 @@ class FlowNetAgent:
     def sample(self, args, mds, temperature):
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
-        noises = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         
         position, _, _, potential = mds.report()
@@ -46,7 +45,6 @@ class FlowNetAgent:
             action = self.f_scale * bias / self.masses + noise
             
             actions[:, s] = action
-            noises[:, s] = noise
         mds.reset()
 
         log_md_reward = -0.5 * torch.square(actions/self.std).mean((1, 2, 3))
@@ -65,7 +63,6 @@ class FlowNetAgent:
             self.replay.add((positions, actions, log_reward))
         
         log = {
-            'noises': noises,
             'actions': actions,
             'last_idx': last_idx,
             'positions': positions, 

@@ -1,6 +1,7 @@
 import torch
 from .utils import *
 import openmm.unit as unit
+from torch.distributions import Normal
 
 class Metric:
     def __init__(self, args, md):
