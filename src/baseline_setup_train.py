@@ -1,4 +1,5 @@
-# This file is designated for the fair comparisions to the prior work https://github.com/LarsHoldijk/SOCTransitionPaths
+# This file is designated for the fair comparisions of trajectory balance objective function 
+# to the prior work https://github.com/LarsHoldijk/SOCTransitionPaths
 
 import torch
 import proxy
@@ -56,8 +57,7 @@ class FlowNetAgent:
         if args.train:
             self.replay.add((positions, actions, log_reward))
 
-
-        last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device),
+        last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device) # For the fair comparisions, we train on reward for fixed length and take final index as 500.
         
         log = {
             'noises': noises,
