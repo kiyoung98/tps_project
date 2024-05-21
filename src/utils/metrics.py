@@ -42,7 +42,7 @@ class Metric:
         mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
         return mean_ll, std_ll
 
-    def cv_metrics(self, last_position, target_position, potentials):
+    def cv_metrics(self, last_position, target_position, potentials, last_idx):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
         target_psi = compute_dihedral(target_position[:, self.angle_1])
@@ -54,17 +54,17 @@ class Metric:
         hit = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
         hit = hit.squeeze().float()
 
-        thp = 100 * hit / hit.shape[0]
+        thp = 100 * hit.sum() / hit.shape[0]
 
-        for i, h in enumerate(hit):
-            if h > 0.5:
-                etp, idx = potentials[i].max(0)
+        for i, j in enumerate(last_idx):
+            if hit[i] > 0.5:
+                etp, idx = potentials[i][:j].max(0)
                 etps.append(etp)
                 etp_idxs.append(idx.item())
 
-                efp = potentials[i][-1]
+                efp = potentials[i][j]
                 efps.append(efp)
-                efp_idxs.append(500)
+                efp_idxs.append(j.item())
 
         if len(etps)>0:
             etps = torch.tensor(etps)
@@ -78,5 +78,5 @@ class Metric:
 
             return thp, mean_etp, std_etp, mean_efp, std_efp
         else:
-            return thp, None, None, None, None, None, None
+            return thp, None, None, None, None
         

@@ -63,8 +63,8 @@ class Logger():
             target_position,
         ):
         # Calculate metrics
-        if self.molecule in ['alanine', 'aspartic', 'cysteine', 'histidine']:
-            thp, mean_etp, std_etp, mean_efp, std_efp = self.metric.cv_metrics(last_position, target_position, potentials)
+        if self.molecule == 'alanine':
+            thp, mean_etp, std_etp, mean_efp, std_efp = self.metric.cv_metrics(last_position, target_position, potentials, last_idx)
 
         mean_ll, std_ll = self.metric.log_likelihood(actions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
