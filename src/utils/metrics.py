@@ -33,7 +33,7 @@ class Metric:
         return mean_pcd, std_pcd
 
     def coulomb(self, x):
-        dist_matrix = torch.cdist(x, x) + self.eye
+        dist_matrix = torch.cdist(x, x) + self.eye # eye prevents 0 division
         coulomb_matrix = self.charge_matrix / dist_matrix
         return coulomb_matrix
 
