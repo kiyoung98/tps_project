@@ -243,6 +243,7 @@ def plot_epd(dir_path, positions, last_idx, target_position):
             plt.show()
             plt.savefig(f'{dir_path}/epd/epd_{i}.png', dpi=300)
             plt.close()
+            np.save(f'{dir_path}/epd/epd_values_{i}.npy', path_epd)
 
 def plot_potentials(dir_path, rollout, potentials, log_reward, last_idx):
     potentials = potentials.detach().cpu().numpy()

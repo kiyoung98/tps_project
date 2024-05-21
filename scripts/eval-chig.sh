@@ -1,7 +1,7 @@
 project=visual
-date=best
+date=pot
 
-for seed in 5
+for seed in 0
 do
   echo ">>" Evaluating chig for seed $seed
   CUDA_VISIBLE_DEVICES=$1 python src/eval.py \
@@ -11,7 +11,7 @@ do
     --seed $seed \
     --start_state unfolded \
     --end_state folded \
-    --num_samples 16 \
+    --num_samples 32 \
     --num_steps 5000 \
     --bias_scale 0.01 \
     --flexible
