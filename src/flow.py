@@ -3,7 +3,6 @@ import proxy
 from tqdm import tqdm
 import openmm.unit as unit
 from utils.utils import pairwise_dist 
-from torch.distributions import Normal
 
 class FlowNetAgent:
     def __init__(self, args, md):
