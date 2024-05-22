@@ -46,14 +46,16 @@
 </head>
 <body>
     <h1>Collective Variable-Free Transition Path Sampling with Generative Flow Network</h1>
-    <p class="intro">In this work, we propose a generative flow network to sample molecular transition paths between a pair of metastable states. This problem is of critical interest in understanding chemical reactions, e.g., protein folding process. Our framework does not require the knowledge of collective variables (CVs), which can be expensive to derive from novel large-scale molecular systems. Furthermore, compared to prior CV free approaches using machine learning, our framework is sample-efficient by using off-policy training and does not suffer from the mode-seeking behaviour. We evaluate our framework on Alanine Dipeptide, Polyproline and Chignolin proteins. Our framework is able to find a diverse set of transition states while obtaining higher-quality transition paths.</p>
+    <p class="intro">
+        Understanding transition paths between meta-stable states in molecular systems is fundamental for material design and drug discovery. However, sampling these paths using molecular dynamics simulations is computationally prohibitive due to the high-energy barriers between the meta-stable states. Recent machine learning approaches, although promising, are mostly restricted to simple systems or rely on collective-variables (CVs) extracted from expensive domain knowledge. In this work, we propose a novel framework that leverages generative flow networks (GFlowNets) for sampling transition paths without relying on CVs. We train a bias potential parameterized by a neural network, based on reformulating the problem as amortized energy-based sampling over molecular trajectories. The training objective is to minimize the squared log-ratio between the target distribution and the sampler, derived from the flow matching objective. Our evaluation on three proteins (alanine dipeptide, polyproline, and chignolin) demonstrates the superiority of our work compared to the previous CV-free machine learning approach for discovering realistic and diverse transition paths. 
+    </p>
     <div class="gif-container">
         <div class="gif-item">
-            <p>Alanine</p>
+            <p>Alanine Dipeptide</p>
             <img src="./alanine.gif" alt="Alanine transition">
         </div>
         <div class="gif-item">
-            <p>Poly</p>
+            <p>Polyproline Helix</p>
             <img src="./poly.gif" alt="Poly transition">
         </div>
         <div class="gif-item">
