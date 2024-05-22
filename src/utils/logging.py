@@ -77,6 +77,7 @@ class Logger():
             self.logger.info(f'Rollout: {rollout}')
             self.logger.info(f"loss: {loss}")
             if loss < self.best_loss:
+                self.best_loss = loss
                 torch.save(policy.state_dict(), f'{self.save_dir}/policy.pt')
 
         if self.molecule == 'alanine':
