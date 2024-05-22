@@ -15,6 +15,9 @@ class Metric:
         if args.molecule == 'alanine':
             self.angle_2 = torch.tensor([1, 6, 8, 14], dtype=torch.long, device=args.device)
             self.angle_1 = torch.tensor([6, 8, 14, 16], dtype=torch.long, device=args.device)
+        elif args.molecule == 'histidine':
+            self.angle_2 = torch.tensor([0, 6, 8, 11], dtype=torch.long, device=args.device)
+            self.angle_1 = torch.tensor([6, 8, 11, 23], dtype=torch.long, device=args.device)
 
     def expected_pairwise_distance(self, last_position, target_position):
         last_pd = pairwise_dist(last_position)
