@@ -63,7 +63,7 @@ class Logger():
             target_position,
         ):
         # Calculate metrics
-        if self.molecule == 'alanine':
+        if self.molecule in ['alanine', 'histidine']:
             thp, mean_etp, std_etp, mean_efp, std_efp = self.metric.cv_metrics(last_position, target_position, potentials, last_idx)
 
         mean_ll, std_ll = self.metric.log_likelihood(actions)
