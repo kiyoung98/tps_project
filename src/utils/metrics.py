@@ -45,29 +45,29 @@ class Metric:
         mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
         return mean_ll, std_ll
 
-    def cv_metrics(self, last_position, target_position, potentials, last_idx):
+    def cv_metrics(self, positions, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
-        target_psi = compute_dihedral(target_position[:, self.angle_1])
-        target_phi = compute_dihedral(target_position[:, self.angle_2])
+        target_psi = compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
+        target_phi = compute_dihedral(target_position[:, self.angle_2].unsqueeze(0))
 
-        psi = compute_dihedral(last_position[:, self.angle_1])
-        phi = compute_dihedral(last_position[:, self.angle_2])
+        psi = compute_dihedral(positions[:, :, self.angle_1])
+        phi = compute_dihedral(positions[:, :, self.angle_2])
 
-        hit = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
-        hit = hit.squeeze().float()
+        hit_mask = (torch.abs(psi-target_psi) < 0.75) & (torch.abs(phi-target_phi) < 0.75)
+        hit, hit_idxs = hit_mask.max(-1)
 
-        thp = 100 * hit.sum() / hit.shape[0]
+        thp = 100 * hit.sum().float() / hit.shape[0]
 
-        for i, j in enumerate(last_idx):
-            if hit[i] > 0.5:
-                etp, idx = potentials[i][:j].max(0)
+        for i, hit_idx in enumerate(hit_idxs):
+            if hit_idx > 0:
+                etp, idx = potentials[i][:hit_idx].max(0)
                 etps.append(etp)
                 etp_idxs.append(idx.item())
 
-                efp = potentials[i][j]
+                efp = potentials[i][hit_idx]
                 efps.append(efp)
-                efp_idxs.append(j.item())
+                efp_idxs.append(hit_idx.item())
 
         if len(etps)>0:
             etps = torch.tensor(etps)
@@ -82,4 +82,3 @@ class Metric:
             return thp, mean_etp, std_etp, mean_efp, std_efp
         else:
             return thp, None, None, None, None
-        
