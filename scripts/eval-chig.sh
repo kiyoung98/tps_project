@@ -1,10 +1,10 @@
 project=visual
-date=pot
+date=best
 
-for seed in 0
+for seed in 3
 do
   echo ">>" Evaluating chig for seed $seed
-  CUDA_VISIBLE_DEVICES=$1 python src/eval.py \
+  CUDA_VISIBLE_DEVICES=$seed python src/eval.py \
     --molecule chignolin \
     --project $project \
     --date $date \
@@ -14,6 +14,6 @@ do
     --num_samples 32 \
     --num_steps 5000 \
     --bias_scale 0.01 \
-    --flexible
-    sleep 1
+    --flexible &
+  sleep 1 
 done
