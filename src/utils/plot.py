@@ -59,7 +59,7 @@ class AlaninePotential():
         z = self.data[x, y]
         return z
 
-def plot_paths_alanine(dir_path, rollout, positions, target_position, last_idx):
+def plot_paths_alanine(molecule, dir_path, rollout, positions, target_position, last_idx):
     positions = positions.detach().cpu().numpy()
     target_position = target_position.detach().cpu().numpy()
     
@@ -69,6 +69,13 @@ def plot_paths_alanine(dir_path, rollout, positions, target_position, last_idx):
     ax = fig.add_subplot(111)
     plt.xlim([-np.pi, np.pi])
     plt.ylim([-np.pi, np.pi])
+
+    if molecule == 'alanine':
+        angle_2 = [1, 6, 8, 14]
+        angle_1 = [6, 8, 14, 16]
+    elif molecule == 'histidine':
+        angle_2 = [0, 6, 8, 11]
+        angle_1 = [6, 8, 11, 23]
 
     angle_2 = [1, 6, 8, 14]
     angle_1 = [6, 8, 14, 16]

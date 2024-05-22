@@ -97,5 +97,5 @@ class Logger():
         self.logger.info(f"std_pcd: {std_pcd}")
         self.logger.info(f"std_length: {std_len}")
 
-        if self.molecule == 'alanine' and rollout % 10 == 0:
-            plot_paths_alanine(self.save_dir, rollout, positions, target_position, last_idx)
+        if self.molecule in ['alanine', 'histidine'] and rollout % 10 == 0:
+            plot_paths_alanine(self.molecule, self.save_dir, rollout, positions, target_position, last_idx)
