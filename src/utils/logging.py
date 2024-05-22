@@ -80,7 +80,7 @@ class Logger():
                 self.best_loss = loss
                 torch.save(policy.state_dict(), f'{self.save_dir}/policy.pt')
 
-        if self.molecule == 'alanine':
+        if self.molecule in ['alanine', 'histidine']:
             self.logger.info(f"target_hit_percentage (%): {thp}")
             self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
             self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
