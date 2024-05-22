@@ -77,9 +77,6 @@ def plot_paths_alanine(molecule, dir_path, rollout, positions, target_position, 
         angle_2 = [0, 6, 8, 11]
         angle_1 = [6, 8, 11, 23]
 
-    angle_2 = [1, 6, 8, 14]
-    angle_1 = [6, 8, 14, 16]
-
     potential = AlaninePotential()
     xs = np.arange(-np.pi, np.pi + .1, .1)
     ys = np.arange(-np.pi, np.pi + .1, .1)
