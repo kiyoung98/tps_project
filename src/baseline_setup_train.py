@@ -1,4 +1,5 @@
-# This file is designated for the fair comparisions to the prior work https://github.com/LarsHoldijk/SOCTransitionPaths
+# This file is designated for the fair comparisions of trajectory balance objective function 
+# to the prior work https://github.com/LarsHoldijk/SOCTransitionPaths
 
 import torch
 import proxy
@@ -45,25 +46,26 @@ class FlowNetAgent:
             potentials[:, s+1] = potential - (1000*action*position).sum((-2, -1))
         mds.reset()
 
-        log_md_reward = (-1/2) * torch.square(actions/args.std).mean((1, 2, 3))
+        log_md_reward = -0.5 * torch.square(actions/args.std).mean((1, 2, 3))
         
         pd = pairwise_dist(position)
         target_pd = pairwise_dist(mds.target_position)
-        log_target_reward = (-1/2) * torch.square((pd-target_pd)/args.sigma).mean((1, 2))
+        log_target_reward = -0.5 * torch.square((pd-target_pd)/args.sigma).mean((1, 2))
         
         log_reward = log_md_reward + log_target_reward
 
         if args.train:
             self.replay.add((positions, actions, log_reward))
+
+        last_idx = args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device) # For the fair comparisions, we train on reward for fixed length and take final index as 500.
         
         log = {
+            'actions': actions,
+            'last_idx': last_idx,
             'positions': positions, 
             'potentials': potentials,
-            'last_position': position,
-            'log_likelihood': log_md_reward,
             'target_position': mds.target_position,
-            'biased_log_likelihood': (-1/2)*torch.square(noises).mean((1, 2, 3)),
-            'last_idx': args.num_steps * torch.ones(args.num_samples, dtype=torch.long, device=args.device),
+            'last_position': positions[torch.arange(args.num_samples), last_idx],
         }
 
         if args.train:
@@ -80,7 +82,7 @@ class FlowNetAgent:
         biases = args.bias_scale * self.policy(positions[:, :-1])
         
         log_z = self.policy.log_z
-        log_forward = (-1/2) * torch.square((biases-actions)/args.std).mean((1, 2, 3))
+        log_forward = -0.5 * torch.square((biases-actions)/args.std).mean((1, 2, 3))
         loss = (log_z+log_forward-log_reward).square().mean() 
         
         loss.backward()

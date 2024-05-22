@@ -5,10 +5,10 @@ def pairwise_dist(x):
     return dist_matrix
 
 def compute_dihedral(positions):
-    v = positions[:, :, :-1] - positions[:, :, 1:]
-    v0 = - v[:, :, 0]
-    v1 = v[:, :, 2]
-    v2 = v[:, :, 1]
+    v = positions[:, :-1] - positions[:, 1:]
+    v0 = - v[:, 0]
+    v1 = v[:, 2]
+    v2 = v[:, 1]
     
     s0 = torch.sum(v0 * v2, dim=-1, keepdim=True) / torch.sum(v2 * v2, dim=-1, keepdim=True)
     s1 = torch.sum(v1 * v2, dim=-1, keepdim=True) / torch.sum(v2 * v2, dim=-1, keepdim=True)

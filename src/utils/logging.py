@@ -1,9 +1,10 @@
 import os
 import sys
+import torch
 import logging
 import datetime
 
-from .plot import *
+from .plot import plot_paths_alanine
 from .metrics import Metric
 
 class Logger():
@@ -54,26 +55,21 @@ class Logger():
             loss, 
             policy, 
             rollout, 
-            last_idx, 
+            actions,
+            last_idx,
             positions, 
             potentials, 
             last_position,
-            log_likelihood, 
             target_position,
-            biased_log_likelihood,  
         ):
         # Calculate metrics
         if self.molecule == 'alanine':
-            hit, thp, mean_len, std_len, mean_etp, std_etp, mean_efp, std_efp = self.metric.alanine(positions, target_position, potentials)
-            true_likelihood = log_likelihood.exp() * hit
-            biased_likelihood = biased_log_likelihood.exp()
-            ess_ratio = self.metric.effective_sample_size(biased_likelihood, true_likelihood) / self.num_samples
-        else:
-            mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
+            thp, mean_etp, std_etp, mean_efp, std_efp = self.metric.cv_metrics(last_position, target_position, potentials, last_idx)
 
-        mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
+        mean_ll, std_ll = self.metric.log_likelihood(actions)
         mean_pd, std_pd = self.metric.expected_pairwise_distance(last_position, target_position)
         mean_pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(last_position, target_position)
+        mean_len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
 
         # Log
         if self.train:
@@ -81,11 +77,11 @@ class Logger():
             self.logger.info(f'Rollout: {rollout}')
             self.logger.info(f"loss: {loss}")
             if loss < self.best_loss:
+                self.best_loss = loss
                 torch.save(policy.state_dict(), f'{self.save_dir}/policy.pt')
 
         if self.molecule == 'alanine':
             self.logger.info(f"target_hit_percentage (%): {thp}")
-            self.logger.info(f"effective_sample_size_ratio: {ess_ratio}")
             self.logger.info(f"energy_transition_point (kJ/mol): {mean_etp}")
             self.logger.info(f"energy_final_point (kJ/mol): {mean_efp}")
             self.logger.info(f"std_etp: {std_etp}")
