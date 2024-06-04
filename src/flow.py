@@ -13,7 +13,7 @@ class FlowNetAgent:
         self.masses = torch.tensor(md.masses.value_in_unit(md.masses.unit), dtype=torch.float, device=args.device).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
 
-        if args.train:
+        if args.type == 'train':
             self.replay = ReplayBuffer(args, md)
 
     def sample(self, args, mds, temperature):
@@ -58,7 +58,7 @@ class FlowNetAgent:
         
         log_reward = log_md_reward + log_target_reward
 
-        if args.train:
+        if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
         
         log = {

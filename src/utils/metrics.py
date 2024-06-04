@@ -79,6 +79,6 @@ class Metric:
             std_etp = etps.std().item()
             std_efp = efps.std().item()
 
-            return thp, mean_etp, std_etp, mean_efp, std_efp
+            return thp, etps, etp_idxs, mean_etp, std_etp, efps, efp_idxs, mean_efp, std_efp
         else:
-            return thp, None, None, None, None
+            return thp, None, None, None, None, None, None, None, None

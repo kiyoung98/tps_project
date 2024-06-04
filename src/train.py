@@ -1,19 +1,27 @@
+import wandb
 import torch
 import argparse
 
 from tqdm import tqdm
-from flow import FlowNetAgent
 from dynamics.mds import MDs
 from dynamics import dynamics
+from flow import FlowNetAgent
 from utils.logging import Logger
 
 parser = argparse.ArgumentParser()
 
 # System Config
 parser.add_argument('--seed', default=0, type=int)
+parser.add_argument('--type', default='train', type=str)
 parser.add_argument('--device', default='cuda', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
-parser.add_argument('--save_dir', default='results/alanine/', type=str)
+
+# Logger Config
+parser.add_argument('--wandb', action='store_true')
+parser.add_argument('--project', default='alanine', type=str)
+parser.add_argument('--save_dir', default='results', type=str)
+parser.add_argument('--date', default="date", type=str, help='Date of the training')
+parser.add_argument('--save_freq', default=100, type=int, help='Frequency of saving in  rollouts')
 
 # Policy Config
 parser.add_argument('--force', action='store_true', help='Predict force otherwise potential')
@@ -40,9 +48,9 @@ parser.add_argument('--trains_per_rollout', default=2000, type=int, help='Number
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    args.train = True
-
     torch.manual_seed(args.seed)
+    if args.wandb:
+        wandb.init(project=args.project, config=args)
 
     md = getattr(dynamics, args.molecule.title())(args, args.start_state)
     agent = FlowNetAgent(args, md)
@@ -52,7 +60,6 @@ if __name__ == '__main__':
     mds = MDs(args)
 
     logger.info("Start training")
-
     for rollout in range(args.num_rollouts):
         print(f'Rollout: {rollout}')
 
@@ -64,6 +71,5 @@ if __name__ == '__main__':
         loss = loss / args.trains_per_rollout
 
         logger.log(loss, agent.policy, rollout, **log)
-
     logger.info("Finish training")
     
