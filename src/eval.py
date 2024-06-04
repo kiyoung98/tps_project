@@ -12,59 +12,47 @@ parser = argparse.ArgumentParser()
 
 # System Config
 parser.add_argument('--seed', default=0, type=int)
-parser.add_argument('--wandb', action='store_true')
 parser.add_argument('--type', default='eval', type=str)
 parser.add_argument('--device', default='cuda', type=str)
-parser.add_argument('--project', default='alanine', type=str)
 parser.add_argument('--molecule', default='alanine', type=str)
-parser.add_argument('--date', default='', type=str, help="Date of the training")
-parser.add_argument('--logger', default=True, type=bool, help='Use system logger')
+
+# Logger Config
+parser.add_argument('--wandb', action='store_true')
+parser.add_argument('--model_path', default='', type=str)
+parser.add_argument('--project', default='alanine', type=str)
+parser.add_argument('--save_dir', default='results', type=str)
+parser.add_argument('--date', default="date", type=str, help='Date of the training')
 
 # Policy Config
-parser.add_argument('--force', action='store_true', help='Predict force otherwise potential')
+parser.add_argument('--force', action='store_true', help='Network predicts force')
 
 # Sampling Config
 parser.add_argument('--start_state', default='c5', type=str)
 parser.add_argument('--end_state', default='c7ax', type=str)
-parser.add_argument('--reward_matrix', default='dist', type=str)
-parser.add_argument('--bias_scale', default=20, type=float, help='Scale factor of bias')
+parser.add_argument('--num_steps', default=500, type=int, help='Length of paths')
+parser.add_argument('--bias_scale', default=0.01, type=float, help='Scale factor of bias')
+parser.add_argument('--timestep', default=1, type=float, help='Timestep of integrator')
+parser.add_argument('--sigma', default=0.05, type=float, help='Control reward of arrival')
 parser.add_argument('--num_samples', default=64, type=int, help='Number of paths to sample')
-parser.add_argument('--flexible', action='store_true', help='Sample paths with flexible length')
-parser.add_argument('--std', default=0.1, type=float, help='Standard deviation of Langevin integrator')
-parser.add_argument('--temperature', default=300., type=float, help='Temperature (K) of the langevin integrator')
-parser.add_argument('--num_steps', default=500, type=int, help='Number of steps in each path i.e. length of trajectory')
-parser.add_argument('--target_std', default=0.05, type=float, help='Standard deviation of gaussian distribution w.r.t. dist matrix of position')
-
+parser.add_argument('--temperature', default=300, type=float, help='Temperature for evaluation')
 
 args = parser.parse_args()
 
-if args.wandb:
-    wandb.init(project=args.project+"-eval", config=args)
-
 if __name__ == '__main__':
-    md = getattr(dynamics, args.molecule.title())(args, args.start_state)
+    if args.wandb:
+        wandb.init(project=args.project+'_eval', config=args)
 
+    md = getattr(dynamics, args.molecule.title())(args, args.start_state)
     agent = FlowNetAgent(args, md)
     logger = Logger(args, md)
 
+    logger.info(f"Initialize {args.num_samples} MDs starting at {args.start_state}")
     mds = MDs(args)
-    target_position = torch.tensor(md.position, dtype=torch.float, device=args.device).unsqueeze(0)
 
-    train_log_dir = f"results/{args.molecule}/{args.project}/{args.date}/train/{args.seed}"
-    filename = "policy.pt"
-    policy_file = f"{train_log_dir}/{filename}"
-    if os.path.exists(policy_file):
-        agent.policy.load_state_dict(torch.load(policy_file))
-    else:
-        raise FileNotFoundError("Policy checkpoint not found")
+    model_path = args.model_path if args.model_path else os.path.join(args.save_dir, args.project, args.date, 'train', str(args.seed), 'policy.pt')
+    agent.policy.load_state_dict(torch.load(model_path))
     
-    # Sampling and obtain results for evaluation (positions, potentials)
-    log = agent.sample(args, mds, 0)
-
-
-    logger.info(f"Sampling done..!")
-    
-    logger.info(f"Evaluating results...")
-
-    logger.log(agent.policy, None, 0, **log, plot=True)
-    logger.info(f"Evaluation done..!")
+    logger.info(f"Start Evaulation")
+    log = agent.sample(args, mds, args.temperature)
+    logger.log(None, agent.policy, 0, **log)
+    logger.info(f"Finish Evaluation")

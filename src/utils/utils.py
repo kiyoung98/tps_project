@@ -1,15 +1,26 @@
-import numpy as np
+import torch
 
-def compute_dihedral(p): 
-    """http://stackoverflow.com/q/20305272/1128289"""
-    b = p[:-1] - p[1:]
-    b[0] *= -1
-    v = np.array(
-        [v - (v.dot(b[1]) / b[1].dot(b[1])) * b[1] for v in [b[0], b[2]]])
-    # Normalize vectors
-    v /= np.sqrt(np.einsum('...i,...i', v, v)).reshape(-1, 1)
-    b1 = b[1] / np.linalg.norm(b[1])
-    x = np.dot(v[0], v[1])
-    m = np.cross(v[0], b1)
-    y = np.dot(m, v[1])
-    return np.arctan2(y, x)
+def pairwise_dist(x):
+    dist_matrix = torch.cdist(x, x)
+    return dist_matrix
+
+def compute_dihedral(positions):
+    v = positions[:, :, :-1] - positions[:, :, 1:]
+    v0 = - v[:, :, 0]
+    v1 = v[:, :, 2]
+    v2 = v[:, :, 1]
+    
+    s0 = torch.sum(v0 * v2, dim=-1, keepdim=True) / torch.sum(v2 * v2, dim=-1, keepdim=True)
+    s1 = torch.sum(v1 * v2, dim=-1, keepdim=True) / torch.sum(v2 * v2, dim=-1, keepdim=True)
+
+    v0 = v0 - s0 * v2
+    v1 = v1 - s1 * v2
+
+    v0 = v0 / torch.norm(v0, dim=-1, keepdim=True)
+    v1 = v1 / torch.norm(v1, dim=-1, keepdim=True)
+    v2 = v2 / torch.norm(v2, dim=-1, keepdim=True)
+
+    x = torch.sum(v0 * v1, dim=-1)
+    v3 = torch.cross(v0, v2, dim=-1)
+    y = torch.sum(v3 * v1, dim=-1)
+    return torch.atan2(y, x)

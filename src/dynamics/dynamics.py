@@ -1,7 +1,6 @@
 import openmm as mm
 from openmm import app
 import openmm.unit as unit
-from openmmtools.integrators import LangevinIntegrator
 
 from .base import BaseDynamics
 
@@ -20,10 +19,9 @@ class Alanine(BaseDynamics):
             constraints=app.HBonds,
             ewaldErrorTolerance=0.0005
         )
-        external_force = mm.CustomExternalForce("k*(fx*x + fy*y + fz*z)")
+        external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
         # creating the parameters
-        external_force.addGlobalParameter("k", 1000)
         external_force.addPerParticleParameter("fx")
         external_force.addPerParticleParameter("fy")
         external_force.addPerParticleParameter("fz")
@@ -31,10 +29,10 @@ class Alanine(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = LangevinIntegrator(
-            self.temperature * unit.kelvin,  
-            1.0 / unit.picoseconds,
-            1.0 * unit.femtoseconds,
+        integrator = mm.LangevinIntegrator(
+            self.temperature,  
+            self.friction_coefficient,  
+            self.timestep,
         ) 
 
         integrator.setConstraintTolerance(0.00001)
@@ -42,7 +40,7 @@ class Alanine(BaseDynamics):
         simulation = app.Simulation(pdb.topology, system, integrator)
         simulation.context.setPositions(pdb.positions)
 
-        return pdb, simulation, external_force
+        return pdb, integrator, simulation, external_force
     
 
 class Chignolin(BaseDynamics):
@@ -59,10 +57,9 @@ class Chignolin(BaseDynamics):
             constraints=app.HBonds,
             ewaldErrorTolerance=0.0005
         )
-        external_force = mm.CustomExternalForce("k*(fx*x + fy*y + fz*z)")
+        external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
         # creating the parameters
-        external_force.addGlobalParameter("k", 1000)
         external_force.addPerParticleParameter("fx")
         external_force.addPerParticleParameter("fy")
         external_force.addPerParticleParameter("fz")
@@ -70,10 +67,10 @@ class Chignolin(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = LangevinIntegrator(
-            self.temperature * unit.kelvin,  
-            1.0 / unit.picoseconds,
-            1.0 * unit.femtoseconds,
+        integrator = mm.LangevinIntegrator(
+            self.temperature,  
+            self.friction_coefficient,  
+            self.timestep,
         ) 
 
         integrator.setConstraintTolerance(0.00001)
@@ -81,7 +78,7 @@ class Chignolin(BaseDynamics):
         simulation = app.Simulation(pdb.topology, system, integrator)
         simulation.context.setPositions(pdb.positions)
 
-        return pdb, simulation, external_force
+        return pdb, integrator, simulation, external_force
     
 
 class Poly(BaseDynamics):
@@ -99,10 +96,9 @@ class Poly(BaseDynamics):
             rigidWater=True,
             ewaldErrorTolerance=0.0005
         )
-        external_force = mm.CustomExternalForce("k*(fx*x + fy*y + fz*z)")
+        external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
         # creating the parameters
-        external_force.addGlobalParameter("k", 1000)
         external_force.addPerParticleParameter("fx")
         external_force.addPerParticleParameter("fy")
         external_force.addPerParticleParameter("fz")
@@ -110,10 +106,10 @@ class Poly(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = LangevinIntegrator(
-            self.temperature * unit.kelvin,  
-            1.0 / unit.picoseconds,
-            2.0 * unit.femtoseconds,
+        integrator = mm.LangevinIntegrator(
+            self.temperature,  
+            self.friction_coefficient,  
+            self.timestep,
         ) 
 
         integrator.setConstraintTolerance(0.00001)
@@ -121,4 +117,42 @@ class Poly(BaseDynamics):
         simulation = app.Simulation(pdb.topology, system, integrator)
         simulation.context.setPositions(pdb.positions)
 
-        return pdb, simulation, external_force
+        return pdb, integrator, simulation, external_force
+    
+class Histidine(BaseDynamics):
+    def __init__(self, args, state):
+        super().__init__(args, state)
+
+    def setup(self):
+        forcefield = app.ForceField('amber/protein.ff14SBonlysc.xml', 'implicit/gbn2.xml')
+        pdb = app.PDBFile(self.start_file)
+        system = forcefield.createSystem(
+            pdb.topology,
+            nonbondedMethod=app.NoCutoff,
+            nonbondedCutoff=1.0 * unit.nanometers,
+            constraints=app.HBonds,
+            rigidWater=True,
+            ewaldErrorTolerance=0.0005
+        )
+        external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
+
+        # creating the parameters
+        external_force.addPerParticleParameter("fx")
+        external_force.addPerParticleParameter("fy")
+        external_force.addPerParticleParameter("fz")
+        system.addForce(external_force)
+        for i in range(len(pdb.positions)):
+            external_force.addParticle(i, [0, 0, 0])
+
+        integrator = mm.LangevinIntegrator(
+            self.temperature,  
+            self.friction_coefficient,  
+            self.timestep,
+        ) 
+
+        integrator.setConstraintTolerance(0.00001)
+
+        simulation = app.Simulation(pdb.topology, system, integrator)
+        simulation.context.setPositions(pdb.positions)
+
+        return pdb, integrator, simulation, external_force
