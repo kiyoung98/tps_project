@@ -2,7 +2,7 @@ import torch
 import proxy
 from tqdm import tqdm
 import openmm.unit as unit
-from utils.utils import pairwise_dist 
+from utils.utils import pairwise_dist, kabsch
 
 class FlowNetAgent:
     def __init__(self, args, md):
@@ -18,13 +18,15 @@ class FlowNetAgent:
 
     def sample(self, args, mds, temperature):
         positions = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
+        velocities = torch.zeros((args.num_samples, args.num_steps+1, self.num_particles, 3), device=args.device)
         actions = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         biases = torch.zeros((args.num_samples, args.num_steps, self.num_particles, 3), device=args.device)
         potentials = torch.zeros(args.num_samples, args.num_steps+1, device=args.device)
         
-        position, _, _, potential = mds.report()
+        position, velocity, _, potential = mds.report()
         
         positions[:, 0] = position
+        velocities[:, 0] = velocity
         potentials[:, 0] = potential
 
         mds.set_temperature(temperature)
@@ -38,6 +40,7 @@ class FlowNetAgent:
             noise = (next_position - position) / args.timestep - (self.v_scale * velocity + self.f_scale * force / self.masses)
 
             positions[:, s+1] = next_position
+            velocities[:, s+1] = velocity
             potentials[:, s+1] = potential - (bias*next_position).sum((1, 2)) # Subtract bias potential to get true potential
 
             position = next_position
@@ -49,6 +52,14 @@ class FlowNetAgent:
         mds.reset()
 
         log_md_reward = -0.5 * torch.square(actions/self.std).mean((1, 2, 3))
+
+        # log_target_reward = torch.zeros(args.num_samples, args.num_steps, device=args.device)
+        # for i in range(args.num_samples):
+        #     aligned_target_position, rmsd = kabsch(mds.target_position, positions[i][1:])
+        #     target_velocity = (aligned_target_position - positions[i][:-1]) / args.timestep
+        #     log_target_reward[i] = -0.5 * torch.square((target_velocity-velocities[i][1:])/self.std).mean((1, 2)) # TODO: Modify velocity
+        # print(log_target_reward)
+        # log_target_reward, last_idx = log_target_reward.max(1)
         
         target_pd = pairwise_dist(mds.target_position)
 
@@ -60,14 +71,12 @@ class FlowNetAgent:
         
         log_reward = log_md_reward + log_target_reward
 
-        log_likelihood = (-1/2)*torch.square(noises).mean((1, 2, 3))
-
         if args.type == 'train':
             self.replay.add((positions, actions, log_reward))
         
         log = {
             'actions': actions,
-            'last_idx': last_idx,
+            'last_idx': last_idx+1,
             'positions': positions, 
             'potentials': potentials,
             'target_position': mds.target_position,
