@@ -62,4 +62,4 @@ def kabsch(P, Q):
     # RMSD
     rmsd = torch.sqrt(torch.sum(torch.square(aligned_P - Q), dim=(1, 2)) / P.shape[1])
 
-    return P, rmsd
+    return aligned_P, rmsd
