@@ -134,19 +134,20 @@ class Logger():
             elif self.molecule == 'histidine':
                 fig_path = plot_paths_histidine(self.save_dir, rollout, positions, target_position, last_idx)
 
-            fig_etp = plot_etps(self.save_dir, rollout, etps, etp_idxs)
-            fig_efp = plot_efps(self.save_dir, rollout, efps, efp_idxs) 
             fig_pot = plot_potentials(self.save_dir, rollout, potentials, last_idx)
 
             if self.wandb:
-                log = {
-                    'etps': wandb.Image(fig_etp),
-                    'efps': wandb.Image(fig_efp),
-                    'potentials': wandb.Image(fig_pot)
-                }
+                log = {'potentials': wandb.Image(fig_pot)}
             
                 if self.molecule in ['alanine', 'histidine']:
-                    cv_log = {'paths': wandb.Image(fig_path)}
+                    fig_etp = plot_etps(self.save_dir, rollout, etps, etp_idxs)
+                    fig_efp = plot_efps(self.save_dir, rollout, efps, efp_idxs) 
+                    
+                    cv_log = {
+                        'paths': wandb.Image(fig_path),
+                        'etps': wandb.Image(fig_etp),
+                        'efps': wandb.Image(fig_efp),
+                        }
                     log.update(cv_log)
             
                 wandb.log(log, step=rollout)
