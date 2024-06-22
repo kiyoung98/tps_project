@@ -10,14 +10,14 @@ class Alanine(BaseDynamics):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField('amber99sbildn.xml', 'tip3p.xml')
+        forcefield = app.ForceField("amber99sbildn.xml", "tip3p.xml")
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
             nonbondedMethod=app.PME,
             nonbondedCutoff=1.0 * unit.nanometers,
             constraints=app.HBonds,
-            ewaldErrorTolerance=0.0005
+            ewaldErrorTolerance=0.0005,
         )
         external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
@@ -30,10 +30,10 @@ class Alanine(BaseDynamics):
             external_force.addParticle(i, [0, 0, 0])
 
         integrator = mm.LangevinIntegrator(
-            self.temperature,  
-            self.friction_coefficient,  
+            self.temperature,
+            self.friction_coefficient,
             self.timestep,
-        ) 
+        )
 
         integrator.setConstraintTolerance(0.00001)
 
@@ -41,21 +41,24 @@ class Alanine(BaseDynamics):
         simulation.context.setPositions(pdb.positions)
 
         return pdb, integrator, simulation, external_force
-    
+
 
 class Chignolin(BaseDynamics):
     def __init__(self, args, state):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField('amber/protein.ff14SBonlysc.xml', 'implicit/gbn2.xml')
+        forcefield = app.ForceField(
+            "/home/guest_sky/tps-gfn/openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
+            "implicit/gbn2.xml",
+        )
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
             nonbondedMethod=app.NoCutoff,
             nonbondedCutoff=1.0 * unit.nanometers,
             constraints=app.HBonds,
-            ewaldErrorTolerance=0.0005
+            ewaldErrorTolerance=0.0005,
         )
         external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
@@ -68,10 +71,10 @@ class Chignolin(BaseDynamics):
             external_force.addParticle(i, [0, 0, 0])
 
         integrator = mm.LangevinIntegrator(
-            self.temperature,  
-            self.friction_coefficient,  
+            self.temperature,
+            self.friction_coefficient,
             self.timestep,
-        ) 
+        )
 
         integrator.setConstraintTolerance(0.00001)
 
@@ -79,14 +82,17 @@ class Chignolin(BaseDynamics):
         simulation.context.setPositions(pdb.positions)
 
         return pdb, integrator, simulation, external_force
-    
+
 
 class Poly(BaseDynamics):
     def __init__(self, args, state):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField('amber/protein.ff14SBonlysc.xml', 'implicit/gbn2.xml')
+        forcefield = app.ForceField(
+            "/home/guest_sky/tps-gfn/openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
+            "implicit/gbn2.xml",
+        )
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
@@ -94,7 +100,7 @@ class Poly(BaseDynamics):
             nonbondedCutoff=1.0 * unit.nanometers,
             constraints=app.HBonds,
             rigidWater=True,
-            ewaldErrorTolerance=0.0005
+            ewaldErrorTolerance=0.0005,
         )
         external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
@@ -107,10 +113,10 @@ class Poly(BaseDynamics):
             external_force.addParticle(i, [0, 0, 0])
 
         integrator = mm.LangevinIntegrator(
-            self.temperature,  
-            self.friction_coefficient,  
+            self.temperature,
+            self.friction_coefficient,
             self.timestep,
-        ) 
+        )
 
         integrator.setConstraintTolerance(0.00001)
 
@@ -118,13 +124,17 @@ class Poly(BaseDynamics):
         simulation.context.setPositions(pdb.positions)
 
         return pdb, integrator, simulation, external_force
-    
+
+
 class Histidine(BaseDynamics):
     def __init__(self, args, state):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField('amber/protein.ff14SBonlysc.xml', 'implicit/gbn2.xml')
+        forcefield = app.ForceField(
+            "/home/guest_sky/tps-gfn/openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
+            "implicit/gbn2.xml",
+        )
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
@@ -132,7 +142,7 @@ class Histidine(BaseDynamics):
             nonbondedCutoff=1.0 * unit.nanometers,
             constraints=app.HBonds,
             rigidWater=True,
-            ewaldErrorTolerance=0.0005
+            ewaldErrorTolerance=0.0005,
         )
         external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
 
@@ -145,10 +155,10 @@ class Histidine(BaseDynamics):
             external_force.addParticle(i, [0, 0, 0])
 
         integrator = mm.LangevinIntegrator(
-            self.temperature,  
-            self.friction_coefficient,  
+            self.temperature,
+            self.friction_coefficient,
             self.timestep,
-        ) 
+        )
 
         integrator.setConstraintTolerance(0.00001)
 

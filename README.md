@@ -4,12 +4,12 @@
 
 1. First, create a new Conda environment:
     ```
-    conda create -n gflow_tps python=3.9
+    conda create -n tps-gfn python=3.9
     ```
 
 2. Activate the newly created environment:
     ```
-    conda activate gflow_tps
+    conda activate tps-gfn
     ```
 
 3. Install pytorch.
@@ -26,15 +26,10 @@
     ```
     cd openmmforcefields
     ```
-    ```
-    pip install -e .
-    ```
-    ```
-    cd ..
-    ```
+
 6. Install another packages using the following commands:
     ```
-    pip install tqdm wandb mdtraj matplotlib
+    pip install torch tqdm wandb mdtraj matplotlib
     ```
 
 ## Usage
