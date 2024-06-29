@@ -1,4 +1,4 @@
-# GFlowNet for Sampling Transition Paths for Large Molecules.
+# [Collective Variable Free Transition Path Sampling with Generative Flow Networks](https://arxiv.org/abs/2405.19961v2)
 
 ## Installation
 
@@ -12,8 +12,6 @@
     conda activate tps-gfn
     ```
 
-3. Install pytorch.
-
 4. Install the openmmtools for Molecular Dynamics (MD) simulation using the following commands:
     ```
     conda install -c conda-forge openmmtools
@@ -23,10 +21,6 @@
     ```
     git clone https://github.com/openmm/openmmforcefields.git
     ```
-    ```
-    cd openmmforcefields
-    ```
-
 6. Install another packages using the following commands:
     ```
     pip install torch tqdm wandb mdtraj matplotlib
@@ -46,12 +40,12 @@
 
 ## Reproduce
 
-- **Table**: Run the following command to reproduce the results of alanine dipeptide with bias potential and reward for fixed length:
+- **Table**: Run the following command to reproduce the table:
     ```
     bash scripts/reproduce_table.sh
     ```
 
-- **Visualization**: Run the following command to reproduce the figure which shows transition paths of multiple reaction channels:
+- **Visualization**: Run the following command to reproduce the figure:
     ```
     bash scripts/reproduce_figure.sh
     ```
