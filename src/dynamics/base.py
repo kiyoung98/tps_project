@@ -28,7 +28,7 @@ class BaseDynamics(ABC):
 
         self.num_particles = self.simulation.system.getNumParticles()
 
-        self.v_scale, self.f_scale, self.masses, self.std = self.get_md_info()
+        self.a, self.m, self.std = self.get_md_info()
         self.charge_matrix = self.get_charge_matrix()
 
     @abstractmethod
@@ -36,20 +36,16 @@ class BaseDynamics(ABC):
         pass
 
     def get_md_info(self):
-        v_scale = np.exp(-self.timestep * self.friction_coefficient)
-        f_scale = (1 - v_scale) / self.friction_coefficient
+        a = np.exp(-self.timestep * self.friction_coefficient)
 
-        masses = [
+        m = [
             self.simulation.system.getParticleMass(i).value_in_unit(unit.dalton)
             for i in range(self.num_particles)
         ]
-        masses = unit.Quantity(np.array(masses), unit.dalton)
+        m = unit.Quantity(np.array(m), unit.dalton)
 
         unadjusted_variance = (
-            unit.BOLTZMANN_CONSTANT_kB
-            * self.temperature
-            * (1 - v_scale**2)
-            / masses[:, None]
+            unit.BOLTZMANN_CONSTANT_kB * self.temperature * (1 - a**2) / m[:, None]
         )
         std_SI_units = (
             1
@@ -57,7 +53,7 @@ class BaseDynamics(ABC):
             * unadjusted_variance.value_in_unit(unit.joule / unit.dalton)
         )
         std = unit.Quantity(np.sqrt(std_SI_units), unit.meter / unit.second)
-        return v_scale, f_scale, masses, std
+        return a, m, std
 
     def get_charge_matrix(self):
         charge_matrix = np.zeros((self.num_particles, self.num_particles))

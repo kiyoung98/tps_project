@@ -1,8 +1,12 @@
+import os
 import openmm as mm
 from openmm import app
 import openmm.unit as unit
 
 from .base import BaseDynamics
+from openmmtools.integrators import LangevinIntegrator
+
+current_dir = os.getcwd()
 
 
 class Alanine(BaseDynamics):
@@ -29,7 +33,7 @@ class Alanine(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = mm.LangevinIntegrator(
+        integrator = LangevinIntegrator(
             self.temperature,
             self.friction_coefficient,
             self.timestep,
@@ -48,10 +52,11 @@ class Chignolin(BaseDynamics):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField(
-            "/home/guest_sky/tps-gfn/openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
-            "implicit/gbn2.xml",
+        path = os.path.join(
+            current_dir,
+            "openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
         )
+        forcefield = app.ForceField(path, "implicit/gbn2.xml")
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
@@ -70,7 +75,7 @@ class Chignolin(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = mm.LangevinIntegrator(
+        integrator = LangevinIntegrator(
             self.temperature,
             self.friction_coefficient,
             self.timestep,
@@ -89,10 +94,11 @@ class Poly(BaseDynamics):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField(
-            "/home/guest_sky/tps-gfn/openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
-            "implicit/gbn2.xml",
+        path = os.path.join(
+            current_dir,
+            "openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
         )
+        forcefield = app.ForceField(path, "implicit/gbn2.xml")
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
@@ -112,7 +118,7 @@ class Poly(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = mm.LangevinIntegrator(
+        integrator = LangevinIntegrator(
             self.temperature,
             self.friction_coefficient,
             self.timestep,
@@ -131,10 +137,11 @@ class Histidine(BaseDynamics):
         super().__init__(args, state)
 
     def setup(self):
-        forcefield = app.ForceField(
-            "/home/guest_sky/tps-gfn/openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
-            "implicit/gbn2.xml",
+        path = os.path.join(
+            current_dir,
+            "openmmforcefields/openmmforcefields/ffxml/amber/protein.ff14SBonlysc.xml",
         )
+        forcefield = app.ForceField(path, "implicit/gbn2.xml")
         pdb = app.PDBFile(self.start_file)
         system = forcefield.createSystem(
             pdb.topology,
@@ -154,7 +161,7 @@ class Histidine(BaseDynamics):
         for i in range(len(pdb.positions)):
             external_force.addParticle(i, [0, 0, 0])
 
-        integrator = mm.LangevinIntegrator(
+        integrator = LangevinIntegrator(
             self.temperature,
             self.friction_coefficient,
             self.timestep,

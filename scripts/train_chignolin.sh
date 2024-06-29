@@ -3,7 +3,7 @@
 current_date=$(date +"%m%d-%H%M%S")
 for seed in {0..7}; do
   CUDA_VISIBLE_DEVICES=$seed python src/train.py \
-    --project chignolin_unbiased \
+    --project chignolin \
     --molecule chignolin \
     --date $current_date \
     --seed $seed \
@@ -12,8 +12,7 @@ for seed in {0..7}; do
     --wandb \
     --save_freq 10 \
     --sigma 0.2 \
-    --num_steps 10000 \
-    --unbiased_steps 5000 \
+    --num_steps 5000 \
     --buffer_size 256 \
     --num_samples 2 \
     --trains_per_rollout 1000 &

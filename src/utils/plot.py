@@ -349,6 +349,7 @@ def plot_3D_view(save_dir, start_file, positions, last_idx):
                 else:
                     trajs = trajs.join(traj)
             trajs.save(f"{save_dir}/3D_views/{i}.h5")
+            trajs.save(f"{save_dir}/3D_views/{i}.pdb")
 
 
 def plot_potential(save_dir, potentials, last_idx):

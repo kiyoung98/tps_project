@@ -7,29 +7,25 @@ from utils.utils import pairwise_dist, kabsch
 
 class FlowNetAgent:
     def __init__(self, args, md):
+        self.a = md.a
         self.num_particles = md.num_particles
-        self.v_scale = torch.tensor(md.v_scale, dtype=torch.float, device=args.device)
-        self.f_scale = torch.tensor(
-            md.f_scale.value_in_unit(unit.femtosecond),
-            dtype=torch.float,
-            device=args.device,
-        )
         self.std = torch.tensor(
             md.std.value_in_unit(unit.nanometer / unit.femtosecond),
             dtype=torch.float,
             device=args.device,
         )
-        self.masses = torch.tensor(
-            md.masses.value_in_unit(md.masses.unit),
+        self.m = torch.tensor(
+            md.m.value_in_unit(md.m.unit),
             dtype=torch.float,
             device=args.device,
         ).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
+        # self.normal = Normal(0, self.std)
 
         if args.type == "train":
             self.replay = ReplayBuffer(args, md)
 
-    def sample(self, args, mds, temperature):
+    def sample(self, args, mds):
         positions = torch.zeros(
             (args.num_samples, args.num_steps + 1, self.num_particles, 3),
             device=args.device,
@@ -39,10 +35,6 @@ class FlowNetAgent:
             device=args.device,
         )
         actions = torch.zeros(
-            (args.num_samples, args.num_steps, self.num_particles, 3),
-            device=args.device,
-        )
-        biases = torch.zeros(
             (args.num_samples, args.num_steps, self.num_particles, 3),
             device=args.device,
         )
@@ -56,57 +48,59 @@ class FlowNetAgent:
         velocities[:, 0] = velocity
         potentials[:, 0] = potential
 
-        mds.set_temperature(temperature)
+        if args.type == "train":
+            mds.set_temperature(args.train_temperature)
         for s in tqdm(range(args.num_steps), desc="Sampling"):
-            if s > args.unbiased_steps:
-                bias = biases[:, s]
-            else:
-                bias = (
-                    args.bias_scale * self.policy(position.detach()).squeeze().detach()
-                )
+            bias = args.bias_scale * self.policy(position.detach()).squeeze().detach()
             mds.step(bias)
 
             next_position, velocity, force, potential = mds.report()
 
             # extract noise
-            noise = (next_position - position) / args.timestep - (
-                self.v_scale * velocity + self.f_scale * force / self.masses
+            noise = (next_position - position) / args.timestep - self.a * (
+                velocity + force / self.m
             )
 
             positions[:, s + 1] = next_position
-            velocities[:, s + 1] = velocity
             potentials[:, s + 1] = potential - (bias * next_position).sum(
                 (1, 2)
             )  # Subtract bias potential to get true potential
 
             position = next_position
             bias = 1e-6 * bias  # kJ/(mol*nm) -> (da*nm)/fs**2
-            action = self.f_scale * bias / self.masses + noise
+            action = self.a * bias / self.m + noise
 
             actions[:, s] = action
-            biases[:, s] = bias
         mds.reset()
 
         log_md_reward = -0.5 * torch.square(actions / self.std).mean((1, 2, 3))
 
-        # log_target_reward = torch.zeros(args.num_samples, args.num_steps, device=args.device)
-        # for i in range(args.num_samples):
-        #     aligned_target_position, rmsd = kabsch(mds.target_position, positions[i][1:])
-        #     target_velocity = (aligned_target_position - positions[i][:-1]) / args.timestep
-        #     log_target_reward[i] = -0.5 * torch.square((target_velocity-velocities[i][1:])/self.std).mean((1, 2)) # TODO: Modify velocity
-        # print(log_target_reward)
-        # log_target_reward, last_idx = log_target_reward.max(1)
-
-        target_pd = pairwise_dist(mds.target_position)
-
-        log_target_reward = torch.zeros(
-            args.num_samples, args.num_steps + 1, device=args.device
-        )
-        for i in range(args.num_samples):
-            pd = pairwise_dist(positions[i])
-            log_target_reward[i] = -torch.square((pd - target_pd) / args.sigma).mean(
-                (1, 2)
+        if args.reward == "kabsch":
+            log_target_reward = torch.zeros(
+                args.num_samples, args.num_steps, device=args.device
             )
+            for i in range(args.num_samples):
+                aligned_target_position, rmsd = kabsch(
+                    mds.target_position, positions[i][1:]
+                )
+                target_velocity = (
+                    aligned_target_position - positions[i][:-1]
+                ) / args.timestep
+                log_target_reward[i] = -0.5 * torch.square(
+                    (target_velocity - velocities[i][1:]) / self.std
+                ).mean((1, 2))
+        elif args.reward == "dist":
+            target_pd = pairwise_dist(mds.target_position)
+
+            log_target_reward = torch.zeros(
+                args.num_samples, args.num_steps + 1, device=args.device
+            )
+            for i in range(args.num_samples):
+                pd = pairwise_dist(positions[i])
+                log_target_reward[i] = -torch.square(
+                    (pd - target_pd) / args.sigma
+                ).mean((1, 2))
+
         log_target_reward, last_idx = log_target_reward.max(1)
 
         log_reward = log_md_reward + log_target_reward
@@ -125,28 +119,30 @@ class FlowNetAgent:
         return log
 
     def train(self, args):
-        log_z_optimizer = torch.optim.Adam([self.policy.log_z], lr=args.log_z_lr)
-        mlp_optimizer = torch.optim.Adam(self.policy.mlp.parameters(), lr=args.mlp_lr)
+        optimizer = torch.optim.Adam(
+            [
+                {"params": [self.policy.log_z], "lr": args.log_z_lr},
+                {"params": self.policy.mlp.parameters(), "lr": args.policy_lr},
+            ]
+        )
 
         positions, actions, log_reward = self.replay.sample()
 
         biases = args.bias_scale * self.policy(positions[:, :-1])
         biases = 1e-6 * biases  # kJ/(mol*nm) -> (da*nm)/fs**2
-        biases = self.f_scale * biases / self.masses
+        biases = self.a * biases / self.m
 
         log_z = self.policy.log_z
         log_forward = -0.5 * torch.square((biases - actions) / self.std).mean((1, 2, 3))
-        loss = (log_z + log_forward - log_reward).square().mean()
+        loss = (log_z + log_forward - log_reward).square().mean() * args.scale
 
         loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(self.policy.log_z, args.max_grad_norm)
-        torch.nn.utils.clip_grad_norm_(self.policy.mlp.parameters(), args.max_grad_norm)
+        for group in optimizer.param_groups:
+            torch.nn.utils.clip_grad_norm_(group["params"], args.max_grad_norm)
 
-        mlp_optimizer.step()
-        log_z_optimizer.step()
-        mlp_optimizer.zero_grad()
-        log_z_optimizer.zero_grad()
+        optimizer.step()
+        optimizer.zero_grad()
         return loss.item()
 
 
@@ -164,6 +160,7 @@ class ReplayBuffer:
         self.idx = 0
         self.buffer_size = args.buffer_size
         self.num_samples = args.num_samples
+        self.batch_size = args.batch_size
 
     def add(self, data):
         indices = torch.arange(self.idx, self.idx + self.num_samples) % self.buffer_size
@@ -172,5 +169,5 @@ class ReplayBuffer:
         self.positions[indices], self.actions[indices], self.log_reward[indices] = data
 
     def sample(self):
-        indices = torch.randperm(min(self.idx, self.buffer_size))[: self.num_samples]
+        indices = torch.randperm(min(self.idx, self.buffer_size))[: self.batch_size]
         return self.positions[indices], self.actions[indices], self.log_reward[indices]
