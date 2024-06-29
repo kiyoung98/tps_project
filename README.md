@@ -1,4 +1,4 @@
-# GFlowNet for Sampling Transition Paths for Large Molecules.
+# [Collective Variable Free Transition Path Sampling with Generative Flow Networks](https://arxiv.org/abs/2405.19961v2)
 
 ## Installation
 
