@@ -51,7 +51,10 @@ class FlowNetAgent:
         if args.type == "train":
             mds.set_temperature(args.train_temperature)
         for s in tqdm(range(args.num_steps), desc="Sampling"):
-            bias = args.bias_scale * self.policy(position.detach()).squeeze().detach()
+            bias = (
+                args.bias_scale
+                * self.policy(position.detach(), mds.target_position).squeeze().detach()
+            )
             mds.step(bias)
 
             next_position, velocity, force, potential = mds.report()
@@ -87,7 +90,7 @@ class FlowNetAgent:
                     aligned_target_position - positions[i][:-1]
                 ) / args.timestep
                 log_target_reward[i] = -0.5 * torch.square(
-                    (target_velocity - velocities[i][1:]) / self.std
+                    (target_velocity - velocities[i][1:]) / args.sigma
                 ).mean((1, 2))
         elif args.reward == "dist":
             target_pd = pairwise_dist(mds.target_position)
@@ -118,7 +121,7 @@ class FlowNetAgent:
         }
         return log
 
-    def train(self, args):
+    def train(self, args, mds):
         optimizer = torch.optim.Adam(
             [
                 {"params": [self.policy.log_z], "lr": args.log_z_lr},
@@ -128,7 +131,7 @@ class FlowNetAgent:
 
         positions, actions, log_reward = self.replay.sample()
 
-        biases = args.bias_scale * self.policy(positions[:, :-1])
+        biases = args.bias_scale * self.policy(positions[:, :-1], mds.target_position)
         biases = 1e-6 * biases  # kJ/(mol*nm) -> (da*nm)/fs**2
         biases = self.a * biases / self.m
 

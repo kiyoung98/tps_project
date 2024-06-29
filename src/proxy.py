@@ -7,9 +7,13 @@ class Alanine(nn.Module):
         super().__init__()
 
         self.force = args.force
+        self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        self.input_dim = md.num_particles * 3
+        if args.feat_aug:
+            self.input_dim = md.num_particles * (3 + 1)
+        else:
+            self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
 
         self.mlp = nn.Sequential(
@@ -30,11 +34,16 @@ class Alanine(nn.Module):
 
         self.to(args.device)
 
-    def forward(self, pos):
+    def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
+        if self.feat_aug:
+            dist = torch.norm(pos - target, dim=-1, keepdim=True)
+            pos_ = torch.cat([pos, dist], dim=-1)
+        else:
+            pos_ = pos
 
-        out = self.mlp(pos.reshape(-1, self.input_dim))
+        out = self.mlp(pos_.reshape(-1, self.input_dim))
 
         if not self.force:
             force = -torch.autograd.grad(
@@ -51,9 +60,13 @@ class Chignolin(nn.Module):
         super().__init__()
 
         self.force = args.force
+        self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        self.input_dim = md.num_particles * 3
+        if args.feat_aug:
+            self.input_dim = md.num_particles * (3 + 1)
+        else:
+            self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
 
         self.mlp = nn.Sequential(
@@ -74,11 +87,16 @@ class Chignolin(nn.Module):
 
         self.to(args.device)
 
-    def forward(self, pos):
+    def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
+        if self.feat_aug:
+            dist = torch.norm(pos - target, dim=-1, keepdim=True)
+            pos_ = torch.cat([pos, dist], dim=-1)
+        else:
+            pos_ = pos
 
-        out = self.mlp(pos.reshape(-1, self.input_dim))
+        out = self.mlp(pos_.reshape(-1, self.input_dim))
 
         if not self.force:
             force = -torch.autograd.grad(
@@ -95,9 +113,13 @@ class Poly(nn.Module):
         super().__init__()
 
         self.force = args.force
+        self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        self.input_dim = md.num_particles * 3
+        if args.feat_aug:
+            self.input_dim = md.num_particles * (3 + 1)
+        else:
+            self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
 
         self.mlp = nn.Sequential(
@@ -118,11 +140,16 @@ class Poly(nn.Module):
 
         self.to(args.device)
 
-    def forward(self, pos):
+    def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
+        if self.feat_aug:
+            dist = torch.norm(pos - target, dim=-1, keepdim=True)
+            pos_ = torch.cat([pos, dist], dim=-1)
+        else:
+            pos_ = pos
 
-        out = self.mlp(pos.reshape(-1, self.input_dim))
+        out = self.mlp(pos_.reshape(-1, self.input_dim))
 
         if not self.force:
             force = -torch.autograd.grad(
@@ -139,9 +166,13 @@ class Histidine(nn.Module):
         super().__init__()
 
         self.force = args.force
+        self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        self.input_dim = md.num_particles * 3
+        if args.feat_aug:
+            self.input_dim = md.num_particles * (3 + 1)
+        else:
+            self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
 
         self.mlp = nn.Sequential(
@@ -162,11 +193,16 @@ class Histidine(nn.Module):
 
         self.to(args.device)
 
-    def forward(self, pos):
+    def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
+        if self.feat_aug:
+            dist = torch.norm(pos - target, dim=-1, keepdim=True)
+            pos_ = torch.cat([pos, dist], dim=-1)
+        else:
+            pos_ = pos
 
-        out = self.mlp(pos.reshape(-1, self.input_dim))
+        out = self.mlp(pos_.reshape(-1, self.input_dim))
 
         if not self.force:
             force = -torch.autograd.grad(

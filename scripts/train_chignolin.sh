@@ -15,7 +15,7 @@ for seed in {0..7}; do
     --num_steps 5000 \
     --buffer_size 256 \
     --num_samples 2 \
-    --trains_per_rollout 1000 &
+    --trains_per_rollout 200 &
 done
 
 wait
