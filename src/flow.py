@@ -156,7 +156,8 @@ class FlowNetAgent:
         optimizer.step()
         optimizer.zero_grad()
 
-        self.replay.update_priorities(indices, tb_error.abs().detach())
+        if args.buffer == "prioritized":
+            self.replay.update_priorities(indices, tb_error.abs().detach())
         return loss.item()
 
 
