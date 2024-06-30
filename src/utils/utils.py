@@ -70,3 +70,24 @@ def compute_dihedral(positions):
     v3 = torch.cross(v0, v2, dim=-1)
     y = torch.sum(v3 * v1, dim=-1)
     return torch.atan2(y, x)
+
+
+def compute_s_dist(x, y):
+    x_dist = torch.cdist(x, x) + torch.eye(x.shape[-2], device=x.device).unsqueeze(0)
+    y_dist = torch.cdist(y, y) + torch.eye(y.shape[-2], device=y.device).unsqueeze(0)
+    log_dist = x_dist.log() - y_dist.log()
+
+    x_gyr = compute_gyration(x)
+    y_gyr = compute_gyration(y)
+
+    gyr_dist = torch.linalg.slogdet(x_gyr)[1] - torch.linalg.slogdet(y_gyr)[1]
+
+    s_dist = log_dist.square().sum(dim=(-2, -1)) / 2 + gyr_dist.square()
+    return s_dist
+
+
+def compute_gyration(x):
+    center = torch.mean(x, dim=-2, keepdim=True)
+    centered_x = x - center
+    gyration_tensors = torch.einsum("lni,lnj->lij", centered_x, centered_x)
+    return gyration_tensors

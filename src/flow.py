@@ -2,7 +2,7 @@ import torch
 import proxy
 from tqdm import tqdm
 import openmm.unit as unit
-from utils.utils import pairwise_dist, kabsch
+from utils.utils import *
 
 
 class FlowNetAgent:
@@ -103,6 +103,14 @@ class FlowNetAgent:
                 log_target_reward[i] = -torch.square(
                     (pd - target_pd) / args.sigma
                 ).mean((1, 2))
+        elif args.reward == "s_dist":
+            log_target_reward = torch.zeros(
+                args.num_samples, args.num_steps + 1, device=args.device
+            )
+            for i in range(args.num_samples):
+                log_target_reward[i] = (
+                    compute_s_dist(positions[i], mds.target_position) / args.sigma
+                )
 
         log_target_reward, last_idx = log_target_reward.max(1)
 
