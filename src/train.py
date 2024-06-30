@@ -85,7 +85,7 @@ parser.add_argument(
     help="Size of buffer which stores sampled paths",
 )
 parser.add_argument(
-    "--batch_size", default=64, type=int, help="Batch size for training"
+    "--batch_size", default=16, type=int, help="Batch size for training"
 )
 parser.add_argument(
     "--trains_per_rollout",
