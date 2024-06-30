@@ -34,7 +34,7 @@ parser.add_argument(
 parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
 parser.add_argument("--num_steps", default=1000, type=int, help="Length of paths")
-parser.add_argument("--feat_aug", action="store_true", help="Use feature augmentation")
+parser.add_argument("--feat_aug", default="", type=str)
 parser.add_argument(
     "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
 )

@@ -10,8 +10,10 @@ class Alanine(nn.Module):
         self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        if args.feat_aug:
+        if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
+        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+            self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
@@ -37,9 +39,16 @@ class Alanine(nn.Module):
     def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
-        if self.feat_aug:
+        if self.feat_aug == "dist":
             dist = torch.norm(pos - target, dim=-1, keepdim=True)
             pos_ = torch.cat([pos, dist], dim=-1)
+        elif self.feat_aug == "rel_pos":
+            pos_ = torch.cat([pos, pos - target], dim=-1)
+        elif self.feat_aug == "norm_rel_pos":
+            pos_ = torch.cat(
+                [pos, (pos - target) / torch.norm(pos - target, dim=-1, keepdim=True)],
+                dim=-1,
+            )
         else:
             pos_ = pos
 
@@ -63,8 +72,10 @@ class Chignolin(nn.Module):
         self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        if args.feat_aug:
+        if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
+        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+            self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
@@ -90,9 +101,16 @@ class Chignolin(nn.Module):
     def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
-        if self.feat_aug:
+        if self.feat_aug == "dist":
             dist = torch.norm(pos - target, dim=-1, keepdim=True)
             pos_ = torch.cat([pos, dist], dim=-1)
+        elif self.feat_aug == "rel_pos":
+            pos_ = torch.cat([pos, pos - target], dim=-1)
+        elif self.feat_aug == "norm_rel_pos":
+            pos_ = torch.cat(
+                [pos, (pos - target) / torch.norm(pos - target, dim=-1, keepdim=True)],
+                dim=-1,
+            )
         else:
             pos_ = pos
 
@@ -116,8 +134,10 @@ class Poly(nn.Module):
         self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        if args.feat_aug:
+        if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
+        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+            self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
@@ -143,9 +163,16 @@ class Poly(nn.Module):
     def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
-        if self.feat_aug:
+        if self.feat_aug == "dist":
             dist = torch.norm(pos - target, dim=-1, keepdim=True)
             pos_ = torch.cat([pos, dist], dim=-1)
+        elif self.feat_aug == "rel_pos":
+            pos_ = torch.cat([pos, pos - target], dim=-1)
+        elif self.feat_aug == "norm_rel_pos":
+            pos_ = torch.cat(
+                [pos, (pos - target) / torch.norm(pos - target, dim=-1, keepdim=True)],
+                dim=-1,
+            )
         else:
             pos_ = pos
 
@@ -169,8 +196,10 @@ class Histidine(nn.Module):
         self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        if args.feat_aug:
+        if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
+        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+            self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
         self.output_dim = md.num_particles * 3 if self.force else 1
@@ -196,9 +225,16 @@ class Histidine(nn.Module):
     def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
-        if self.feat_aug:
+        if self.feat_aug == "dist":
             dist = torch.norm(pos - target, dim=-1, keepdim=True)
             pos_ = torch.cat([pos, dist], dim=-1)
+        elif self.feat_aug == "rel_pos":
+            pos_ = torch.cat([pos, pos - target], dim=-1)
+        elif self.feat_aug == "norm_rel_pos":
+            pos_ = torch.cat(
+                [pos, (pos - target) / torch.norm(pos - target, dim=-1, keepdim=True)],
+                dim=-1,
+            )
         else:
             pos_ = pos
 
