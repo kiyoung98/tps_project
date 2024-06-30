@@ -55,6 +55,8 @@ parser.add_argument("--reward", default="dist", type=str)
 parser.add_argument(
     "--train_temperature", default=600, type=float, help="Temperature for training"
 )
+parser.add_argument("--pos_grad", action="store_true")
+parser.add_argument("--pos_grad_weight", default=1, type=float)
 parser.add_argument(
     "--max_grad_norm", default=10, type=int, help="Maximum norm of gradient to clip"
 )
@@ -75,7 +77,7 @@ parser.add_argument(
     default="",
     type=str,
 )
-parser.add_argument("--alpha", default=1, type=float)
+parser.add_argument("--prioritized_exp", default=1, type=float)
 parser.add_argument(
     "--buffer_size",
     default=2048,

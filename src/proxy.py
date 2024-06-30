@@ -12,10 +12,11 @@ class Alanine(nn.Module):
         self.num_particles = md.num_particles
         if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
-        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+        elif args.feat_aug in ["rel_pos", "norm_rel_pos"]:
             self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
+
         self.output_dim = md.num_particles * 3 if self.force else 1
 
         self.mlp = nn.Sequential(
@@ -74,7 +75,7 @@ class Chignolin(nn.Module):
         self.num_particles = md.num_particles
         if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
-        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+        elif args.feat_aug in ["rel_pos", "norm_rel_pos"]:
             self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
@@ -136,7 +137,7 @@ class Poly(nn.Module):
         self.num_particles = md.num_particles
         if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
-        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+        elif args.feat_aug in ["rel_pos", "norm_rel_pos"]:
             self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3
@@ -198,7 +199,7 @@ class Histidine(nn.Module):
         self.num_particles = md.num_particles
         if args.feat_aug == "dist":
             self.input_dim = md.num_particles * (3 + 1)
-        elif args.feat_aug == "rel_pos" or "norm_rel_pos":
+        elif args.feat_aug in ["rel_pos", "norm_rel_pos"]:
             self.input_dim = md.num_particles * (3 + 3)
         else:
             self.input_dim = md.num_particles * 3

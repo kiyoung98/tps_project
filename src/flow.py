@@ -139,8 +139,11 @@ class FlowNetAgent:
 
         indices, positions, actions, log_reward = self.replay.sample()
 
-        biases = args.bias_scale * self.policy(positions[:, :-1], mds.target_position)
-        biases = 1e-6 * biases  # kJ/(mol*nm) -> (da*nm)/fs**2
+        if args.pos_grad and args.force:
+            positions.requires_grad = True
+
+        biases = args.bias_scale * self.policy(positions, mds.target_position)
+        biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
         biases = self.a * biases / self.m
 
         log_z = self.policy.log_z
@@ -155,6 +158,10 @@ class FlowNetAgent:
 
         optimizer.step()
         optimizer.zero_grad()
+
+        if args.pos_grad:
+            positions = positions - args.pos_grad_weight * positions.grad
+            self.replay.update_positions(indices, positions.detach())
 
         if args.buffer == "prioritized":
             self.replay.update_priorities(indices, tb_error.abs().detach())
@@ -174,7 +181,7 @@ class ReplayBuffer:
         self.priorities = torch.ones(args.buffer_size, device=args.device)
 
         self.idx = 0
-        self.alpha = args.alpha
+        self.prioritized_exp = args.prioritized_exp
         self.buffer = args.buffer
         self.buffer_size = args.buffer_size
         self.num_samples = args.num_samples
@@ -188,9 +195,11 @@ class ReplayBuffer:
 
     def sample(self):
         if self.buffer == "prioritized":
-            probs = self.priorities[: min(self.idx, self.buffer_size)].pow(self.alpha)
+            probs = self.priorities[: min(self.idx, self.buffer_size)].pow(
+                self.prioritized_exp
+            )
         elif self.buffer == "":
-            probs = self.priorities
+            probs = self.priorities[: min(self.idx, self.buffer_size)]
         probs = probs / probs.sum()
         indices = torch.multinomial(
             probs, min(self.idx, self.batch_size), replacement=False
@@ -204,3 +213,6 @@ class ReplayBuffer:
 
     def update_priorities(self, indices, weight):
         self.priorities[indices] = weight
+
+    def update_positions(self, indices, positions):
+        self.positions[indices] = positions
