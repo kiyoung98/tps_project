@@ -108,7 +108,7 @@ class FlowNetAgent:
                 args.num_samples, args.num_steps + 1, device=args.device
             )
             for i in range(args.num_samples):
-                log_target_reward[i] = (
+                log_target_reward[i] = -(
                     compute_s_dist(positions[i], mds.target_position) / args.sigma
                 )
 
