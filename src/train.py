@@ -71,6 +71,12 @@ parser.add_argument(
     help="Learning rate of bias potential or force",
 )
 parser.add_argument(
+    "--buffer",
+    default="",
+    type=str,
+)
+parser.add_argument("--alpha", default=1, type=float)
+parser.add_argument(
     "--buffer_size",
     default=2048,
     type=int,
