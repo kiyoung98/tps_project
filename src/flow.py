@@ -48,9 +48,9 @@ class FlowNetAgent:
         velocities[:, 0] = velocity
         potentials[:, 0] = potential
 
-        if args.type == "train":
-            mds.set_temperature(args.train_temperature)
         for s in tqdm(range(args.num_steps), desc="Sampling"):
+            if args.type == "train":
+                mds.set_temperature(args.train_temperature)
             if args.unbiased_md == "mixing" and s % 2 == 0:
                 mds.set_temperature(args.temperature)
                 bias = torch.zeros(
@@ -58,7 +58,6 @@ class FlowNetAgent:
                     device=args.device,
                 )
             else:
-                mds.set_temperature(args.train_temperature)
                 bias = (
                     args.bias_scale
                     * self.policy(position.detach(), mds.target_position)
