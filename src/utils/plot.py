@@ -336,12 +336,16 @@ def plot_path_alanine(save_dir, positions, target_position, last_idx):
         plt.close()
 
 
-def plot_3D_view(save_dir, start_file, positions, last_idx):
+def plot_3D_view(save_dir, start_file, positions, potentials, last_idx):
     positions = positions.detach().cpu().numpy()
     for i in tqdm(range(positions.shape[0]), desc="Plot 3D views"):
         if last_idx[i] > 0:
+            traj = md.load_pdb(start_file)
+            for j in [0, potentials[i].argmax(), last_idx[i] - 1]:
+                traj.xyz = positions[i, j]
+                traj.save(f"{save_dir}/3D_views/{i}_{j}.pdb")
+
             for j in range(last_idx[i]):
-                traj = md.load_pdb(start_file)
                 traj.xyz = positions[i, j]
 
                 if j == 0:
@@ -349,7 +353,6 @@ def plot_3D_view(save_dir, start_file, positions, last_idx):
                 else:
                     trajs = trajs.join(traj)
             trajs.save(f"{save_dir}/3D_views/{i}.h5")
-            trajs.save(f"{save_dir}/3D_views/{i}.pdb")
 
 
 def plot_potential(save_dir, potentials, last_idx):

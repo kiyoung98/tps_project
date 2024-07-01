@@ -179,4 +179,6 @@ class Logger:
         if self.type == "eval":
             plot_path_alanine(self.save_dir, positions, target_position, last_idx)
             plot_potential(self.save_dir, potentials, last_idx)
-            plot_3D_view(self.save_dir, self.start_file, positions, last_idx)
+            plot_3D_view(
+                self.save_dir, self.start_file, positions, potentials, last_idx
+            )
