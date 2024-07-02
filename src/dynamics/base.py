@@ -30,6 +30,7 @@ class BaseDynamics(ABC):
 
         self.a, self.m, self.std = self.get_md_info()
         self.charge_matrix = self.get_charge_matrix()
+        self.heavy_atom_ids = self.get_heavy_atoms()
 
     @abstractmethod
     def setup(self):
@@ -70,6 +71,14 @@ class BaseDynamics(ABC):
                         * nuclear_charge[atom_j.element.symbol]
                     )
         return charge_matrix
+
+    def get_heavy_atoms(self):
+        heavy_atom_ids = []
+        topology = self.pdb.getTopology()
+        for atom in topology.atoms():
+            if atom.element.symbol != "H":
+                heavy_atom_ids.append(atom.index)
+        return heavy_atom_ids
 
     def step(self, forces):
         for i in range(forces.shape[0]):

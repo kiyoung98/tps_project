@@ -50,6 +50,7 @@ parser.add_argument(
     "--temperature", default=300, type=float, help="Temperature for evaluation"
 )
 parser.add_argument("--reward", default="dist", type=str)
+parser.add_argument("--heavy_atoms", action="store_true")
 parser.add_argument("--unbiased_md", default="", type=str)
 
 # Training Config

@@ -14,6 +14,7 @@ class Logger:
         self.wandb = args.wandb
         self.molecule = args.molecule
         self.start_file = md.start_file
+        self.heavy_atoms = args.heavy_atoms
         self.save_freq = args.save_freq if args.type == "train" else 1
 
         self.best_loss = float("inf")
@@ -87,6 +88,9 @@ class Logger:
         pd, std_pd = self.metric.expected_pairwise_distance(
             last_position, target_position
         )
+        lpd, std_lpd = self.metric.expected_log_pairwise_distance(
+            last_position, target_position, self.heavy_atoms
+        )
         pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(
             last_position, target_position
         )
@@ -109,10 +113,12 @@ class Logger:
                 "log_z": policy.log_z.item(),
                 "ll": ll,
                 "epd": pd,
+                "elpd": lpd,
                 "epcd": pcd,
                 "len": len,
                 "std_ll": std_ll,
                 "std_pd": std_pd,
+                "std_lpd": std_lpd,
                 "std_pcd": std_pcd,
                 "std_len": std_len,
             }
@@ -132,6 +138,7 @@ class Logger:
         self.logger.info(f"log_z: {policy.log_z.item()}")
         self.logger.info(f"ll: {ll}")
         self.logger.info(f"epd: {pd}")
+        self.logger.info(f"elpd: {lpd}")
         self.logger.info(f"epcd: {pcd}")
         self.logger.info(f"len: {len}")
         self.logger.info(f"std_ll: {std_ll}")

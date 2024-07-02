@@ -17,6 +17,8 @@ class Metric:
             device=args.device,
         )
 
+        self.heavy_atom_ids = md.heavy_atom_ids
+
         self.normal = Normal(0, self.std)
 
         if args.molecule == "alanine":
@@ -41,6 +43,19 @@ class Metric:
         pd = (last_pd - target_pd).square().mean((1, 2))
         mean_pd, std_pd = pd.mean().item(), pd.std().item()
         return mean_pd, std_pd
+
+    def expected_log_pairwise_distance(
+        self, last_position, target_position, heavy_atoms=False
+    ):
+        if heavy_atoms:
+            s_dist = compute_s_dist(
+                last_position[:, self.heavy_atom_ids],
+                target_position[:, self.heavy_atom_ids],
+            )
+        else:
+            s_dist = compute_s_dist(last_position, target_position)
+        mean_s_dist, std_s_dist = s_dist.mean().item(), s_dist.std().item()
+        return mean_s_dist, std_s_dist
 
     def expected_pairwise_coulomb_distance(self, last_position, target_position):
         last_pcd = self.coulomb(last_position)

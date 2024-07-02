@@ -20,6 +20,7 @@ class FlowNetAgent:
             device=args.device,
         ).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
+        self.heavy_atom_ids = md.heavy_atom_ids
         # self.normal = Normal(0, self.std)
 
         if args.type == "train":
@@ -117,9 +118,18 @@ class FlowNetAgent:
                 args.num_samples, args.num_steps + 1, device=args.device
             )
             for i in range(args.num_samples):
-                log_target_reward[i] = -(
-                    compute_s_dist(positions[i], mds.target_position) / args.sigma
-                )
+                if args.heavy_atoms:
+                    log_target_reward[i] = -(
+                        compute_s_dist(
+                            positions[i][:, self.heavy_atom_ids],
+                            mds.target_position[:, self.heavy_atom_ids],
+                        )
+                        / args.sigma
+                    )
+                else:
+                    log_target_reward[i] = -(
+                        compute_s_dist(positions[i], mds.target_position) / args.sigma
+                    )
 
         log_target_reward, last_idx = log_target_reward.max(1)
 
