@@ -116,11 +116,11 @@ if __name__ == "__main__":
     for rollout in range(args.num_rollouts):
         print(f"Rollout: {rollout}")
 
-        log = agent.sample(args, mds)
+        log = agent.sample(args, mds, temperatures[rollout])
 
         loss = 0
         for _ in tqdm(range(args.trains_per_rollout), desc="Training"):
-            loss += agent.train(args, mds, temperatures[rollout])
+            loss += agent.train(args, mds)
         loss = loss / args.trains_per_rollout
 
         logger.log(loss, agent.policy, rollout, **log)
