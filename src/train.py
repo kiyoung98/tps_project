@@ -54,9 +54,8 @@ parser.add_argument("--heavy_atoms", action="store_true")
 parser.add_argument("--unbiased_md", default="", type=str)
 
 # Training Config
-parser.add_argument(
-    "--train_temperature", default=600, type=float, help="Temperature for training"
-)
+parser.add_argument("--start_temperature", default=600, type=float)
+parser.add_argument("--end_temperature", default=300, type=float)
 parser.add_argument("--pos_grad", action="store_true")
 parser.add_argument("--pos_grad_weight", default=1, type=float)
 parser.add_argument(
@@ -109,6 +108,9 @@ if __name__ == "__main__":
 
     logger.info(f"Initialize {args.num_samples} MDs starting at {args.start_state}")
     mds = MDs(args)
+    temperatures = torch.linspace(
+        args.start_temperature, args.end_temperature, args.num_rollouts
+    )
 
     logger.info("Start training")
     for rollout in range(args.num_rollouts):
@@ -118,7 +120,7 @@ if __name__ == "__main__":
 
         loss = 0
         for _ in tqdm(range(args.trains_per_rollout), desc="Training"):
-            loss += agent.train(args, mds)
+            loss += agent.train(args, mds, temperatures[rollout])
         loss = loss / args.trains_per_rollout
 
         logger.log(loss, agent.policy, rollout, **log)

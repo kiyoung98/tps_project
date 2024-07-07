@@ -76,6 +76,8 @@ class Logger:
         potentials,
         last_position,
         target_position,
+        log_md_reward,
+        log_target_reward,
     ):
 
         # Calculate metrics
@@ -96,6 +98,9 @@ class Logger:
         )
         len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
 
+        elmr, std_lmr = log_md_reward.mean().item(), log_md_reward.std().item()
+        eltr, std_ltr = log_target_reward.mean().item(), log_target_reward.std().item()
+
         # Log
         if self.type == "train":
             self.logger.info(
@@ -115,11 +120,15 @@ class Logger:
                 "epd": pd,
                 "elpd": lpd,
                 "epcd": pcd,
+                "elmr": elmr,
+                "eltr": eltr,
                 "len": len,
                 "std_ll": std_ll,
                 "std_pd": std_pd,
                 "std_lpd": std_lpd,
                 "std_pcd": std_pcd,
+                "std_lmr": std_lmr,
+                "std_ltr": std_ltr,
                 "std_len": std_len,
             }
 
@@ -140,6 +149,8 @@ class Logger:
         self.logger.info(f"epd: {pd}")
         self.logger.info(f"elpd: {lpd}")
         self.logger.info(f"epcd: {pcd}")
+        self.logger.info(f"elmr: {elmr}")
+        self.logger.info(f"eltr: {eltr}")
         self.logger.info(f"len: {len}")
         self.logger.info(f"std_ll: {std_ll}")
         self.logger.info(f"std_pd: {std_pd}")

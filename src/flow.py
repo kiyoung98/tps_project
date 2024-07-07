@@ -26,7 +26,7 @@ class FlowNetAgent:
         if args.type == "train":
             self.replay = ReplayBuffer(args, md)
 
-    def sample(self, args, mds):
+    def sample(self, args, mds, temperature):
         positions = torch.zeros(
             (args.num_samples, args.num_steps + 1, self.num_particles, 3),
             device=args.device,
@@ -51,7 +51,7 @@ class FlowNetAgent:
 
         for s in tqdm(range(args.num_steps), desc="Sampling"):
             if args.type == "train":
-                mds.set_temperature(args.train_temperature)
+                mds.set_temperature(temperature)
             if args.unbiased_md == "mixing" and s % 2 == 0:
                 mds.set_temperature(args.temperature)
                 bias = torch.zeros(
@@ -143,6 +143,8 @@ class FlowNetAgent:
             "last_idx": last_idx + 1,
             "positions": positions,
             "potentials": potentials,
+            "log_md_reward": log_md_reward,
+            "log_target_reward": log_target_reward,
             "target_position": mds.target_position,
             "last_position": positions[torch.arange(args.num_samples), last_idx],
         }

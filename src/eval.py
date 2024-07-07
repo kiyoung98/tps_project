@@ -72,6 +72,6 @@ if __name__ == "__main__":
     agent.policy.load_state_dict(torch.load(model_path))
 
     logger.info(f"Start Evaulation")
-    log = agent.sample(args, mds)
+    log = agent.sample(args, mds, args.temperature)
     logger.log(None, agent.policy, 0, **log)
     logger.info(f"Finish Evaluation")
