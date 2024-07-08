@@ -138,6 +138,11 @@ class FlowNetAgent:
         if args.type == "train":
             self.replay.add((positions, actions, log_reward))
 
+        # if args.pos_grad:
+        #     positions.requires_grad = True
+        #     positions = positions - args.pos_grad_weight * positions.grad
+        #     self.replay.update_positions(indices, positions.detach())
+
         log = {
             "actions": actions,
             "last_idx": last_idx + 1,
@@ -160,9 +165,6 @@ class FlowNetAgent:
 
         indices, positions, actions, log_reward = self.replay.sample()
 
-        if args.pos_grad and args.force:
-            positions.requires_grad = True
-
         biases = args.bias_scale * self.policy(positions, mds.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
         biases = self.a * biases / self.m
@@ -179,10 +181,6 @@ class FlowNetAgent:
 
         optimizer.step()
         optimizer.zero_grad()
-
-        if args.pos_grad:
-            positions = positions - args.pos_grad_weight * positions.grad
-            self.replay.update_positions(indices, positions.detach())
 
         if args.buffer == "prioritized":
             self.replay.update_priorities(indices, tb_error.abs().detach())
@@ -235,5 +233,5 @@ class ReplayBuffer:
     def update_priorities(self, indices, weight):
         self.priorities[indices] = weight
 
-    def update_positions(self, indices, positions):
-        self.positions[indices] = positions
+    # def update_positions(self, indices, positions):
+    #     self.positions[indices] = positions

@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=0 python src/eval.py --model_path model/alanine/pot_flex.pt --num_steps 1000

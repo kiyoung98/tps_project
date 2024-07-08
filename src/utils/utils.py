@@ -72,6 +72,36 @@ def compute_dihedral(positions):
     return torch.atan2(y, x)
 
 
+def chignolin_h_bond(positions):
+    asp3od1_thr6og = torch.norm(positions[:, :, 36] - positions[:, :, 76], dim=-1)
+    asp3od2_thr6og = torch.norm(positions[:, :, 37] - positions[:, :, 76], dim=-1)
+    asp3n_thr8o = torch.norm(positions[:, :, 30] - positions[:, :, 95], dim=-1)
+
+    # find pair wise minimum between dists (36, 37) and angle corresponding to the minimum for hydrogen bond indexed by 81
+    asp3od_thr6og = torch.min(asp3od1_thr6og, asp3od2_thr6og)
+    # asp3od_thr6og = torch.where(
+    #     asp3od1_thr6og < asp3od2_thr6og, asp3od_thr6og, asp3od2_thr6og
+    # )
+
+    # asp3od_thr6og_angle = angle_between_vectors(
+    #     positions[:, :, 36] - positions[:, :, 81],
+    #     positions[:, :, 81] - positions[:, :, 76],
+    # )
+    # asp3n_thr8o_angle = angle_between_vectors(
+    #     positions[:, :, 30] - positions[:, :, 38],
+    #     positions[:, :, 38] - positions[:, :, 95],
+    # )
+    return asp3od_thr6og, asp3n_thr8o  # , angle
+
+
+def angle_between_vectors(v1, v2):
+    unit_v1 = v1 / torch.norm(v1, dim=-1, keepdim=True)
+    unit_v2 = v2 / torch.norm(v2, dim=-1, keepdim=True)
+    dot_product = torch.sum(unit_v1 * unit_v2, dim=-1)
+    angle = torch.acos(torch.clamp(dot_product, -1.0, 1.0))
+    return angle * (180.0 / torch.pi)
+
+
 def compute_s_dist(x, y):
     x_dist = torch.cdist(x, x) + torch.eye(x.shape[-2], device=x.device).unsqueeze(0)
     y_dist = torch.cdist(y, y) + torch.eye(y.shape[-2], device=y.device).unsqueeze(0)

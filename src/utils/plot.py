@@ -3,6 +3,7 @@ import numpy as np
 import mdtraj as md
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+from .utils import chignolin_h_bond
 
 
 def compute_dihedral(p):
@@ -238,6 +239,31 @@ def plot_paths_histidine(
     return fig
 
 
+def plot_paths_chignolin(save_dir, rollout, positions, last_idx):
+    asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
+    asp3od_thr6og = asp3od_thr6og.detach().cpu().numpy()
+    asp3n_thr8o = asp3n_thr8o.detach().cpu().numpy()
+
+    fig = plt.figure(figsize=(7, 7))
+    plt.xlim([0, 1.5])
+    plt.ylim([0, 2])
+    for i in range(positions.shape[0]):
+        if last_idx[i] > 0:
+            plt.scatter(asp3od_thr6og[i][: last_idx[i]], asp3n_thr8o[i][: last_idx[i]])
+
+    plt.plot([0, 0.35], [0, 0], color="black")
+    plt.plot([0.35, 0.35], [0, 0.35], color="black")
+    plt.plot([0.35, 0], [0.35, 0.35], color="black")
+    plt.plot([0, 0], [0.35, 0], color="black")
+
+    plt.xlabel("Asp3OD-Thr6OG")
+    plt.ylabel("Asp3N-Thr8O")
+    plt.show()
+    plt.savefig(f"{save_dir}/paths/{rollout}.png")
+    plt.close()
+    return fig
+
+
 def plot_potentials(save_dir, rollout, potentials, last_idx):
     potentials = potentials.detach().cpu().numpy()
     fig = plt.figure(figsize=(20, 5))
@@ -331,6 +357,91 @@ def plot_path_alanine(save_dir, positions, target_position, last_idx):
 
         plt.xlabel("phi")
         plt.ylabel("psi")
+        plt.show()
+        plt.savefig(f"{save_dir}/path/{i}.png")
+        plt.close()
+
+
+def plot_path_histidine(save_dir, positions, target_position, last_idx):
+    positions = positions.detach().cpu().numpy()
+    target_position = target_position.detach().cpu().numpy()
+
+    angle_2 = [0, 6, 8, 11]
+    angle_1 = [6, 8, 11, 23]
+
+    for i in range(positions.shape[0]):
+        plt.clf()
+        plt.close()
+        fig = plt.figure(figsize=(7, 7))
+        ax = fig.add_subplot(111)
+        plt.xlim([-np.pi, np.pi])
+        plt.ylim([-np.pi, np.pi])
+        potential = HistidinePotential()
+        xs = np.arange(-np.pi, np.pi + 0.1, 0.1)
+        ys = np.arange(-np.pi, np.pi + 0.1, 0.1)
+        x, y = np.meshgrid(xs, ys)
+        inp = torch.tensor(np.array([x, y])).view(2, -1).T
+
+        z = potential.potential(inp)
+        z = z.view(y.shape[0], y.shape[1])
+
+        plt.contourf(xs, ys, z, levels=100, zorder=0)
+
+        psis_start = []
+        phis_start = []
+
+        psis_start.append(compute_dihedral(positions[i, 0, angle_1, :]))
+        phis_start.append(compute_dihedral(positions[i, 0, angle_2, :]))
+
+        psi = []
+        phi = []
+        for j in range(last_idx[i]):
+            psi.append(compute_dihedral(positions[i, j, angle_1, :]))
+            phi.append(compute_dihedral(positions[i, j, angle_2, :]))
+        ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
+
+        ax.scatter(
+            phis_start,
+            psis_start,
+            edgecolors="black",
+            c="w",
+            zorder=100,
+            s=100,
+            marker="*",
+        )
+
+        psis_target = []
+        phis_target = []
+        psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
+        phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
+        ax.scatter(phis_target, psis_target, edgecolors="w", c="w", zorder=100, s=10)
+
+        plt.xlabel("phi")
+        plt.ylabel("psi")
+        plt.show()
+        plt.savefig(f"{save_dir}/path/{i}.png")
+        plt.close()
+
+
+def plot_path_chignolin(save_dir, positions, last_idx):
+    asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
+    asp3od_thr6og = asp3od_thr6og.detach().cpu().numpy()
+    asp3n_thr8o = asp3n_thr8o.detach().cpu().numpy()
+
+    for i in range(positions.shape[0]):
+        plt.figure(figsize=(7, 7))
+        plt.xlim([0, 1.5])
+        plt.ylim([0, 2])
+        if last_idx[i] > 0:
+            plt.scatter(asp3od_thr6og[i][: last_idx[i]], asp3n_thr8o[i][: last_idx[i]])
+
+        plt.plot([0, 0.35], [0, 0], color="black")
+        plt.plot([0.35, 0.35], [0, 0.35], color="black")
+        plt.plot([0.35, 0], [0.35, 0.35], color="black")
+        plt.plot([0, 0], [0.35, 0], color="black")
+
+        plt.xlabel("Asp3OD-Thr6OG")
+        plt.ylabel("Asp3N-Thr8O")
         plt.show()
         plt.savefig(f"{save_dir}/path/{i}.png")
         plt.close()

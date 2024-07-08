@@ -81,10 +81,14 @@ class Logger:
     ):
 
         # Calculate metrics
-        if self.molecule in ["alanine", "histidine"]:
+        if self.molecule in ["alanine", "histidine", "chignolin"]:
             thp, etps, etp_idxs, etp, std_etp, efps, efp_idxs, efp, std_efp = (
                 self.metric.cv_metrics(positions, target_position, potentials)
             )
+        if self.molecule == "chignolin":
+            asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
+            eat36, std_eat36 = asp3od_thr6og.mean().item(), asp3od_thr6og.std().item()
+            eat38, std_eat38 = asp3n_thr8o.mean().item(), asp3n_thr8o.std().item()
 
         ll, std_ll = self.metric.log_likelihood(actions)
         pd, std_pd = self.metric.expected_pairwise_distance(
@@ -132,13 +136,21 @@ class Logger:
                 "std_len": std_len,
             }
 
-            if self.molecule in ["alanine", "histidine"]:
+            if self.molecule in ["alanine", "histidine", "chignolin"]:
                 cv_log = {
                     "thp": thp,
                     "etp": etp,
                     "efp": efp,
                     "std_etp": std_etp,
                     "std_efp": std_efp,
+                }
+                log.update(cv_log)
+            elif self.molecule == "chignolin":
+                cv_log = {
+                    "eat36": eat36,
+                    "eat38": eat38,
+                    "std_eat36": std_eat36,
+                    "std_eat38": std_eat38,
                 }
                 log.update(cv_log)
 
@@ -157,12 +169,17 @@ class Logger:
         self.logger.info(f"std_pcd: {std_pcd}")
         self.logger.info(f"std_len: {std_len}")
 
-        if self.molecule in ["alanine", "histidine"]:
+        if self.molecule in ["alanine", "histidine", "chignolin"]:
             self.logger.info(f"thp: {thp}")
             self.logger.info(f"etp: {etp}")
             self.logger.info(f"efp: {efp}")
             self.logger.info(f"std_etp: {std_etp}")
             self.logger.info(f"std_etp: {std_efp}")
+        elif self.molecule == "chignolin":
+            self.logger.info(f"eat36: {eat36}")
+            self.logger.info(f"eat38: {eat38}")
+            self.logger.info(f"std_eat36: {std_eat36}")
+            self.logger.info(f"std_eat38: {std_eat38}")
 
         if rollout % self.save_freq == 0:
             torch.save(policy.state_dict(), f"{self.save_dir}/policies/{rollout}.pt")
@@ -175,13 +192,17 @@ class Logger:
                 fig_path = plot_paths_histidine(
                     self.save_dir, rollout, positions, target_position, last_idx
                 )
+            elif self.molecule == "chignolin":
+                fig_path = plot_paths_chignolin(
+                    self.save_dir, rollout, positions, last_idx
+                )
 
             fig_pot = plot_potentials(self.save_dir, rollout, potentials, last_idx)
 
             if self.wandb:
                 log = {"potentials": wandb.Image(fig_pot)}
 
-                if self.molecule in ["alanine", "histidine"]:
+                if self.molecule in ["alanine", "histidine", "chignolin"]:
                     fig_etp = plot_etps(self.save_dir, rollout, etps, etp_idxs)
                     fig_efp = plot_efps(self.save_dir, rollout, efps, efp_idxs)
 
@@ -195,7 +216,12 @@ class Logger:
                 wandb.log(log, step=rollout)
 
         if self.type == "eval":
-            plot_path_alanine(self.save_dir, positions, target_position, last_idx)
+            if self.molecule == "alanine":
+                plot_path_alanine(self.save_dir, positions, target_position, last_idx)
+            elif self.molecule == "histidine":
+                plot_path_histidine(self.save_dir, positions, target_position, last_idx)
+            elif self.molecule == "chignolin":
+                plot_path_chignolin(self.save_dir, positions, last_idx)
             plot_potential(self.save_dir, potentials, last_idx)
             plot_3D_view(
                 self.save_dir, self.start_file, positions, potentials, last_idx

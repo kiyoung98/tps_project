@@ -17,6 +17,7 @@ class Metric:
             device=args.device,
         )
 
+        self.molecule = args.molecule
         self.heavy_atom_ids = md.heavy_atom_ids
 
         self.normal = Normal(0, self.std)
@@ -78,15 +79,21 @@ class Metric:
     def cv_metrics(self, positions, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
-        target_psi = compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
-        target_phi = compute_dihedral(target_position[:, self.angle_2].unsqueeze(0))
+        if self.molecule == "chignolin":
+            asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
+            hit_mask = (asp3od_thr6og < 0.35) & (asp3n_thr8o < 0.35)
 
-        psi = compute_dihedral(positions[:, :, self.angle_1])
-        phi = compute_dihedral(positions[:, :, self.angle_2])
+        elif self.molecule in ["alanine", "histidine"]:
+            target_psi = compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
+            target_phi = compute_dihedral(target_position[:, self.angle_2].unsqueeze(0))
 
-        hit_mask = (torch.abs(psi - target_psi) < 0.75) & (
-            torch.abs(phi - target_phi) < 0.75
-        )
+            psi = compute_dihedral(positions[:, :, self.angle_1])
+            phi = compute_dihedral(positions[:, :, self.angle_2])
+
+            hit_mask = (torch.abs(psi - target_psi) < 0.75) & (
+                torch.abs(phi - target_phi) < 0.75
+            )
+
         hit, hit_idxs = hit_mask.max(-1)
 
         thp = 100 * hit.sum().float() / hit.shape[0]
