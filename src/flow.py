@@ -3,6 +3,7 @@ import proxy
 from tqdm import tqdm
 import openmm.unit as unit
 from utils.utils import *
+from torch.distributions import Normal
 
 
 class FlowNetAgent:
@@ -21,7 +22,7 @@ class FlowNetAgent:
         ).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
         self.heavy_atom_ids = md.heavy_atom_ids
-        # self.normal = Normal(0, self.std)
+        self.normal = Normal(0, self.std)
 
         if args.type == "train":
             self.replay = ReplayBuffer(args, md)
@@ -49,22 +50,12 @@ class FlowNetAgent:
         velocities[:, 0] = velocity
         potentials[:, 0] = potential
 
+        mds.set_temperature(temperature)
         for s in tqdm(range(args.num_steps), desc="Sampling"):
-            if args.type == "train":
-                mds.set_temperature(temperature)
-            if args.unbiased_md == "mixing" and s % 2 == 0:
-                mds.set_temperature(args.temperature)
-                bias = torch.zeros(
-                    (args.num_samples, self.num_particles, 3),
-                    device=args.device,
-                )
-            else:
-                bias = (
-                    args.bias_scale
-                    * self.policy(position.detach(), mds.target_position)
-                    .squeeze()
-                    .detach()
-                )
+            bias = (
+                args.bias_scale
+                * self.policy(position.detach(), mds.target_position).squeeze().detach()
+            )
             mds.step(bias)
 
             next_position, velocity, force, potential = mds.report()

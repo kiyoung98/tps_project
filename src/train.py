@@ -34,10 +34,8 @@ parser.add_argument(
 parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
 parser.add_argument("--num_steps", default=1000, type=int, help="Length of paths")
-parser.add_argument("--feat_aug", default="", type=str)
-parser.add_argument(
-    "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
-)
+parser.add_argument("--feat_aug", default="dist", type=str)
+parser.add_argument("--bias_scale", default=1, type=float, help="Scale factor of bias")
 parser.add_argument("--scale", default=1, type=float)
 parser.add_argument("--timestep", default=1, type=float, help="Timestep of integrator")
 parser.add_argument(
@@ -51,18 +49,15 @@ parser.add_argument(
 )
 parser.add_argument("--reward", default="dist", type=str)
 parser.add_argument("--heavy_atoms", action="store_true")
-parser.add_argument("--unbiased_md", default="", type=str)
 
 # Training Config
 parser.add_argument("--start_temperature", default=600, type=float)
 parser.add_argument("--end_temperature", default=300, type=float)
-parser.add_argument("--pos_grad", action="store_true")
-parser.add_argument("--pos_grad_weight", default=1, type=float)
 parser.add_argument(
-    "--max_grad_norm", default=10, type=int, help="Maximum norm of gradient to clip"
+    "--max_grad_norm", default=1, type=int, help="Maximum norm of gradient to clip"
 )
 parser.add_argument(
-    "--num_rollouts", default=5000, type=int, help="Number of rollouts (or sampling)"
+    "--num_rollouts", default=1000, type=int, help="Number of rollouts (or sampling)"
 )
 parser.add_argument(
     "--log_z_lr", default=1e-2, type=float, help="Learning rate of estimator for log Z"

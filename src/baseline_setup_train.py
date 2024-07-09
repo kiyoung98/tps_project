@@ -1,5 +1,5 @@
 # This file is designated for the fair comparisions of trajectory balance objective function
-# to the prior work https://github.com/LarsHoldijk/SOCTransitionPaths
+# to PIPS https://github.com/LarsHoldijk/SOCTransitionPaths
 
 import torch
 import proxy
