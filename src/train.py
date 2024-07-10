@@ -35,7 +35,9 @@ parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
 parser.add_argument("--num_steps", default=1000, type=int, help="Length of paths")
 parser.add_argument("--feat_aug", default="dist", type=str)
-parser.add_argument("--bias_scale", default=1, type=float, help="Scale factor of bias")
+parser.add_argument(
+    "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
+)
 parser.add_argument("--scale", default=1, type=float)
 parser.add_argument("--timestep", default=1, type=float, help="Timestep of integrator")
 parser.add_argument(

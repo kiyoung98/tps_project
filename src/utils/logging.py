@@ -83,7 +83,9 @@ class Logger:
         # Calculate metrics
         if self.molecule in ["alanine", "histidine", "chignolin"]:
             thp, etps, etp_idxs, etp, std_etp, efps, efp_idxs, efp, std_efp = (
-                self.metric.cv_metrics(positions, target_position, potentials)
+                self.metric.cv_metrics(
+                    last_idx, last_position, target_position, potentials
+                )
             )
         if self.molecule == "chignolin":
             asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
