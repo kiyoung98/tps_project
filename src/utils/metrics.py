@@ -99,7 +99,7 @@ class Metric:
 
         for i, hit_idx in enumerate(hit):
             if hit_idx:
-                etp, idx = potentials[i][: last_idx[i]].max(0)
+                etp, idx = potentials[i][: last_idx[i] + 1].max(0)
                 etps.append(etp)
                 etp_idxs.append(idx.item())
 

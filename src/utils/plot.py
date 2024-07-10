@@ -152,7 +152,7 @@ def plot_paths_alanine(save_dir, rollout, positions, target_position, last_idx):
 
         psi = []
         phi = []
-        for j in range(last_idx[i]):
+        for j in range(last_idx[i] + 1):
             psi.append(compute_dihedral(positions[i, j, angle_1, :]))
             phi.append(compute_dihedral(positions[i, j, angle_2, :]))
         ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
@@ -216,7 +216,7 @@ def plot_paths_histidine(
 
         psi = []
         phi = []
-        for j in range(last_idx[i]):
+        for j in range(last_idx[i] + 1):
             psi.append(compute_dihedral(positions[i, j, angle_1, :]))
             phi.append(compute_dihedral(positions[i, j, angle_2, :]))
         ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
@@ -249,7 +249,9 @@ def plot_paths_chignolin(save_dir, rollout, positions, last_idx):
     plt.ylim([0, 2])
     for i in range(positions.shape[0]):
         if last_idx[i] > 0:
-            plt.scatter(asp3od_thr6og[i][: last_idx[i]], asp3n_thr8o[i][: last_idx[i]])
+            plt.scatter(
+                asp3od_thr6og[i][: last_idx[i] + 1], asp3n_thr8o[i][: last_idx[i] + 1]
+            )
 
     plt.plot([0, 0.35], [0, 0], color="black")
     plt.plot([0.35, 0.35], [0, 0.35], color="black")
@@ -269,7 +271,7 @@ def plot_potentials(save_dir, rollout, potentials, last_idx):
     fig = plt.figure(figsize=(20, 5))
     for i in range(potentials.shape[0]):
         if last_idx[i] > 0:
-            plt.plot(potentials[i][: last_idx[i]])
+            plt.plot(potentials[i][: last_idx[i] + 1])
 
     plt.xlabel("Time (fs)")
     plt.ylabel("Potential Energy (kJ/mol)")
@@ -334,7 +336,7 @@ def plot_path_alanine(save_dir, positions, target_position, last_idx):
 
         psi = []
         phi = []
-        for j in range(last_idx[i]):
+        for j in range(last_idx[i] + 1):
             psi.append(compute_dihedral(positions[i, j, angle_1, :]))
             phi.append(compute_dihedral(positions[i, j, angle_2, :]))
         ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
@@ -395,7 +397,7 @@ def plot_path_histidine(save_dir, positions, target_position, last_idx):
 
         psi = []
         phi = []
-        for j in range(last_idx[i]):
+        for j in range(last_idx[i] + 1):
             psi.append(compute_dihedral(positions[i, j, angle_1, :]))
             phi.append(compute_dihedral(positions[i, j, angle_2, :]))
         ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
@@ -433,7 +435,9 @@ def plot_path_chignolin(save_dir, positions, last_idx):
         plt.xlim([0, 1.5])
         plt.ylim([0, 2])
         if last_idx[i] > 0:
-            plt.scatter(asp3od_thr6og[i][: last_idx[i]], asp3n_thr8o[i][: last_idx[i]])
+            plt.scatter(
+                asp3od_thr6og[i][: last_idx[i] + 1], asp3n_thr8o[i][: last_idx[i] + 1]
+            )
 
         plt.plot([0, 0.35], [0, 0], color="black")
         plt.plot([0.35, 0.35], [0, 0.35], color="black")
@@ -452,11 +456,11 @@ def plot_3D_view(save_dir, start_file, positions, potentials, last_idx):
     for i in tqdm(range(positions.shape[0]), desc="Plot 3D views"):
         if last_idx[i] > 0:
             traj = md.load_pdb(start_file)
-            for j in [0, potentials[i].argmax(), last_idx[i] - 1]:
+            for j in [0, potentials[i].argmax(), last_idx[i]]:
                 traj.xyz = positions[i, j]
                 traj.save(f"{save_dir}/3D_views/{i}_{j}.pdb")
 
-            for j in range(last_idx[i]):
+            for j in range(last_idx[i] + 1):
                 traj.xyz = positions[i, j]
 
                 if j == 0:
@@ -471,7 +475,7 @@ def plot_potential(save_dir, potentials, last_idx):
     for i in tqdm(range(potentials.shape[0]), desc="Plot potentials"):
         if last_idx[i] > 0:
             plt.figure(figsize=(16, 2))
-            plt.plot(potentials[i][: last_idx[i]])
+            plt.plot(potentials[i][: last_idx[i] + 1])
             plt.xlabel("Time (fs)")
             plt.ylabel("Potential Energy (kJ/mol)")
             plt.show()
