@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
         loss = 0
         for _ in tqdm(range(args.trains_per_rollout), desc="Training"):
-            loss += agent.train(args, mds)
+            loss += agent.train(args)
         loss = loss / args.trains_per_rollout
 
         logger.log(loss, agent.policy, rollout, **log)

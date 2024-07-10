@@ -27,11 +27,14 @@ parser.add_argument("--date", default="date", type=str, help="Date of the traini
 parser.add_argument("--force", action="store_true", help="Network predicts force")
 
 # Sampling Config
+parser.add_argument("--unbiased", action="store_true")
 parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
 parser.add_argument("--num_steps", default=1000, type=int, help="Length of paths")
 parser.add_argument("--feat_aug", default="dist", type=str)
-parser.add_argument("--bias_scale", default=1, type=float, help="Scale factor of bias")
+parser.add_argument(
+    "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
+)
 parser.add_argument("--scale", default=1, type=float)
 parser.add_argument("--timestep", default=1, type=float, help="Timestep of integrator")
 parser.add_argument(
@@ -59,14 +62,20 @@ if __name__ == "__main__":
     mds = MDs(args)
     agent = FlowNetAgent(args, md, mds)
 
-    model_path = (
-        args.model_path
-        if args.model_path
-        else os.path.join(
-            args.save_dir, args.project, args.date, "train", str(args.seed), "policy.pt"
+    if not args.unbiased:
+        model_path = (
+            args.model_path
+            if args.model_path
+            else os.path.join(
+                args.save_dir,
+                args.project,
+                args.date,
+                "train",
+                str(args.seed),
+                "policy.pt",
+            )
         )
-    )
-    agent.policy.load_state_dict(torch.load(model_path))
+        agent.policy.load_state_dict(torch.load(model_path))
 
     logger.info(f"Start Evaulation")
     log = agent.sample(args, mds, args.temperature)

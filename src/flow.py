@@ -44,7 +44,7 @@ class FlowNetAgent:
             device=args.device,
         )
         potentials = torch.zeros(
-            args.num_samples, args.num_steps + 1, device=args.device
+            (args.num_samples, args.num_steps + 1), device=args.device
         )
 
         position, velocity, _, potential = mds.report()
@@ -55,12 +55,17 @@ class FlowNetAgent:
 
         mds.set_temperature(temperature)
         for s in tqdm(range(args.num_steps), desc="Sampling"):
-            bias = (
-                args.bias_scale
-                * self.policy(position.detach(), self.target_position)
-                .squeeze()
-                .detach()
-            )
+            if args.type == "eval" and args.unbiased:
+                bias = torch.zeros(
+                    (args.num_samples, self.num_particles, 3), device=args.device
+                )
+            else:
+                bias = (
+                    args.bias_scale
+                    * self.policy(position.detach(), self.target_position)
+                    .squeeze()
+                    .detach()
+                )
             mds.step(bias)
 
             next_position, velocity, force, potential = mds.report()
@@ -149,7 +154,7 @@ class FlowNetAgent:
         }
         return log
 
-    def train(self, args, mds):
+    def train(self, args):
         optimizer = torch.optim.Adam(
             [
                 {"params": [self.policy.log_z], "lr": args.log_z_lr},
