@@ -89,8 +89,8 @@ class Logger:
             )
         if self.molecule == "chignolin":
             asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
-            eat36, std_eat36 = asp3od_thr6og.mean().item(), asp3od_thr6og.std().item()
-            eat38, std_eat38 = asp3n_thr8o.mean().item(), asp3n_thr8o.std().item()
+            eat36, std_at36 = asp3od_thr6og.mean().item(), asp3od_thr6og.std().item()
+            eat38, std_at38 = asp3n_thr8o.mean().item(), asp3n_thr8o.std().item()
 
         ll, std_ll = self.metric.log_likelihood(actions)
         pd, std_pd = self.metric.expected_pairwise_distance(
@@ -151,8 +151,8 @@ class Logger:
                 cv_log = {
                     "eat36": eat36,
                     "eat38": eat38,
-                    "std_eat36": std_eat36,
-                    "std_eat38": std_eat38,
+                    "std_at36": std_at36,
+                    "std_at38": std_at38,
                 }
                 log.update(cv_log)
 
@@ -180,8 +180,8 @@ class Logger:
         elif self.molecule == "chignolin":
             self.logger.info(f"eat36: {eat36}")
             self.logger.info(f"eat38: {eat38}")
-            self.logger.info(f"std_eat36: {std_eat36}")
-            self.logger.info(f"std_eat38: {std_eat38}")
+            self.logger.info(f"std_at36: {std_at36}")
+            self.logger.info(f"std_at38: {std_at38}")
 
         if rollout % self.save_freq == 0:
             torch.save(policy.state_dict(), f"{self.save_dir}/policies/{rollout}.pt")

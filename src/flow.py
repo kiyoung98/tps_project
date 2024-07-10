@@ -136,7 +136,7 @@ class FlowNetAgent:
 
         log = {
             "actions": actions,
-            "last_idx": last_idx + 1,
+            "last_idx": last_idx,
             "positions": positions,
             "potentials": potentials,
             "log_md_reward": log_md_reward,
