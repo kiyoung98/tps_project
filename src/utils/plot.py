@@ -369,10 +369,13 @@ def plot_3D_view(save_dir, start_file, positions, potentials, last_idx):
 
 def plot_potential(save_dir, potentials, last_idx):
     potentials = potentials.detach().cpu().numpy()
+
     for i in tqdm(range(potentials.shape[0]), desc="Plot potentials"):
         if last_idx[i] > 0:
             plt.figure(figsize=(16, 2))
-            plt.plot(potentials[i][: last_idx[i] + 1])
+            pot = potentials[i][: last_idx[i] + 1]
+            np.save(f"{save_dir}/potential/{i}.npy", pot)
+            plt.plot(pot)
             plt.xlabel("Time (fs)")
             plt.ylabel("Potential Energy (kJ/mol)")
             plt.show()

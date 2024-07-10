@@ -195,10 +195,6 @@ class Logger:
                 fig_path = plot_paths_alanine(
                     self.save_dir, rollout, positions, target_position, last_idx
                 )
-            elif self.molecule == "histidine":
-                fig_path = plot_paths_histidine(
-                    self.save_dir, rollout, positions, target_position, last_idx
-                )
             elif self.molecule == "chignolin":
                 fig_path = plot_paths_chignolin(
                     self.save_dir, rollout, positions, last_idx
@@ -225,8 +221,6 @@ class Logger:
         if self.type == "eval":
             if self.molecule == "alanine":
                 plot_path_alanine(self.save_dir, positions, target_position, last_idx)
-            elif self.molecule == "histidine":
-                plot_path_histidine(self.save_dir, positions, target_position, last_idx)
             elif self.molecule == "chignolin":
                 plot_path_chignolin(self.save_dir, positions, last_idx)
             plot_potential(self.save_dir, potentials, last_idx)
