@@ -3,20 +3,7 @@ import numpy as np
 import mdtraj as md
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from .utils import chignolin_h_bond
-
-
-def compute_dihedral(p):
-    b = p[:-1] - p[1:]
-    b[0] *= -1
-    v = np.array([v - (v.dot(b[1]) / b[1].dot(b[1])) * b[1] for v in [b[0], b[2]]])
-
-    v /= np.sqrt(np.einsum("...i,...i", v, v)).reshape(-1, 1)
-    b1 = b[1] / np.linalg.norm(b[1])
-    x = np.dot(v[0], v[1])
-    m = np.cross(v[0], b1)
-    y = np.dot(m, v[1])
-    return np.arctan2(y, x)
+from .utils import chignolin_h_bond, compute_dihedral
 
 
 class AlaninePotential:
@@ -114,8 +101,23 @@ class HistidinePotential:  # TODO: Make histidine.dat for 4 torsion angles
 
 
 def plot_paths_alanine(save_dir, rollout, positions, target_position, last_idx):
-    positions = positions.detach().cpu().numpy()
-    target_position = target_position.detach().cpu().numpy()
+    angle_1 = [6, 8, 14, 16]
+    angle_2 = [1, 6, 8, 14]
+
+    psi = compute_dihedral(positions[:, :, angle_1, :]).detach().cpu().numpy()
+    phi = compute_dihedral(positions[:, :, angle_2, :]).detach().cpu().numpy()
+    target_psi = (
+        compute_dihedral(target_position[:, angle_1, :].unsqueeze(0))
+        .detach()
+        .cpu()
+        .numpy()
+    )
+    target_phi = (
+        compute_dihedral(target_position[:, angle_2, :].unsqueeze(0))
+        .detach()
+        .cpu()
+        .numpy()
+    )
 
     plt.clf()
     plt.close()
@@ -123,9 +125,6 @@ def plot_paths_alanine(save_dir, rollout, positions, target_position, last_idx):
     ax = fig.add_subplot(111)
     plt.xlim([-np.pi, np.pi])
     plt.ylim([-np.pi, np.pi])
-
-    angle_2 = [1, 6, 8, 14]
-    angle_1 = [6, 8, 14, 16]
 
     potential = AlaninePotential()
     xs = np.arange(-np.pi, np.pi + 0.1, 0.1)
@@ -143,93 +142,23 @@ def plot_paths_alanine(save_dir, rollout, positions, target_position, last_idx):
         color=[cm(1.0 * i / positions.shape[0]) for i in range(positions.shape[0])]
     )
 
-    psis_start = []
-    phis_start = []
-
     for i in range(positions.shape[0]):
-        psis_start.append(compute_dihedral(positions[i, 0, angle_1, :]))
-        phis_start.append(compute_dihedral(positions[i, 0, angle_2, :]))
-
-        psi = []
-        phi = []
-        for j in range(last_idx[i] + 1):
-            psi.append(compute_dihedral(positions[i, j, angle_1, :]))
-            phi.append(compute_dihedral(positions[i, j, angle_2, :]))
-        ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
+        ax.plot(
+            phi[i, : last_idx[i] + 1],
+            psi[i, : last_idx[i] + 1],
+            marker="o",
+            linestyle="None",
+            markersize=2,
+            alpha=1.0,
+        )
 
     ax.scatter(
-        phis_start, psis_start, edgecolors="black", c="w", zorder=100, s=100, marker="*"
+        phi[:1, 0], psi[:1, 0], edgecolors="black", c="w", zorder=100, s=100, marker="*"
     )
-
-    psis_target = []
-    phis_target = []
-    psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
-    phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
-    ax.scatter(phis_target, psis_target, edgecolors="w", c="w", zorder=100, s=10)
-
-    plt.xlabel("phi")
-    plt.ylabel("psi")
-    plt.show()
-    plt.savefig(f"{save_dir}/paths/{rollout}.png")
-    plt.close()
-    return fig
-
-
-def plot_paths_histidine(
-    save_dir, rollout, positions, target_position, last_idx
-):  # TODO: Two Ramachandran Plots
-    positions = positions.detach().cpu().numpy()
-    target_position = target_position.detach().cpu().numpy()
-
-    plt.clf()
-    plt.close()
-    fig = plt.figure(figsize=(7, 7))
-    ax = fig.add_subplot(111)
-    plt.xlim([-np.pi, np.pi])
-    plt.ylim([-np.pi, np.pi])
-
-    angle_2 = [0, 6, 8, 11]
-    angle_1 = [6, 8, 11, 23]
-
-    potential = HistidinePotential()
-    xs = np.arange(-np.pi, np.pi + 0.1, 0.1)
-    ys = np.arange(-np.pi, np.pi + 0.1, 0.1)
-    x, y = np.meshgrid(xs, ys)
-    inp = torch.tensor(np.array([x, y])).view(2, -1).T
-
-    z = potential.potential(inp)
-    z = z.view(y.shape[0], y.shape[1])
-
-    plt.contourf(xs, ys, z, levels=100, zorder=0)
-
-    cm = plt.get_cmap("gist_rainbow")
-    ax.set_prop_cycle(
-        color=[cm(1.0 * i / positions.shape[0]) for i in range(positions.shape[0])]
-    )
-
-    psis_start = []
-    phis_start = []
-
-    for i in range(positions.shape[0]):
-        psis_start.append(compute_dihedral(positions[i, 0, angle_1, :]))
-        phis_start.append(compute_dihedral(positions[i, 0, angle_2, :]))
-
-        psi = []
-        phi = []
-        for j in range(last_idx[i] + 1):
-            psi.append(compute_dihedral(positions[i, j, angle_1, :]))
-            phi.append(compute_dihedral(positions[i, j, angle_2, :]))
-        ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
 
     ax.scatter(
-        phis_start, psis_start, edgecolors="black", c="w", zorder=100, s=100, marker="*"
+        target_phi[:1, 0], target_psi[:1, 0], edgecolors="w", c="w", zorder=100, s=10
     )
-
-    psis_target = []
-    phis_target = []
-    psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
-    phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
-    ax.scatter(phis_target, psis_target, edgecolors="w", c="w", zorder=100, s=10)
 
     plt.xlabel("phi")
     plt.ylabel("psi")
@@ -245,12 +174,24 @@ def plot_paths_chignolin(save_dir, rollout, positions, last_idx):
     asp3n_thr8o = asp3n_thr8o.detach().cpu().numpy()
 
     fig = plt.figure(figsize=(7, 7))
+    ax = fig.add_subplot(111)
+
+    cm = plt.get_cmap("gist_rainbow")
+    ax.set_prop_cycle(
+        color=[cm(1.0 * i / positions.shape[0]) for i in range(positions.shape[0])]
+    )
+
     plt.xlim([0, 1.5])
     plt.ylim([0, 2])
     for i in range(positions.shape[0]):
         if last_idx[i] > 0:
-            plt.scatter(
-                asp3od_thr6og[i][: last_idx[i] + 1], asp3n_thr8o[i][: last_idx[i] + 1]
+            ax.plot(
+                asp3od_thr6og[i][: last_idx[i] + 1],
+                asp3n_thr8o[i][: last_idx[i] + 1],
+                marker="o",
+                linestyle="None",
+                markersize=2,
+                alpha=1.0,
             )
 
     plt.plot([0, 0.35], [0, 0], color="black")
@@ -304,11 +245,23 @@ def plot_efps(save_dir, rollout, efps, efp_idxs):
 
 
 def plot_path_alanine(save_dir, positions, target_position, last_idx):
-    positions = positions.detach().cpu().numpy()
-    target_position = target_position.detach().cpu().numpy()
-
-    angle_2 = [1, 6, 8, 14]
     angle_1 = [6, 8, 14, 16]
+    angle_2 = [1, 6, 8, 14]
+
+    psi = compute_dihedral(positions[:, :, angle_1, :]).detach().cpu().numpy()
+    phi = compute_dihedral(positions[:, :, angle_2, :]).detach().cpu().numpy()
+    target_psi = (
+        compute_dihedral(target_position[:, angle_1, :].unsqueeze(0))
+        .detach()
+        .cpu()
+        .numpy()
+    )
+    target_phi = (
+        compute_dihedral(target_position[:, angle_2, :].unsqueeze(0))
+        .detach()
+        .cpu()
+        .numpy()
+    )
 
     for i in range(positions.shape[0]):
         plt.clf()
@@ -328,22 +281,18 @@ def plot_path_alanine(save_dir, positions, target_position, last_idx):
 
         plt.contourf(xs, ys, z, levels=100, zorder=0)
 
-        psis_start = []
-        phis_start = []
-
-        psis_start.append(compute_dihedral(positions[i, 0, angle_1, :]))
-        phis_start.append(compute_dihedral(positions[i, 0, angle_2, :]))
-
-        psi = []
-        phi = []
-        for j in range(last_idx[i] + 1):
-            psi.append(compute_dihedral(positions[i, j, angle_1, :]))
-            phi.append(compute_dihedral(positions[i, j, angle_2, :]))
-        ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
+        ax.plot(
+            phi[i, : last_idx[i] + 1],
+            psi[i, : last_idx[i] + 1],
+            marker="o",
+            linestyle="None",
+            markersize=2,
+            alpha=1.0,
+        )
 
         ax.scatter(
-            phis_start,
-            psis_start,
+            phi[:1, 0],
+            psi[:1, 0],
             edgecolors="black",
             c="w",
             zorder=100,
@@ -351,72 +300,14 @@ def plot_path_alanine(save_dir, positions, target_position, last_idx):
             marker="*",
         )
 
-        psis_target = []
-        phis_target = []
-        psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
-        phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
-        ax.scatter(phis_target, psis_target, edgecolors="w", c="w", zorder=100, s=10)
-
-        plt.xlabel("phi")
-        plt.ylabel("psi")
-        plt.show()
-        plt.savefig(f"{save_dir}/path/{i}.png")
-        plt.close()
-
-
-def plot_path_histidine(save_dir, positions, target_position, last_idx):
-    positions = positions.detach().cpu().numpy()
-    target_position = target_position.detach().cpu().numpy()
-
-    angle_2 = [0, 6, 8, 11]
-    angle_1 = [6, 8, 11, 23]
-
-    for i in range(positions.shape[0]):
-        plt.clf()
-        plt.close()
-        fig = plt.figure(figsize=(7, 7))
-        ax = fig.add_subplot(111)
-        plt.xlim([-np.pi, np.pi])
-        plt.ylim([-np.pi, np.pi])
-        potential = HistidinePotential()
-        xs = np.arange(-np.pi, np.pi + 0.1, 0.1)
-        ys = np.arange(-np.pi, np.pi + 0.1, 0.1)
-        x, y = np.meshgrid(xs, ys)
-        inp = torch.tensor(np.array([x, y])).view(2, -1).T
-
-        z = potential.potential(inp)
-        z = z.view(y.shape[0], y.shape[1])
-
-        plt.contourf(xs, ys, z, levels=100, zorder=0)
-
-        psis_start = []
-        phis_start = []
-
-        psis_start.append(compute_dihedral(positions[i, 0, angle_1, :]))
-        phis_start.append(compute_dihedral(positions[i, 0, angle_2, :]))
-
-        psi = []
-        phi = []
-        for j in range(last_idx[i] + 1):
-            psi.append(compute_dihedral(positions[i, j, angle_1, :]))
-            phi.append(compute_dihedral(positions[i, j, angle_2, :]))
-        ax.plot(phi, psi, marker="o", linestyle="None", markersize=2, alpha=1.0)
-
         ax.scatter(
-            phis_start,
-            psis_start,
-            edgecolors="black",
+            target_phi[:1, 0],
+            target_psi[:1, 0],
+            edgecolors="w",
             c="w",
             zorder=100,
-            s=100,
-            marker="*",
+            s=10,
         )
-
-        psis_target = []
-        phis_target = []
-        psis_target.append(compute_dihedral(target_position[0, angle_1, :]))
-        phis_target.append(compute_dihedral(target_position[0, angle_2, :]))
-        ax.scatter(phis_target, psis_target, edgecolors="w", c="w", zorder=100, s=10)
 
         plt.xlabel("phi")
         plt.ylabel("psi")
@@ -431,12 +322,18 @@ def plot_path_chignolin(save_dir, positions, last_idx):
     asp3n_thr8o = asp3n_thr8o.detach().cpu().numpy()
 
     for i in range(positions.shape[0]):
-        plt.figure(figsize=(7, 7))
+        fig = plt.figure(figsize=(7, 7))
+        ax = fig.add_subplot(111)
         plt.xlim([0, 1.5])
         plt.ylim([0, 2])
         if last_idx[i] > 0:
-            plt.scatter(
-                asp3od_thr6og[i][: last_idx[i] + 1], asp3n_thr8o[i][: last_idx[i] + 1]
+            ax.plot(
+                asp3od_thr6og[i][: last_idx[i] + 1],
+                asp3n_thr8o[i][: last_idx[i] + 1],
+                marker="o",
+                linestyle="None",
+                markersize=2,
+                alpha=1.0,
             )
 
         plt.plot([0, 0.35], [0, 0], color="black")
