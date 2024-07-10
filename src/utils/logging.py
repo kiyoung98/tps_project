@@ -170,6 +170,7 @@ class Logger:
         self.logger.info(f"len: {len}")
         self.logger.info(f"std_ll: {std_ll}")
         self.logger.info(f"std_pd: {std_pd}")
+        self.logger.info(f"std_lpd: {std_lpd}")
         self.logger.info(f"std_pcd: {std_pcd}")
         self.logger.info(f"std_lmr: {std_lmr}")
         self.logger.info(f"std_ltr: {std_ltr}")
