@@ -40,10 +40,7 @@ def kabsch(P, Q):
 
     aligned_P = torch.matmul(p, R.transpose(1, 2)) + centroid_Q
 
-    # RMSD
-    rmsd = torch.sqrt(torch.sum(torch.square(aligned_P - Q), dim=(1, 2)) / P.shape[1])
-
-    return aligned_P, rmsd
+    return aligned_P
 
 
 def compute_dihedral(positions):

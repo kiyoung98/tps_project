@@ -30,6 +30,7 @@ class MDs:
         target_position = torch.tensor(
             target_position, dtype=torch.float, device=self.device
         ).unsqueeze(0)
+
         return target_position
 
     def step(self, force):

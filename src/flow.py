@@ -7,7 +7,7 @@ from torch.distributions import Normal
 
 
 class FlowNetAgent:
-    def __init__(self, args, md):
+    def __init__(self, args, md, mds):
         self.a = md.a
         self.num_particles = md.num_particles
         self.std = torch.tensor(
@@ -23,6 +23,9 @@ class FlowNetAgent:
         self.policy = getattr(proxy, args.molecule.title())(args, md)
         self.heavy_atom_ids = md.heavy_atom_ids
         self.normal = Normal(0, self.std)
+
+        position = mds.report()[0]
+        self.target_position = kabsch(mds.target_position, position[:1])
 
         if args.type == "train":
             self.replay = ReplayBuffer(args, md)
@@ -54,7 +57,9 @@ class FlowNetAgent:
         for s in tqdm(range(args.num_steps), desc="Sampling"):
             bias = (
                 args.bias_scale
-                * self.policy(position.detach(), mds.target_position).squeeze().detach()
+                * self.policy(position.detach(), self.target_position)
+                .squeeze()
+                .detach()
             )
             mds.step(bias)
 
@@ -84,9 +89,7 @@ class FlowNetAgent:
                 args.num_samples, args.num_steps, device=args.device
             )
             for i in range(args.num_samples):
-                aligned_target_position, rmsd = kabsch(
-                    mds.target_position, positions[i][1:]
-                )
+                aligned_target_position = kabsch(self.target_position, positions[i][1:])
                 target_velocity = (
                     aligned_target_position - positions[i][:-1]
                 ) / args.timestep
@@ -94,7 +97,7 @@ class FlowNetAgent:
                     (target_velocity - velocities[i][1:]) / args.sigma
                 ).mean((1, 2))
         elif args.reward == "dist":
-            target_pd = pairwise_dist(mds.target_position)
+            target_pd = pairwise_dist(self.target_position)
 
             log_target_reward = torch.zeros(
                 args.num_samples, args.num_steps + 1, device=args.device
@@ -113,13 +116,13 @@ class FlowNetAgent:
                     log_target_reward[i] = -(
                         compute_s_dist(
                             positions[i][:, self.heavy_atom_ids],
-                            mds.target_position[:, self.heavy_atom_ids],
+                            self.target_position[:, self.heavy_atom_ids],
                         )
                         / args.sigma
                     )
                 else:
                     log_target_reward[i] = -(
-                        compute_s_dist(positions[i], mds.target_position) / args.sigma
+                        compute_s_dist(positions[i], self.target_position) / args.sigma
                     )
 
         log_target_reward, last_idx = log_target_reward.max(1)
@@ -141,7 +144,7 @@ class FlowNetAgent:
             "potentials": potentials,
             "log_md_reward": log_md_reward,
             "log_target_reward": log_target_reward,
-            "target_position": mds.target_position,
+            "target_position": self.target_position,
             "last_position": positions[torch.arange(args.num_samples), last_idx],
         }
         return log
@@ -156,7 +159,7 @@ class FlowNetAgent:
 
         indices, positions, actions, log_reward = self.replay.sample()
 
-        biases = args.bias_scale * self.policy(positions, mds.target_position)
+        biases = args.bias_scale * self.policy(positions, self.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
         biases = self.a * biases / self.m
 

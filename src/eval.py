@@ -53,11 +53,11 @@ if __name__ == "__main__":
         wandb.init(project=args.project + "_eval", config=args)
 
     md = getattr(dynamics, args.molecule.title())(args, args.start_state)
-    agent = FlowNetAgent(args, md)
     logger = Logger(args, md)
 
     logger.info(f"Initialize {args.num_samples} MDs starting at {args.start_state}")
     mds = MDs(args)
+    agent = FlowNetAgent(args, md, mds)
 
     model_path = (
         args.model_path

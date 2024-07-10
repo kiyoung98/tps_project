@@ -37,7 +37,14 @@ class Metric:
                 [6, 8, 11, 23], dtype=torch.long, device=args.device
             )
 
-    def expected_pairwise_distance(self, last_position, target_position):
+    def rmsd(self, last_position, target_position):
+        aligned_target_position = kabsch(target_position, last_position)
+        diff = last_position - aligned_target_position
+        rmsd = torch.sqrt((diff**2).sum(-1).mean(-1))
+        mean_rmsd, std_rmsd = rmsd.mean().item(), rmsd.std().item()
+        return mean_rmsd, std_rmsd
+
+    def pairwise_distance(self, last_position, target_position):
         last_pd = pairwise_dist(last_position)
         target_pd = pairwise_dist(target_position)
 
@@ -45,9 +52,7 @@ class Metric:
         mean_pd, std_pd = pd.mean().item(), pd.std().item()
         return mean_pd, std_pd
 
-    def expected_log_pairwise_distance(
-        self, last_position, target_position, heavy_atoms=False
-    ):
+    def log_pairwise_distance(self, last_position, target_position, heavy_atoms=False):
         if heavy_atoms:
             s_dist = compute_s_dist(
                 last_position[:, self.heavy_atom_ids],
@@ -58,7 +63,7 @@ class Metric:
         mean_s_dist, std_s_dist = s_dist.mean().item(), s_dist.std().item()
         return mean_s_dist, std_s_dist
 
-    def expected_pairwise_coulomb_distance(self, last_position, target_position):
+    def pairwise_coulomb_distance(self, last_position, target_position):
         last_pcd = self.coulomb(last_position)
         target_pcd = self.coulomb(target_position)
 

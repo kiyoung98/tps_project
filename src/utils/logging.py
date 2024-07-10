@@ -92,14 +92,13 @@ class Logger:
             eat36, std_at36 = asp3od_thr6og.mean().item(), asp3od_thr6og.std().item()
             eat38, std_at38 = asp3n_thr8o.mean().item(), asp3n_thr8o.std().item()
 
+        ermsd, std_rmsd = self.metric.rmsd(last_position, target_position)
         ll, std_ll = self.metric.log_likelihood(actions)
-        pd, std_pd = self.metric.expected_pairwise_distance(
-            last_position, target_position
-        )
-        lpd, std_lpd = self.metric.expected_log_pairwise_distance(
+        epd, std_pd = self.metric.pairwise_distance(last_position, target_position)
+        elpd, std_lpd = self.metric.log_pairwise_distance(
             last_position, target_position, self.heavy_atoms
         )
-        pcd, std_pcd = self.metric.expected_pairwise_coulomb_distance(
+        epcd, std_pcd = self.metric.pairwise_coulomb_distance(
             last_position, target_position
         )
         len, std_len = last_idx.float().mean().item(), last_idx.float().std().item()
@@ -123,11 +122,12 @@ class Logger:
                 "loss": loss,
                 "log_z": policy.log_z.item(),
                 "ll": ll,
-                "epd": pd,
-                "elpd": lpd,
-                "epcd": pcd,
+                "epd": epd,
+                "elpd": elpd,
+                "epcd": epcd,
                 "elmr": elmr,
                 "eltr": eltr,
+                "ermsd": ermsd,
                 "len": len,
                 "std_ll": std_ll,
                 "std_pd": std_pd,
@@ -135,6 +135,7 @@ class Logger:
                 "std_pcd": std_pcd,
                 "std_lmr": std_lmr,
                 "std_ltr": std_ltr,
+                "std_rmsd": std_rmsd,
                 "std_len": std_len,
             }
 
@@ -160,15 +161,19 @@ class Logger:
 
         self.logger.info(f"log_z: {policy.log_z.item()}")
         self.logger.info(f"ll: {ll}")
-        self.logger.info(f"epd: {pd}")
-        self.logger.info(f"elpd: {lpd}")
-        self.logger.info(f"epcd: {pcd}")
+        self.logger.info(f"epd: {epd}")
+        self.logger.info(f"elpd: {elpd}")
+        self.logger.info(f"epcd: {epcd}")
         self.logger.info(f"elmr: {elmr}")
         self.logger.info(f"eltr: {eltr}")
+        self.logger.info(f"ermsd: {ermsd}")
         self.logger.info(f"len: {len}")
         self.logger.info(f"std_ll: {std_ll}")
         self.logger.info(f"std_pd: {std_pd}")
         self.logger.info(f"std_pcd: {std_pcd}")
+        self.logger.info(f"std_lmr: {std_lmr}")
+        self.logger.info(f"std_ltr: {std_ltr}")
+        self.logger.info(f"std_rmsd: {std_rmsd}")
         self.logger.info(f"std_len: {std_len}")
 
         if self.molecule in ["alanine", "histidine", "chignolin"]:
