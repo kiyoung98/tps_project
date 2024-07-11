@@ -136,6 +136,11 @@ class FlowNetAgent:
 
         if args.type == "train":
             self.replay.add((positions, actions, log_reward))
+        if args.type == "eval" and args.unbiased:
+            last_idx = (
+                torch.zeros(args.num_samples, dtype=torch.long, device=args.device)
+                + args.num_steps
+            )
 
         # if args.pos_grad:
         #     positions.requires_grad = True

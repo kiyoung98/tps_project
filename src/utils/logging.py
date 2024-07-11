@@ -105,6 +105,8 @@ class Logger:
 
         elmr, std_lmr = log_md_reward.mean().item(), log_md_reward.std().item()
         eltr, std_ltr = log_target_reward.mean().item(), log_target_reward.std().item()
+        log_reward = log_md_reward + log_target_reward
+        elr, std_lr = log_reward.mean().item(), log_reward.std().item()
 
         # Log
         if self.type == "train":
@@ -125,6 +127,7 @@ class Logger:
                 "epd": epd,
                 "elpd": elpd,
                 "epcd": epcd,
+                "elr": elr,
                 "elmr": elmr,
                 "eltr": eltr,
                 "ermsd": ermsd,
@@ -133,6 +136,7 @@ class Logger:
                 "std_pd": std_pd,
                 "std_lpd": std_lpd,
                 "std_pcd": std_pcd,
+                "std_lr": std_lr,
                 "std_lmr": std_lmr,
                 "std_ltr": std_ltr,
                 "std_rmsd": std_rmsd,
@@ -164,6 +168,7 @@ class Logger:
         self.logger.info(f"epd: {epd}")
         self.logger.info(f"elpd: {elpd}")
         self.logger.info(f"epcd: {epcd}")
+        self.logger.info(f"elr: {elr}")
         self.logger.info(f"elmr: {elmr}")
         self.logger.info(f"eltr: {eltr}")
         self.logger.info(f"ermsd: {ermsd}")
@@ -172,6 +177,7 @@ class Logger:
         self.logger.info(f"std_pd: {std_pd}")
         self.logger.info(f"std_lpd: {std_lpd}")
         self.logger.info(f"std_pcd: {std_pcd}")
+        self.logger.info(f"std_lr: {std_lr}")
         self.logger.info(f"std_lmr: {std_lmr}")
         self.logger.info(f"std_ltr: {std_ltr}")
         self.logger.info(f"std_rmsd: {std_rmsd}")
