@@ -18,6 +18,8 @@ class Logger:
         self.save_freq = args.save_freq if args.type == "train" else 1
 
         self.best_loss = float("inf")
+        self.best_epd = float("inf")
+        self.best_elr = float("-inf")
         self.metric = Metric(args, md)
 
         self.save_dir = os.path.join(
@@ -117,7 +119,13 @@ class Logger:
             self.logger.info(f"loss: {loss}")
             if loss < self.best_loss:
                 self.best_loss = loss
-                torch.save(policy.state_dict(), f"{self.save_dir}/policy.pt")
+                torch.save(policy.state_dict(), f"{self.save_dir}/loss_policy.pt")
+            if epd < self.best_epd:
+                self.best_epd = epd
+                torch.save(policy.state_dict(), f"{self.save_dir}/epd_policy.pt")
+            if elr > self.best_elr:
+                self.best_elr = elr
+                torch.save(policy.state_dict(), f"{self.save_dir}/elr_policy.pt")
 
         if self.wandb:
             log = {
