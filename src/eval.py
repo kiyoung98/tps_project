@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser()
 # System Config
 parser.add_argument("--seed", default=0, type=int)
 parser.add_argument("--type", default="eval", type=str)
+parser.add_argument("--best", default="loss", type=str)
 parser.add_argument("--device", default="cuda", type=str)
 parser.add_argument("--molecule", default="alanine", type=str)
 
@@ -72,12 +73,12 @@ if __name__ == "__main__":
                 args.date,
                 "train",
                 str(args.seed),
-                "policy.pt",
+                f"{args.best}_policy.pt",
             )
         )
         agent.policy.load_state_dict(torch.load(model_path))
 
     logger.info(f"Start Evaulation")
     log = agent.sample(args, mds, args.temperature)
-    logger.log(None, agent.policy, 0, **log)
+    logger.log(agent.policy, 0, **log)
     logger.info(f"Finish Evaluation")

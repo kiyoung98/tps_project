@@ -17,14 +17,23 @@ class Logger:
         self.heavy_atoms = args.heavy_atoms
         self.save_freq = args.save_freq if args.type == "train" else 1
 
-        self.best_loss = float("inf")
         self.best_epd = float("inf")
         self.best_elr = float("-inf")
         self.metric = Metric(args, md)
 
-        self.save_dir = os.path.join(
-            args.save_dir, args.project, args.date, args.type, str(args.seed)
-        )
+        if args.type == "eval":
+            self.save_dir = os.path.join(
+                args.save_dir,
+                args.project,
+                args.date,
+                args.type,
+                args.best,
+                str(args.seed),
+            )
+        else:
+            self.save_dir = os.path.join(
+                args.save_dir, args.project, args.date, args.type, str(args.seed)
+            )
 
         for name in [
             "paths",
@@ -69,7 +78,6 @@ class Logger:
 
     def log(
         self,
-        loss,
         policy,
         rollout,
         actions,
@@ -116,10 +124,6 @@ class Logger:
                 "-----------------------------------------------------------"
             )
             self.logger.info(f"Rollout: {rollout}")
-            self.logger.info(f"loss: {loss}")
-            if loss < self.best_loss:
-                self.best_loss = loss
-                torch.save(policy.state_dict(), f"{self.save_dir}/loss_policy.pt")
             if epd < self.best_epd:
                 self.best_epd = epd
                 torch.save(policy.state_dict(), f"{self.save_dir}/epd_policy.pt")
@@ -129,7 +133,6 @@ class Logger:
 
         if self.wandb:
             log = {
-                "loss": loss,
                 "log_z": policy.log_z.item(),
                 "ll": ll,
                 "epd": epd,

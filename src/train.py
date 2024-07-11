@@ -111,15 +111,20 @@ if __name__ == "__main__":
     )
 
     logger.info("Start training")
+    best_loss = float("inf")
     for rollout in range(args.num_rollouts):
         print(f"Rollout: {rollout}")
 
         log = agent.sample(args, mds, temperatures[rollout])
+        logger.log(agent.policy, rollout, **log)
 
-        loss = 0
         for _ in tqdm(range(args.trains_per_rollout), desc="Training"):
             loss += agent.train(args)
         loss = loss / args.trains_per_rollout
 
-        logger.log(loss, agent.policy, rollout, **log)
+        logger.info(f"loss: {loss}")
+        if loss < best_loss:
+            best_loss = loss
+            torch.save(agent.policy.state_dict(), f"{logger.save_dir}/loss_policy.pt")
+
     logger.info("Finish training")
