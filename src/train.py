@@ -124,6 +124,8 @@ if __name__ == "__main__":
         loss = loss / args.trains_per_rollout
 
         logger.info(f"loss: {loss}")
+        if args.wandb:
+            wandb.log({"loss": loss}, step=rollout)
         if loss < best_loss:
             best_loss = loss
             torch.save(agent.policy.state_dict(), f"{logger.save_dir}/loss_policy.pt")
