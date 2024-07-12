@@ -199,7 +199,7 @@ class Logger:
             self.logger.info(f"etp: {etp}")
             self.logger.info(f"efp: {efp}")
             self.logger.info(f"std_etp: {std_etp}")
-            self.logger.info(f"std_etp: {std_efp}")
+            self.logger.info(f"std_efp: {std_efp}")
         elif self.molecule == "chignolin":
             self.logger.info(f"eat36: {eat36}")
             self.logger.info(f"eat38: {eat38}")
