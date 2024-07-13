@@ -74,7 +74,7 @@ class FlowNetAgent:
             noise = (
                 velocity
                 - self.a * (next_position - position) / args.timestep
-                - force * args.timestep / self.m
+                - self.a * args.timestep * force / self.m
             )
 
             positions[:, s + 1] = next_position
@@ -84,12 +84,12 @@ class FlowNetAgent:
 
             position = next_position
             bias = 1e-6 * bias  # kJ/(mol*nm) -> (da*nm)/fs**2
-            action = bias * args.timestep / self.m + noise
+            action = self.a * args.timestep * bias / self.m + noise
 
             actions[:, s] = action
         mds.reset()
 
-        log_md_reward = -0.5 * torch.square(actions / self.std).mean((1, 2, 3))
+        log_md_reward = self.normal.log_prob(actions).mean((1, 2, 3))
 
         if args.reward == "kabsch":
             log_target_reward = torch.zeros(
@@ -111,7 +111,7 @@ class FlowNetAgent:
             )
             for i in range(args.num_samples):
                 pd = pairwise_dist(positions[i])
-                log_target_reward[i] = -torch.square(
+                log_target_reward[i] = -0.5 * torch.square(
                     (pd - target_pd) / args.sigma
                 ).mean((1, 2))
         elif args.reward == "s_dist":
@@ -168,10 +168,10 @@ class FlowNetAgent:
 
         biases = args.bias_scale * self.policy(positions, self.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
-        biases = biases * args.timestep / self.m
+        biases = self.a * args.timestep * biases / self.m
 
         log_z = self.policy.log_z
-        log_forward = -0.5 * torch.square((biases - actions) / self.std).mean((1, 2, 3))
+        log_forward = self.normal.log_prob(biases - actions).mean((1, 2, 3))
         tb_error = log_z + log_forward - log_reward
         loss = tb_error.square().mean() * args.scale
 

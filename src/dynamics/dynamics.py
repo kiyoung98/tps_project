@@ -37,7 +37,7 @@ class Alanine(BaseDynamics):
             self.temperature,
             self.friction_coefficient,
             self.timestep,
-            splitting="R O V",
+            splitting="R V O",
         )
 
         integrator.setConstraintTolerance(0.00001)
@@ -80,7 +80,7 @@ class Chignolin(BaseDynamics):
             self.temperature,
             self.friction_coefficient,
             self.timestep,
-            splitting="R O V",
+            splitting="R V O",
         )
 
         integrator.setConstraintTolerance(0.00001)
@@ -124,7 +124,7 @@ class Poly(BaseDynamics):
             self.temperature,
             self.friction_coefficient,
             self.timestep,
-            splitting="R O V",
+            splitting="R V O",
         )
 
         integrator.setConstraintTolerance(0.00001)
