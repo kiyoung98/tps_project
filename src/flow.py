@@ -39,25 +39,26 @@ class FlowNetAgent:
             (args.num_samples, args.num_steps + 1, self.num_particles, 3),
             device=args.device,
         )
-        actions = torch.zeros(
-            (args.num_samples, args.num_steps, self.num_particles, 3),
+        forces = torch.zeros(
+            (args.num_samples, args.num_steps + 1, self.num_particles, 3),
             device=args.device,
         )
         potentials = torch.zeros(
             (args.num_samples, args.num_steps + 1), device=args.device
         )
 
-        position, velocity, _, potential = mds.report()
+        position, velocity, force, potential = mds.report()
 
         positions[:, 0] = position
         velocities[:, 0] = velocity
+        forces[:, 0] = force
         potentials[:, 0] = potential
 
         mds.set_temperature(temperature)
-        for s in tqdm(range(args.num_steps), desc="Sampling"):
+        for s in tqdm(range(1, args.num_steps + 1), desc="Sampling"):
             if args.type == "eval" and args.unbiased:
                 bias = torch.zeros(
-                    (args.num_samples, self.num_particles, 3), device=args.device
+                    args.num_samples, self.num_particles, 3, device=args.device
                 )
             else:
                 bias = (
@@ -70,26 +71,24 @@ class FlowNetAgent:
 
             next_position, velocity, force, potential = mds.report()
 
-            # extract noise
-            noise = (
-                velocity
-                - self.a * (next_position - position) / args.timestep
-                - self.a * args.timestep * force / self.m
-            )
-
-            positions[:, s + 1] = next_position
-            potentials[:, s + 1] = potential - (bias * next_position).sum(
+            positions[:, s] = next_position
+            velocities[:, s] = velocity
+            forces[:, s] = (
+                force - 1e-6 * bias
+            )  # kJ/(mol*nm) -> (da*nm)/fs**2 Subtract bias to get unbiased force
+            potentials[:, s] = potential - (bias * next_position).sum(
                 (1, 2)
-            )  # Subtract bias potential to get true potential
+            )  # Subtract bias to get unbiased potential
 
             position = next_position
-            bias = 1e-6 * bias  # kJ/(mol*nm) -> (da*nm)/fs**2
-            action = self.a * args.timestep * bias / self.m + noise
-
-            actions[:, s] = action
         mds.reset()
 
-        log_md_reward = self.normal.log_prob(actions).mean((1, 2, 3))
+        means = (
+            self.a * velocities[:, :-1]
+            + self.a * args.timestep * forces[:, :-1] / self.m
+        )
+        log_md = self.normal.log_prob(velocities[:, 1:] - means)
+        log_md_reward = log_md.mean((1, 2, 3))
 
         if args.reward == "kabsch":
             log_target_reward = torch.zeros(
@@ -134,10 +133,12 @@ class FlowNetAgent:
 
         log_target_reward, last_idx = log_target_reward.max(1)
 
-        log_reward = log_md_reward + log_target_reward
+        log_reward = (
+            log_md_reward + log_target_reward
+        )  # for training stability, we take mean.
 
         if args.type == "train":
-            self.replay.add((positions, actions, log_reward))
+            self.replay.add((positions, velocities, forces, log_reward))
         if args.type == "eval" and args.unbiased:
             last_idx = (
                 torch.zeros(args.num_samples, dtype=torch.long, device=args.device)
@@ -145,14 +146,14 @@ class FlowNetAgent:
             )
 
         log = {
-            "actions": actions,
-            "last_idx": last_idx,
             "positions": positions,
             "potentials": potentials,
             "log_md_reward": log_md_reward,
             "log_target_reward": log_target_reward,
-            "target_position": self.target_position,
+            "unbiased_md_ll": log_md.sum((2, 3)).mean(1),
+            "last_idx": last_idx,
             "last_position": positions[torch.arange(args.num_samples), last_idx],
+            "target_position": self.target_position,
         }
         return log
 
@@ -164,14 +165,17 @@ class FlowNetAgent:
             ]
         )
 
-        indices, positions, actions, log_reward = self.replay.sample()
+        indices, positions, velocities, forces, log_reward = self.replay.sample()
 
         biases = args.bias_scale * self.policy(positions, self.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
-        biases = self.a * args.timestep * biases / self.m
+        means = (
+            self.a * velocities[:, :-1]
+            + self.a * args.timestep * (forces[:, :-1] + biases) / self.m
+        )
 
         log_z = self.policy.log_z
-        log_forward = self.normal.log_prob(biases - actions).mean((1, 2, 3))
+        log_forward = self.normal.log_prob(velocities[:, 1:] - means).mean((1, 2, 3))
         tb_error = log_z + log_forward - log_reward
         loss = tb_error.square().mean() * args.scale
 
@@ -194,8 +198,13 @@ class ReplayBuffer:
             (args.buffer_size, args.num_steps + 1, md.num_particles, 3),
             device=args.device,
         )
-        self.actions = torch.zeros(
-            (args.buffer_size, args.num_steps, md.num_particles, 3), device=args.device
+        self.velocities = torch.zeros(
+            (args.buffer_size, args.num_steps + 1, md.num_particles, 3),
+            device=args.device,
+        )
+        self.forces = torch.zeros(
+            (args.buffer_size, args.num_steps + 1, md.num_particles, 3),
+            device=args.device,
         )
         self.log_reward = torch.zeros(args.buffer_size, device=args.device)
         self.priorities = torch.ones(args.buffer_size, device=args.device)
@@ -211,7 +220,12 @@ class ReplayBuffer:
         indices = torch.arange(self.idx, self.idx + self.num_samples) % self.buffer_size
         self.idx += self.num_samples
 
-        self.positions[indices], self.actions[indices], self.log_reward[indices] = data
+        (
+            self.positions[indices],
+            self.velocities[indices],
+            self.forces[indices],
+            self.log_reward[indices],
+        ) = data
 
     def sample(self):
         if self.buffer == "prioritized":
@@ -227,7 +241,8 @@ class ReplayBuffer:
         return (
             indices,
             self.positions[indices],
-            self.actions[indices],
+            self.velocities[indices],
+            self.forces[indices],
             self.log_reward[indices],
         )
 

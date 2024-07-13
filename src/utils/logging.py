@@ -80,14 +80,14 @@ class Logger:
         self,
         policy,
         rollout,
-        actions,
-        last_idx,
         positions,
         potentials,
-        last_position,
-        target_position,
         log_md_reward,
         log_target_reward,
+        unbiased_md_ll,
+        last_idx,
+        last_position,
+        target_position,
     ):
 
         # Calculate metrics
@@ -103,7 +103,7 @@ class Logger:
             eat38, std_at38 = asp3n_thr8o.mean().item(), asp3n_thr8o.std().item()
 
         ermsd, std_rmsd = self.metric.rmsd(last_position, target_position)
-        ll, std_ll = self.metric.log_likelihood(actions)
+        ll, std_ll = unbiased_md_ll.mean().item(), unbiased_md_ll.std().item()
         epd, std_pd = self.metric.pairwise_distance(last_position, target_position)
         elpd, std_lpd = self.metric.log_pairwise_distance(
             last_position, target_position, self.heavy_atoms

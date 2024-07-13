@@ -76,11 +76,6 @@ class Metric:
         coulomb_matrix = self.charge_matrix / dist_matrix
         return coulomb_matrix
 
-    def log_likelihood(self, diff):
-        log_likelihood = self.normal.log_prob(diff).sum((2, 3)).mean(1)
-        mean_ll, std_ll = log_likelihood.mean().item(), log_likelihood.std().item()
-        return mean_ll, std_ll
-
     def cv_metrics(self, last_idx, last_position, target_position, potentials):
         etps, efps, etp_idxs, efp_idxs = [], [], [], []
 
