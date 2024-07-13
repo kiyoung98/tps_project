@@ -71,8 +71,10 @@ class FlowNetAgent:
             next_position, velocity, force, potential = mds.report()
 
             # extract noise
-            noise = (next_position - position) / args.timestep - self.a * (
-                velocity + force / self.m
+            noise = (
+                velocity
+                - self.a * (next_position - position) / args.timestep
+                - force * args.timestep / self.m
             )
 
             positions[:, s + 1] = next_position
@@ -82,7 +84,7 @@ class FlowNetAgent:
 
             position = next_position
             bias = 1e-6 * bias  # kJ/(mol*nm) -> (da*nm)/fs**2
-            action = self.a * bias / self.m + noise
+            action = bias * args.timestep / self.m + noise
 
             actions[:, s] = action
         mds.reset()
@@ -142,11 +144,6 @@ class FlowNetAgent:
                 + args.num_steps
             )
 
-        # if args.pos_grad:
-        #     positions.requires_grad = True
-        #     positions = positions - args.pos_grad_weight * positions.grad
-        #     self.replay.update_positions(indices, positions.detach())
-
         log = {
             "actions": actions,
             "last_idx": last_idx,
@@ -171,7 +168,7 @@ class FlowNetAgent:
 
         biases = args.bias_scale * self.policy(positions, self.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
-        biases = self.a * biases / self.m
+        biases = biases * args.timestep / self.m
 
         log_z = self.policy.log_z
         log_forward = -0.5 * torch.square((biases - actions) / self.std).mean((1, 2, 3))
@@ -236,6 +233,3 @@ class ReplayBuffer:
 
     def update_priorities(self, indices, weight):
         self.priorities[indices] = weight
-
-    # def update_positions(self, indices, positions):
-    #     self.positions[indices] = positions
