@@ -171,7 +171,7 @@ class FlowNetAgent:
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
         means = (
             self.a * velocities[:, :-1]
-            + self.a * args.timestep * (forces[:, :-1] + biases) / self.m
+            + self.a * args.timestep * (forces[:, :-1] - biases) / self.m
         )
 
         log_z = self.policy.log_z
