@@ -74,7 +74,7 @@ class FlowNetAgent:
             positions[:, s] = next_position
             velocities[:, s] = velocity
             forces[:, s] = (
-                force - 1e-6 * bias
+                force + 1e-6 * bias
             )  # kJ/(mol*nm) -> (da*nm)/fs**2 Subtract bias to get unbiased force
             potentials[:, s] = potential - (bias * next_position).sum(
                 (1, 2)
