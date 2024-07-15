@@ -70,8 +70,14 @@ class FlowNetAgent:
 
             next_position, velocity, force, potential = mds.report()
 
-            noise = (next_position - position) / args.timestep - self.a * (
-                velocity + force / self.m
+            # noise = (next_position - position) / args.timestep - self.a * (
+            #     velocity + force / self.m
+            # )
+
+            noise = (
+                velocity
+                + self.a * args.timestep * force / self.m
+                - self.a * (next_position - position) / args.timestep
             )
 
             # noise = (
@@ -87,8 +93,7 @@ class FlowNetAgent:
 
             position = next_position
             bias = 1e-6 * bias  # kJ/(mol*nm) -> (da*nm)/fs**2
-            # action = self.a * args.timestep * -bias / self.m + noise
-            action = self.a * args.timestep * bias / self.m + noise
+            action = self.a * args.timestep * -bias / self.m + noise
 
             actions[:, s] = action
         mds.reset()
@@ -172,11 +177,10 @@ class FlowNetAgent:
 
         biases = args.bias_scale * self.policy(positions, self.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
-        biases = self.a * args.timestep * biases / self.m
+        means = self.a * args.timestep * -biases / self.m
 
         log_z = self.policy.log_z
-        # log_forward = self.normal.log_prob(-biases - actions).mean((1, 2, 3))
-        log_forward = self.normal.log_prob(biases - actions).mean((1, 2, 3))
+        log_forward = self.normal.log_prob(actions - means).mean((1, 2, 3))
         tb_error = log_z + log_forward - log_reward
         loss = tb_error.square().mean() * args.scale
 
