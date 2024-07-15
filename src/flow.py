@@ -110,9 +110,10 @@ class FlowNetAgent:
             )
             for i in range(args.num_samples):
                 pd = pairwise_dist(positions[i])
-                log_target_reward[i] = -0.5 * torch.square(
-                    (pd - target_pd) / args.sigma
-                ).mean((1, 2))
+                log_target_reward[i] = (
+                    -0.5 * torch.square((pd - target_pd) / args.sigma).mean((1, 2))
+                    + args.target_reward_scale
+                )
         elif args.reward == "s_dist":
             log_target_reward = torch.zeros(
                 args.num_samples, args.num_steps + 1, device=args.device
@@ -177,7 +178,7 @@ class FlowNetAgent:
         log_z = self.policy.log_z
         log_forward = self.normal.log_prob(velocities[:, 1:] - means).mean((1, 2, 3))
         tb_error = log_z + log_forward - log_reward
-        loss = tb_error.square().mean() * args.scale
+        loss = tb_error.square().mean()
 
         loss.backward()
 
