@@ -87,7 +87,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--trains_per_rollout",
-    default=2000,
+    default=2000,  # TODO: 1000
     type=int,
     help="Number of training per rollout in a rollout",
 )

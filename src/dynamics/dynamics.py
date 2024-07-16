@@ -24,6 +24,9 @@ class Alanine(BaseDynamics):
             ewaldErrorTolerance=0.0005,
         )
         external_force = mm.CustomExternalForce("fx*x+fy*y+fz*z")
+        # TODO: external_force = mm.CustomExternalForce(
+        #     "-(fx*x+fy*y+fz*z)"
+        # )  # minus grad of this expression is (fx, fy, fz)=force
 
         # creating the parameters
         external_force.addPerParticleParameter("fx")

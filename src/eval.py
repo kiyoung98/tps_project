@@ -13,7 +13,7 @@ parser = argparse.ArgumentParser()
 # System Config
 parser.add_argument("--seed", default=0, type=int)
 parser.add_argument("--type", default="eval", type=str)
-parser.add_argument("--best", default="loss", type=str)
+parser.add_argument("--best", default="epd", type=str)
 parser.add_argument("--device", default="cuda", type=str)
 parser.add_argument("--molecule", default="alanine", type=str)
 
