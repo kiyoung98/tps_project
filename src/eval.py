@@ -37,6 +37,7 @@ parser.add_argument(
     "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
 )
 parser.add_argument("--scale", default=1, type=float)
+parser.add_argument("--target_reward_scale", default=8, type=float)
 parser.add_argument("--timestep", default=1, type=float, help="Timestep of integrator")
 parser.add_argument(
     "--sigma", default=0.05, type=float, help="Control reward of arrival"
