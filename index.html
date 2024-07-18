@@ -28,6 +28,7 @@
             font-size: 1.2em;
             max-width: 1000px;
             margin-bottom: 30px;
+            text-align: left;
         }
 
         .gif-container {
@@ -80,16 +81,17 @@
     <a href="https://openreview.net/forum?id=iRAhN14kZs&referrer=%5Bthe%20profile%20of%20Sungsoo%20Ahn%5D(%2Fprofile%3Fid%3D~Sungsoo_Ahn1)"
         class="paper-button">Paper</a>
     <p class="intro">
-        Understanding transition paths between meta-stable states in molecular systems is fundamental for material
-        design and drug discovery. However, sampling these paths via unbiased molecular dynamics simulations is
-        computationally prohibitive due to the high energy barriers between the meta-stable states. Recent machine
-        learning approaches are often restricted to simple systems or rely on collective variables (CVs) extracted from
-        expensive domain knowledge. In this work, we propose to leverage generative flow networks (GFlowNets) to sample
-        transition paths without relying on CVs. We reformulate the problem as amortized energy-based sampling over
-        transition paths and train a neural bias potential by minimizing the squared log-ratio between the target
-        distribution and the generator, derived from the flow matching objective of GFlowNets. Our evaluation on three
-        proteins (Alanine Dipeptide, Polyproline Helix, and Chignolin) demonstrates that our approach, called TPS-GFN,
-        generates more realistic and diverse transition paths than the previous CV-free machine learning approach. </p>
+    <h2>Abstract</h2>
+    Understanding transition paths between meta-stable states in molecular systems is fundamental for material
+    design and drug discovery. However, sampling these paths via unbiased molecular dynamics simulations is
+    computationally prohibitive due to the high energy barriers between the meta-stable states. Recent machine
+    learning approaches are often restricted to simple systems or rely on collective variables (CVs) extracted from
+    expensive domain knowledge. In this work, we propose to leverage generative flow networks (GFlowNets) to sample
+    transition paths without relying on CVs. We reformulate the problem as amortized energy-based sampling over
+    transition paths and train a neural bias potential by minimizing the squared log-ratio between the target
+    distribution and the generator, derived from the flow matching objective of GFlowNets. Our evaluation on three
+    proteins (Alanine Dipeptide, Polyproline Helix, and Chignolin) demonstrates that our approach, called TPS-GFN,
+    generates more realistic and diverse transition paths than the previous CV-free machine learning approach. </p>
     <h2>Transition Paths</h2>
     <p>
         We visualize 3D views of start state, transition path, and target state.
