@@ -56,6 +56,14 @@
 
 <body>
     <h1>Collective Variable-Free Transition Path Sampling <br> with Generative Flow Network</h1>
+    <h2>ICML 2024 SPIGM</h2>
+    <p>Kiyoung Seong</p>
+    <p>Seonghyun Park</p>
+    <p>Seonghwan Kim</p>
+    <p>Woo Youn Kim</p>
+    <p>Sungsoo Ahn</p>
+    <a href="https://openreview.net/forum?id=iRAhN14kZs&referrer=%5Bthe%20profile%20of%20Sungsoo%20Ahn%5D(%2Fprofile%3Fid%3D~Sungsoo_Ahn1)"
+        class="paper-button">Paper</a>
     <p class="intro">
         Understanding transition paths between meta-stable states in molecular systems is fundamental for material
         design and drug discovery. However, sampling these paths via unbiased molecular dynamics simulations is
@@ -67,21 +75,24 @@
         distribution and the generator, derived from the flow matching objective of GFlowNets. Our evaluation on three
         proteins (Alanine Dipeptide, Polyproline Helix, and Chignolin) demonstrates that our approach, called TPS-GFN,
         generates more realistic and diverse transition paths than the previous CV-free machine learning approach. </p>
-    <h2>Animations</h2>
+    <h2>Transition Paths</h2>
     <p>
-        We visualize 3D views of the start state, transition path animation, and the target state.
+        We visualize 3D views of start state, transition path, and target state.
         systems.
     </p>
     <h3>Alanine Dipeptide</h3>
     <div class="gif-container">
         <div class="gif-item">
             <img src="./c5.png" alt="Alanine initial state">
+            <p>C5</p>
         </div>
         <div class="gif-item">
             <img src="./alanine.gif" alt="Alanine conformation change">
+            <p>Conformation Change</p>
         </div>
         <div class="gif-item">
             <img src="./c7ax.png" alt="Alanine target state">
+            <p>C7ax</p>
         </div>
     </div>
     <br>
@@ -89,12 +100,15 @@
     <div class="gif-container">
         <div class="gif-item">
             <img src="./pp2.png" alt="Poly start state">
+            <p>Left-handed (PP-II)</p>
         </div>
         <div class="gif-item">
             <img src="./poly.gif" alt="Poly isomerization">
+            <p>Isomerization</p>
         </div>
         <div class="gif-item">
             <img src="./pp1.png" alt="Poly target state">
+            <p>Right-handed (PP-I)</p>
         </div>
     </div>
     <br>
@@ -102,14 +116,26 @@
     <div class="gif-container">
         <div class="gif-item">
             <img src="./unfolded.png" alt="Chignolin initial state">
+            <p>Unfolded</p>
         </div>
         <div class="gif-item">
             <img src="./chignolin.gif" alt="Chignolin folding process">
+            <p>Folding Process</p>
         </div>
         <div class="gif-item">
             <img src="./folded.png" alt="Chignolin target state">
+            <p>Folded</p>
         </div>
     </div>
+    <h3>CITE</h3>
+    <pre>
+        @article{seong2024collective,
+        title={Collective Variable Free Transition Path Sampling with Generative Flow Network},
+        author={Seong, Kiyoung and Park, Seonghyun and Kim, Seonghwan and Kim, Woo Youn and Ahn, Sungsoo},
+        journal={arXiv preprint arXiv:2405.19961},
+        year={2024}
+        }
+    </pre>
 </body>
 
 </html>
