@@ -43,24 +43,35 @@
 
         .gif-container {
             display: flex;
-            justify-content: center;
-            gap: 30px;
+            justify-content: space-around;
+            /* 이미지들 사이의 간격을 균등하게 조정 */
         }
 
         .gif-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-        }
-
-        .gif-item p {
-            font-size: 1.1em;
-            margin-bottom: 10px;
+            /* 내부 요소들을 중앙 정렬 */
+            height: 300px;
+            /* 고정 높이 설정 */
+            justify-content: space-between;
+            /* 내부 요소들 사이의 간격을 균등하게 분배 */
         }
 
         .gif-item img {
-            width: 300px;
-            height: auto;
+            max-height: 80%;
+            /* 이미지 최대 높이 설정 */
+            object-fit: cover;
+            /* 컨테이너를 채우면서 비율 유지 */
+            width: auto;
+            /* 너비 자동 조정 */
+        }
+
+        .gif-item p {
+            text-align: center;
+            /* 텍스트 중앙 정렬 */
+            margin: 5px 0;
+            /* 상하 여백 설정 */
         }
 
         .paper-button {
