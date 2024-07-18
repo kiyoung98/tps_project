@@ -3,7 +3,7 @@ import numpy as np
 import mdtraj as md
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-from .utils import chignolin_h_bond, compute_dihedral
+from .utils import *
 
 
 class AlaninePotential:
@@ -207,6 +207,37 @@ def plot_paths_chignolin(save_dir, rollout, positions, last_idx):
     return fig
 
 
+def plot_hands(save_dir, rollout, positions, last_idx):
+    handed = poly_handed(positions)
+    handed = handed.detach().cpu().numpy()
+
+    fig = plt.figure(figsize=(20, 5))
+    ax = fig.add_subplot(111)
+    plt.ylim([-1, 1])
+
+    cm = plt.get_cmap("gist_rainbow")
+    ax.set_prop_cycle(
+        color=[cm(1.0 * i / positions.shape[0]) for i in range(positions.shape[0])]
+    )
+
+    for i in range(positions.shape[0]):
+        if last_idx[i] > 0:
+            ax.plot(
+                handed[i][: last_idx[i] + 1],
+                marker="o",
+                linestyle="None",
+                markersize=2,
+                alpha=1.0,
+            )
+
+    plt.xlabel("Time (fs)")
+    plt.ylabel("Handedness")
+    plt.show()
+    plt.savefig(f"{save_dir}/paths/{rollout}.png")
+    plt.close()
+    return fig
+
+
 def plot_potentials(save_dir, rollout, potentials, last_idx):
     potentials = potentials.detach().cpu().numpy()
     fig = plt.figure(figsize=(20, 5))
@@ -336,6 +367,18 @@ def plot_path_chignolin(save_dir, positions, last_idx):
                 alpha=1.0,
             )
 
+            if (
+                asp3od_thr6og[i][last_idx[i]] < 0.35
+                and asp3n_thr8o[i][last_idx[i]] < 0.35
+            ):
+                np.save(
+                    f"{save_dir}/path/{i}_36.npy",
+                    asp3od_thr6og[i][: last_idx[i] + 1],
+                )
+                np.save(
+                    f"{save_dir}/path/{i}_38.npy", asp3n_thr8o[i][: last_idx[i] + 1]
+                )
+
         plt.plot([0, 0.35], [0, 0], color="black")
         plt.plot([0.35, 0.35], [0, 0.35], color="black")
         plt.plot([0.35, 0], [0.35, 0.35], color="black")
@@ -343,6 +386,39 @@ def plot_path_chignolin(save_dir, positions, last_idx):
 
         plt.xlabel("Asp3OD-Thr6OG")
         plt.ylabel("Asp3N-Thr8O")
+        plt.show()
+        plt.savefig(f"{save_dir}/path/{i}.png")
+        plt.close()
+
+
+def plot_hand(save_dir, positions, last_idx):
+    handed = poly_handed(positions)
+    handed = handed.detach().cpu().numpy()
+
+    for i in range(handed.shape[0]):
+        plt.clf()
+        plt.close()
+        fig = plt.figure(figsize=(20, 5))
+        ax = fig.add_subplot(111)
+        plt.ylim([-1, 1])
+
+        cm = plt.get_cmap("gist_rainbow")
+        ax.set_prop_cycle(
+            color=[cm(1.0 * i / positions.shape[0]) for i in range(positions.shape[0])]
+        )
+
+        ax.plot(
+            handed[i][: last_idx[i] + 1],
+            marker="o",
+            linestyle="None",
+            markersize=2,
+            alpha=1.0,
+        )
+
+        np.save(f"{save_dir}/path/{i}.npy", handed[i][: last_idx[i] + 1])
+
+        plt.xlabel("Time (fs)")
+        plt.ylabel("Handedness")
         plt.show()
         plt.savefig(f"{save_dir}/path/{i}.png")
         plt.close()

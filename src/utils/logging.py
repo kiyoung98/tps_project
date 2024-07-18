@@ -91,16 +91,17 @@ class Logger:
     ):
 
         # Calculate metrics
-        if self.molecule in ["alanine", "histidine", "chignolin"]:
-            thp, etps, etp_idxs, etp, std_etp, efps, efp_idxs, efp, std_efp = (
-                self.metric.cv_metrics(
-                    last_idx, last_position, target_position, potentials
-                )
-            )
+        thp, etps, etp_idxs, etp, std_etp, efps, efp_idxs, efp, std_efp = (
+            self.metric.cv_metrics(last_idx, last_position, target_position, potentials)
+        )
         if self.molecule == "chignolin":
             asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(positions)
             eat36, std_at36 = asp3od_thr6og.mean().item(), asp3od_thr6og.std().item()
             eat38, std_at38 = asp3n_thr8o.mean().item(), asp3n_thr8o.std().item()
+
+        elif self.molecule == "poly":
+            h = poly_handed(positions)
+            eh, std_h = h.mean().item(), h.std().item()
 
         ermsd, std_rmsd = self.metric.rmsd(last_position, target_position)
         ll, std_ll = unbiased_md_ll.mean().item(), unbiased_md_ll.std().item()
@@ -136,6 +137,9 @@ class Logger:
                 "log_z": policy.log_z.item(),
                 "ll": ll,
                 "epd": epd,
+                "thp": thp,
+                "etp": etp,
+                "efp": efp,
                 "elpd": elpd,
                 "epcd": epcd,
                 "elr": elr,
@@ -147,6 +151,8 @@ class Logger:
                 "std_pd": std_pd,
                 "std_lpd": std_lpd,
                 "std_pcd": std_pcd,
+                "std_etp": std_etp,
+                "std_efp": std_efp,
                 "std_lr": std_lr,
                 "std_lmr": std_lmr,
                 "std_ltr": std_ltr,
@@ -154,16 +160,7 @@ class Logger:
                 "std_len": std_len,
             }
 
-            if self.molecule in ["alanine", "histidine", "chignolin"]:
-                cv_log = {
-                    "thp": thp,
-                    "etp": etp,
-                    "efp": efp,
-                    "std_etp": std_etp,
-                    "std_efp": std_efp,
-                }
-                log.update(cv_log)
-            elif self.molecule == "chignolin":
+            if self.molecule == "chignolin":
                 cv_log = {
                     "eat36": eat36,
                     "eat38": eat38,
@@ -172,11 +169,21 @@ class Logger:
                 }
                 log.update(cv_log)
 
+            elif self.molecule == "poly":
+                cv_log = {
+                    "eh": eh,
+                    "std_h": std_h,
+                }
+                log.update(cv_log)
+
             wandb.log(log, step=rollout)
 
         self.logger.info(f"log_z: {policy.log_z.item()}")
         self.logger.info(f"ll: {ll}")
         self.logger.info(f"epd: {epd}")
+        self.logger.info(f"thp: {thp}")
+        self.logger.info(f"etp: {etp}")
+        self.logger.info(f"efp: {efp}")
         self.logger.info(f"elpd: {elpd}")
         self.logger.info(f"epcd: {epcd}")
         self.logger.info(f"elr: {elr}")
@@ -186,6 +193,8 @@ class Logger:
         self.logger.info(f"len: {len}")
         self.logger.info(f"std_ll: {std_ll}")
         self.logger.info(f"std_pd: {std_pd}")
+        self.logger.info(f"std_etp: {std_etp}")
+        self.logger.info(f"std_efp: {std_efp}")
         self.logger.info(f"std_lpd: {std_lpd}")
         self.logger.info(f"std_pcd: {std_pcd}")
         self.logger.info(f"std_lr: {std_lr}")
@@ -194,17 +203,15 @@ class Logger:
         self.logger.info(f"std_rmsd: {std_rmsd}")
         self.logger.info(f"std_len: {std_len}")
 
-        if self.molecule in ["alanine", "histidine", "chignolin"]:
-            self.logger.info(f"thp: {thp}")
-            self.logger.info(f"etp: {etp}")
-            self.logger.info(f"efp: {efp}")
-            self.logger.info(f"std_etp: {std_etp}")
-            self.logger.info(f"std_efp: {std_efp}")
-        elif self.molecule == "chignolin":
+        if self.molecule == "chignolin":
             self.logger.info(f"eat36: {eat36}")
             self.logger.info(f"eat38: {eat38}")
             self.logger.info(f"std_at36: {std_at36}")
             self.logger.info(f"std_at38: {std_at38}")
+
+        elif self.molecule == "poly":
+            self.logger.info(f"eh: {eh}")
+            self.logger.info(f"std_h: {std_h}")
 
         if rollout % self.save_freq == 0:
             torch.save(policy.state_dict(), f"{self.save_dir}/policies/{rollout}.pt")
@@ -217,22 +224,23 @@ class Logger:
                 fig_path = plot_paths_chignolin(
                     self.save_dir, rollout, positions, last_idx
                 )
+            elif self.molecule == "poly":
+                fig_path = plot_hands(self.save_dir, rollout, positions, last_idx)
 
             fig_pot = plot_potentials(self.save_dir, rollout, potentials, last_idx)
 
             if self.wandb:
                 log = {"potentials": wandb.Image(fig_pot)}
 
-                if self.molecule in ["alanine", "histidine", "chignolin"]:
-                    fig_etp = plot_etps(self.save_dir, rollout, etps, etp_idxs)
-                    fig_efp = plot_efps(self.save_dir, rollout, efps, efp_idxs)
+                fig_etp = plot_etps(self.save_dir, rollout, etps, etp_idxs)
+                fig_efp = plot_efps(self.save_dir, rollout, efps, efp_idxs)
 
-                    cv_log = {
-                        "paths": wandb.Image(fig_path),
-                        "etps": wandb.Image(fig_etp),
-                        "efps": wandb.Image(fig_efp),
-                    }
-                    log.update(cv_log)
+                cv_log = {
+                    "paths": wandb.Image(fig_path),
+                    "etps": wandb.Image(fig_etp),
+                    "efps": wandb.Image(fig_efp),
+                }
+                log.update(cv_log)
 
                 wandb.log(log, step=rollout)
 
@@ -241,6 +249,8 @@ class Logger:
                 plot_path_alanine(self.save_dir, positions, target_position, last_idx)
             elif self.molecule == "chignolin":
                 plot_path_chignolin(self.save_dir, positions, last_idx)
+            elif self.molecule == "poly":
+                plot_hand(self.save_dir, positions, last_idx)
             plot_potential(self.save_dir, potentials, last_idx)
             plot_3D_view(
                 self.save_dir, self.start_file, positions, potentials, last_idx

@@ -29,13 +29,6 @@ class Metric:
             self.angle_1 = torch.tensor(
                 [6, 8, 14, 16], dtype=torch.long, device=args.device
             )
-        elif args.molecule == "histidine":
-            self.angle_2 = torch.tensor(
-                [0, 6, 8, 11], dtype=torch.long, device=args.device
-            )
-            self.angle_1 = torch.tensor(
-                [6, 8, 11, 23], dtype=torch.long, device=args.device
-            )
 
     def rmsd(self, last_position, target_position):
         aligned_target_position = kabsch(target_position, last_position)
@@ -83,7 +76,11 @@ class Metric:
             asp3od_thr6og, asp3n_thr8o = chignolin_h_bond(last_position.unsqueeze(0))
             hit = (asp3od_thr6og < 0.35) & (asp3n_thr8o < 0.35)
 
-        elif self.molecule in ["alanine", "histidine"]:
+        elif self.molecule == "poly":
+            handed = poly_handed(last_position.unsqueeze(0))
+            hit = handed > 0
+
+        elif self.molecule == "alanine":
             target_psi = compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
             target_phi = compute_dihedral(target_position[:, self.angle_2].unsqueeze(0))
 

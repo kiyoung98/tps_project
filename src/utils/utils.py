@@ -91,6 +91,22 @@ def chignolin_h_bond(positions):
     return asp3od_thr6og, asp3n_thr8o  # , angle
 
 
+def poly_handed(positions):
+    c1 = positions[:, :, 16]
+    c2 = positions[:, :, 18]
+    c3 = positions[:, :, 30]
+    c4 = positions[:, :, 44]
+
+    ab = c2 - c1
+    cd = c4 - c3
+    ef = (c3 + c4) / 2 - (c1 + c2) / 2
+    h = ef * torch.cross(ab, cd, dim=-1)
+    h = h.sum(dim=-1) / (
+        torch.norm(ab, dim=-1) * torch.norm(cd, dim=-1) * torch.norm(ef, dim=-1)
+    )
+    return h
+
+
 def angle_between_vectors(v1, v2):
     unit_v1 = v1 / torch.norm(v1, dim=-1, keepdim=True)
     unit_v2 = v2 / torch.norm(v2, dim=-1, keepdim=True)
