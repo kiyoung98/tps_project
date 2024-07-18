@@ -67,10 +67,12 @@
         }
 
         .gif-item img {
-            max-height: 80%;
-            /* 이미지 최대 높이 설정 */
-            object-fit: cover;
-            /* 컨테이너를 채우면서 비율 유지 */
+            max-width: 500px;
+            /* 이미지 최대 너비를 500px로 설정 */
+            max-height: 100%;
+            /* 이미지 최대 높이를 컨테이너 높이로 제한 */
+            object-fit: contain;
+            /* 이미지가 컨테이너에 맞게 조정되면서 비율 유지 */
             width: auto;
             /* 너비 자동 조정 */
         }
