@@ -45,16 +45,16 @@
 
         p.caption {
             font-size: 1.2em;
-            margin-left: 20%;
-            margin-right: 20%;
+            margin-left: 10%;
+            margin-right: 10%;
             margin-bottom: 30px;
             color: grey;
         }
 
         p.intro {
             font-size: 1.2em;
-            margin-left: 20%;
-            margin-right: 20%;
+            margin-left: 30%;
+            margin-right: 30%;
             margin-bottom: 30px;
         }
 
@@ -121,18 +121,18 @@
     <h3>Kiyoung Seong | Seonghyun Park | Seonghwan Kim | Woo Youn Kim | Sungsoo Ahn</h3>
     <a href="https://openreview.net/forum?id=iRAhN14kZs&referrer=%5Bthe%20profile%20of%20Sungsoo%20Ahn%5D(%2Fprofile%3Fid%3D~Sungsoo_Ahn1)"
         class="paper-button">Paper</a>
-    <p class="intro">
     <h2>Abstract</h2>
-    Understanding transition paths between meta-stable states in molecular systems is fundamental for material
-    design and drug discovery. However, sampling these paths via unbiased molecular dynamics simulations is
-    computationally prohibitive due to the high energy barriers between the meta-stable states. Recent machine
-    learning approaches are often restricted to simple systems or rely on collective variables (CVs) extracted from
-    expensive domain knowledge. In this work, we propose to leverage generative flow networks (GFlowNets) to sample
-    transition paths without relying on CVs. We reformulate the problem as amortized energy-based sampling over
-    transition paths and train a neural bias potential by minimizing the squared log-ratio between the target
-    distribution and the generator, derived from the flow matching objective of GFlowNets. Our evaluation on three
-    proteins (Alanine Dipeptide, Polyproline Helix, and Chignolin) demonstrates that our approach, called TPS-GFN,
-    generates more realistic and diverse transition paths than the previous CV-free machine learning approach. </p>
+    <p class="intro">
+        Understanding transition paths between meta-stable states in molecular systems is fundamental for material
+        design and drug discovery. However, sampling these paths via unbiased molecular dynamics simulations is
+        computationally prohibitive due to the high energy barriers between the meta-stable states. Recent machine
+        learning approaches are often restricted to simple systems or rely on collective variables (CVs) extracted from
+        expensive domain knowledge. In this work, we propose to leverage generative flow networks (GFlowNets) to sample
+        transition paths without relying on CVs. We reformulate the problem as amortized energy-based sampling over
+        transition paths and train a neural bias potential by minimizing the squared log-ratio between the target
+        distribution and the generator, derived from the flow matching objective of GFlowNets. Our evaluation on three
+        proteins (Alanine Dipeptide, Polyproline Helix, and Chignolin) demonstrates that our approach, called TPS-GFN,
+        generates more realistic and diverse transition paths than the previous CV-free machine learning approach. </p>
     <h2>Results</h2>
     <h3>Alanine Dipeptide</h3>
     <div class="gif-container">
