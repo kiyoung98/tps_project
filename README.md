@@ -17,7 +17,7 @@
     conda install -c conda-forge openmmtools
     ```
 
-5. Install the openmmforcefields for forcefields of large proteins using the following commands:
+5. Install the openmmforcefields for forcefields of Polyproline Helix and Chignolin using the following commands:
     ```
     git clone https://github.com/openmm/openmmforcefields.git
     ```
