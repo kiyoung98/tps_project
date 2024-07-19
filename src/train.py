@@ -30,7 +30,7 @@ parser.add_argument(
     "--force", action="store_true", help="Predict force otherwise potential"
 )
 parser.add_argument(
-    "--log_z", default=0, type=float, help="Learning rate of estimator for log Z"
+    "--log_z", default="-8", type=float, help="Learning rate of estimator for log Z"
 )
 
 # Sampling Config
