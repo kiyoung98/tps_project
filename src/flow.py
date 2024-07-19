@@ -21,7 +21,7 @@ class FlowNetAgent:
             device=args.device,
         ).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
-        self.heavy_atom_ids = md.heavy_atom_ids
+        self.heavy_ids = md.heavy_ids
         self.normal = Normal(0, self.std)
 
         position = mds.report()[0]
@@ -110,20 +110,19 @@ class FlowNetAgent:
             )
             for i in range(args.num_samples):
                 pd = pairwise_dist(positions[i])
-                log_target_reward[i] = (
-                    -0.5 * torch.square((pd - target_pd) / args.sigma).mean((1, 2))
-                    + args.target_reward_scale
-                )
+                log_target_reward[i] = -0.5 * torch.square(
+                    (pd - target_pd) / args.sigma
+                ).mean((1, 2))
         elif args.reward == "s_dist":
             log_target_reward = torch.zeros(
                 args.num_samples, args.num_steps + 1, device=args.device
             )
             for i in range(args.num_samples):
-                if args.heavy_atoms:
+                if args.heavy_only:
                     log_target_reward[i] = -(
                         compute_s_dist(
-                            positions[i][:, self.heavy_atom_ids],
-                            self.target_position[:, self.heavy_atom_ids],
+                            positions[i][:, self.heavy_ids],
+                            self.target_position[:, self.heavy_ids],
                         )
                         / args.sigma
                     )

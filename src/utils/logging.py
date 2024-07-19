@@ -14,7 +14,7 @@ class Logger:
         self.wandb = args.wandb
         self.molecule = args.molecule
         self.start_file = md.start_file
-        self.heavy_atoms = args.heavy_atoms
+        self.heavy_only = args.heavy_only
         self.save_freq = args.save_freq if args.type == "train" else 1
 
         self.best_epd = float("inf")
@@ -107,7 +107,7 @@ class Logger:
         ll, std_ll = unbiased_md_ll.mean().item(), unbiased_md_ll.std().item()
         epd, std_pd = self.metric.pairwise_distance(last_position, target_position)
         elpd, std_lpd = self.metric.log_pairwise_distance(
-            last_position, target_position, self.heavy_atoms
+            last_position, target_position, self.heavy_only
         )
         epcd, std_pcd = self.metric.pairwise_coulomb_distance(
             last_position, target_position

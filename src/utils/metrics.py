@@ -18,7 +18,7 @@ class Metric:
         )
 
         self.molecule = args.molecule
-        self.heavy_atom_ids = md.heavy_atom_ids
+        self.heavy_ids = md.heavy_ids
 
         self.normal = Normal(0, self.std)
 
@@ -45,11 +45,11 @@ class Metric:
         mean_pd, std_pd = pd.mean().item(), pd.std().item()
         return mean_pd, std_pd
 
-    def log_pairwise_distance(self, last_position, target_position, heavy_atoms=False):
-        if heavy_atoms:
+    def log_pairwise_distance(self, last_position, target_position, heavy_only=False):
+        if heavy_only:
             s_dist = compute_s_dist(
-                last_position[:, self.heavy_atom_ids],
-                target_position[:, self.heavy_atom_ids],
+                last_position[:, self.heavy_ids],
+                target_position[:, self.heavy_ids],
             )
         else:
             s_dist = compute_s_dist(last_position, target_position)

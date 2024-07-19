@@ -29,6 +29,9 @@ parser.add_argument(
 parser.add_argument(
     "--force", action="store_true", help="Predict force otherwise potential"
 )
+parser.add_argument(
+    "--log_z", default=0, type=float, help="Learning rate of estimator for log Z"
+)
 
 # Sampling Config
 parser.add_argument("--start_state", default="c5", type=str)
@@ -38,7 +41,6 @@ parser.add_argument("--feat_aug", default="dist", type=str)
 parser.add_argument(
     "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
 )
-parser.add_argument("--target_reward_scale", default=8, type=float)
 parser.add_argument("--timestep", default=1, type=float, help="Timestep of integrator")
 parser.add_argument(
     "--sigma", default=0.05, type=float, help="Control reward of arrival"
@@ -50,7 +52,7 @@ parser.add_argument(
     "--temperature", default=300, type=float, help="Temperature for evaluation"
 )
 parser.add_argument("--reward", default="dist", type=str)
-parser.add_argument("--heavy_atoms", action="store_true")
+parser.add_argument("--heavy_only", action="store_true")
 
 # Training Config
 parser.add_argument("--start_temperature", default=600, type=float)
@@ -87,7 +89,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "--trains_per_rollout",
-    default=2000,  # TODO: 1000
+    default=2000,
     type=int,
     help="Number of training per rollout in a rollout",
 )

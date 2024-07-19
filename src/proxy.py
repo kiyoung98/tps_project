@@ -32,8 +32,7 @@ class Alanine(nn.Module):
             nn.ReLU(),
             nn.Linear(128, self.output_dim, bias=False),
         )
-
-        self.log_z = nn.Parameter(torch.tensor(0.0))
+        self.log_z = nn.Parameter(torch.tensor(args.log_z))
 
         self.to(args.device)
 
@@ -95,7 +94,7 @@ class Chignolin(nn.Module):
             nn.Linear(512, self.output_dim, bias=False),
         )
 
-        self.log_z = nn.Parameter(torch.tensor(0.0))
+        self.log_z = nn.Parameter(torch.tensor(args.log_z))
 
         self.to(args.device)
 
@@ -157,7 +156,7 @@ class Poly(nn.Module):
             nn.Linear(256, self.output_dim, bias=False),
         )
 
-        self.log_z = nn.Parameter(torch.tensor(0.0))
+        self.log_z = nn.Parameter(torch.tensor(args.log_z))
 
         self.to(args.device)
 
