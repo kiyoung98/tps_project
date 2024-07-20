@@ -3,4 +3,3 @@ results/
 openmmforcefields/
 **/__pycache__/
 .ipynb_checkpoints/
-model/
