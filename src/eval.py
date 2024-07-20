@@ -26,7 +26,7 @@ parser.add_argument("--date", default="date", type=str, help="Date of the traini
 
 # Policy Config
 parser.add_argument("--force", action="store_true", help="Network predicts force")
-parser.add_argument("--log_z", default=0, type=float)
+parser.add_argument("--log_z", default="-8", type=float)
 
 # Sampling Config
 parser.add_argument("--unbiased", action="store_true")
