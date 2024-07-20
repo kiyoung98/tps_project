@@ -131,7 +131,14 @@ class FlowNetAgent:
                         compute_s_dist(positions[i], self.target_position) / args.sigma
                     )
 
-        log_target_reward, last_idx = log_target_reward.max(1)
+        if not args.fixed:
+            log_target_reward, last_idx = log_target_reward.max(1)
+        else:
+            log_target_reward = log_target_reward[:, -1]
+            last_idx = (
+                torch.zeros(args.num_samples, dtype=torch.long, device=args.device)
+                + args.num_steps
+            )
 
         log_reward = (
             log_md_reward + log_target_reward

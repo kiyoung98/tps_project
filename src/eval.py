@@ -50,6 +50,7 @@ parser.add_argument(
 )
 parser.add_argument("--reward", default="dist", type=str)
 parser.add_argument("--heavy_only", action="store_true")
+parser.add_argument("--fixed", action="store_true")
 
 args = parser.parse_args()
 
