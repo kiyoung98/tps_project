@@ -14,7 +14,6 @@ class Logger:
         self.wandb = args.wandb
         self.molecule = args.molecule
         self.start_file = md.start_file
-        self.heavy_only = args.heavy_only
         self.save_freq = args.save_freq if args.type == "train" else 1
 
         self.best_epd = float("inf")
@@ -106,9 +105,6 @@ class Logger:
         ermsd, std_rmsd = self.metric.rmsd(last_position, target_position)
         ll, std_ll = unbiased_md_ll.mean().item(), unbiased_md_ll.std().item()
         epd, std_pd = self.metric.pairwise_distance(last_position, target_position)
-        elpd, std_lpd = self.metric.log_pairwise_distance(
-            last_position, target_position, self.heavy_only
-        )
         epcd, std_pcd = self.metric.pairwise_coulomb_distance(
             last_position, target_position
         )
@@ -140,7 +136,6 @@ class Logger:
                 "thp": thp,
                 "etp": etp,
                 "efp": efp,
-                "elpd": elpd,
                 "epcd": epcd,
                 "elr": elr,
                 "elmr": elmr,
@@ -149,7 +144,6 @@ class Logger:
                 "len": len,
                 "std_ll": std_ll,
                 "std_pd": std_pd,
-                "std_lpd": std_lpd,
                 "std_pcd": std_pcd,
                 "std_etp": std_etp,
                 "std_efp": std_efp,
@@ -184,7 +178,6 @@ class Logger:
         self.logger.info(f"thp: {thp}")
         self.logger.info(f"etp: {etp}")
         self.logger.info(f"efp: {efp}")
-        self.logger.info(f"elpd: {elpd}")
         self.logger.info(f"epcd: {epcd}")
         self.logger.info(f"elr: {elr}")
         self.logger.info(f"elmr: {elmr}")
@@ -195,7 +188,6 @@ class Logger:
         self.logger.info(f"std_pd: {std_pd}")
         self.logger.info(f"std_etp: {std_etp}")
         self.logger.info(f"std_efp: {std_efp}")
-        self.logger.info(f"std_lpd: {std_lpd}")
         self.logger.info(f"std_pcd: {std_pcd}")
         self.logger.info(f"std_lr: {std_lr}")
         self.logger.info(f"std_lmr: {std_lmr}")

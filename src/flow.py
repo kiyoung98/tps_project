@@ -21,7 +21,6 @@ class FlowNetAgent:
             device=args.device,
         ).unsqueeze(-1)
         self.policy = getattr(proxy, args.molecule.title())(args, md)
-        self.heavy_ids = md.heavy_ids
         self.normal = Normal(0, self.std)
 
         position = mds.report()[0]
@@ -90,46 +89,16 @@ class FlowNetAgent:
         log_md = self.normal.log_prob(velocities[:, 1:] - means)
         log_md_reward = log_md.mean((1, 2, 3))
 
-        if args.reward == "kabsch":
-            log_target_reward = torch.zeros(
-                args.num_samples, args.num_steps, device=args.device
-            )
-            for i in range(args.num_samples):
-                aligned_target_position = kabsch(self.target_position, positions[i][1:])
-                target_velocity = (
-                    aligned_target_position - positions[i][:-1]
-                ) / args.timestep
-                log_target_reward[i] = -0.5 * torch.square(
-                    (target_velocity - velocities[i][1:]) / args.sigma
-                ).mean((1, 2))
-        elif args.reward == "dist":
-            target_pd = pairwise_dist(self.target_position)
+        target_pd = pairwise_dist(self.target_position)
 
-            log_target_reward = torch.zeros(
-                args.num_samples, args.num_steps + 1, device=args.device
-            )
-            for i in range(args.num_samples):
-                pd = pairwise_dist(positions[i])
-                log_target_reward[i] = -0.5 * torch.square(
-                    (pd - target_pd) / args.sigma
-                ).mean((1, 2))
-        elif args.reward == "s_dist":
-            log_target_reward = torch.zeros(
-                args.num_samples, args.num_steps + 1, device=args.device
-            )
-            for i in range(args.num_samples):
-                if args.heavy_only:
-                    log_target_reward[i] = -(
-                        compute_s_dist(
-                            positions[i][:, self.heavy_ids],
-                            self.target_position[:, self.heavy_ids],
-                        )
-                        / args.sigma
-                    )
-                else:
-                    log_target_reward[i] = -(
-                        compute_s_dist(positions[i], self.target_position) / args.sigma
-                    )
+        log_target_reward = torch.zeros(
+            args.num_samples, args.num_steps + 1, device=args.device
+        )
+        for i in range(args.num_samples):
+            pd = pairwise_dist(positions[i])
+            log_target_reward[i] = -0.5 * torch.square(
+                (pd - target_pd) / args.sigma
+            ).mean((1, 2))
 
         log_target_reward, last_idx = log_target_reward.max(1)
 
@@ -165,7 +134,7 @@ class FlowNetAgent:
             ]
         )
 
-        indices, positions, velocities, forces, log_reward = self.replay.sample()
+        positions, velocities, forces, log_reward = self.replay.sample()
 
         biases = args.bias_scale * self.policy(positions, self.target_position)
         biases = 1e-6 * biases[:, :-1]  # kJ/(mol*nm) -> (da*nm)/fs**2
@@ -186,9 +155,6 @@ class FlowNetAgent:
 
         optimizer.step()
         optimizer.zero_grad()
-
-        if args.buffer == "prioritized":
-            self.replay.update_priorities(indices, tb_error.abs().detach())
         return loss.item()
 
 
@@ -210,8 +176,6 @@ class ReplayBuffer:
         self.priorities = torch.ones(args.buffer_size, device=args.device)
 
         self.idx = 0
-        self.prioritized_exp = args.prioritized_exp
-        self.buffer = args.buffer
         self.buffer_size = args.buffer_size
         self.num_samples = args.num_samples
         self.batch_size = args.batch_size
@@ -228,23 +192,14 @@ class ReplayBuffer:
         ) = data
 
     def sample(self):
-        if self.buffer == "prioritized":
-            probs = self.priorities[: min(self.idx, self.buffer_size)].pow(
-                self.prioritized_exp
-            )
-        elif self.buffer == "":
-            probs = self.priorities[: min(self.idx, self.buffer_size)]
+        probs = self.priorities[: min(self.idx, self.buffer_size)]
         probs = probs / probs.sum()
         indices = torch.multinomial(
             probs, min(self.idx, self.batch_size), replacement=False
         )
         return (
-            indices,
             self.positions[indices],
             self.velocities[indices],
             self.forces[indices],
             self.log_reward[indices],
         )
-
-    def update_priorities(self, indices, weight):
-        self.priorities[indices] = weight

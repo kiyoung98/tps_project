@@ -131,15 +131,9 @@ class Poly(nn.Module):
         super().__init__()
 
         self.force = args.force
-        self.feat_aug = args.feat_aug
 
         self.num_particles = md.num_particles
-        if args.feat_aug == "dist":
-            self.input_dim = md.num_particles * (3 + 1)
-        elif args.feat_aug in ["rel_pos", "norm_rel_pos"]:
-            self.input_dim = md.num_particles * (3 + 3)
-        else:
-            self.input_dim = md.num_particles * 3
+        self.input_dim = md.num_particles * (3 + 1)
         self.output_dim = md.num_particles * 3 if self.force else 1
 
         self.mlp = nn.Sequential(
@@ -163,18 +157,9 @@ class Poly(nn.Module):
     def forward(self, pos, target):
         if not self.force:
             pos.requires_grad = True
-        if self.feat_aug == "dist":
-            dist = torch.norm(pos - target, dim=-1, keepdim=True)
-            pos_ = torch.cat([pos, dist], dim=-1)
-        elif self.feat_aug == "rel_pos":
-            pos_ = torch.cat([pos, pos - target], dim=-1)
-        elif self.feat_aug == "norm_rel_pos":
-            pos_ = torch.cat(
-                [pos, (pos - target) / torch.norm(pos - target, dim=-1, keepdim=True)],
-                dim=-1,
-            )
-        else:
-            pos_ = pos
+
+        dist = torch.norm(pos - target, dim=-1, keepdim=True)
+        pos_ = torch.cat([pos, dist], dim=-1)
 
         out = self.mlp(pos_.reshape(-1, self.input_dim))
 

@@ -18,17 +18,7 @@ class Metric:
         )
 
         self.molecule = args.molecule
-        self.heavy_ids = md.heavy_ids
-
         self.normal = Normal(0, self.std)
-
-        if args.molecule == "alanine":
-            self.angle_2 = torch.tensor(
-                [1, 6, 8, 14], dtype=torch.long, device=args.device
-            )
-            self.angle_1 = torch.tensor(
-                [6, 8, 14, 16], dtype=torch.long, device=args.device
-            )
 
     def rmsd(self, last_position, target_position):
         aligned_target_position = kabsch(target_position, last_position)
@@ -44,17 +34,6 @@ class Metric:
         pd = (last_pd - target_pd).square().mean((1, 2))
         mean_pd, std_pd = pd.mean().item(), pd.std().item()
         return mean_pd, std_pd
-
-    def log_pairwise_distance(self, last_position, target_position, heavy_only=False):
-        if heavy_only:
-            s_dist = compute_s_dist(
-                last_position[:, self.heavy_ids],
-                target_position[:, self.heavy_ids],
-            )
-        else:
-            s_dist = compute_s_dist(last_position, target_position)
-        mean_s_dist, std_s_dist = s_dist.mean().item(), s_dist.std().item()
-        return mean_s_dist, std_s_dist
 
     def pairwise_coulomb_distance(self, last_position, target_position):
         last_pcd = self.coulomb(last_position)
@@ -81,11 +60,17 @@ class Metric:
             hit = handed > 0
 
         elif self.molecule == "alanine":
-            target_psi = compute_dihedral(target_position[:, self.angle_1].unsqueeze(0))
-            target_phi = compute_dihedral(target_position[:, self.angle_2].unsqueeze(0))
+            angle_2 = torch.tensor(
+                [1, 6, 8, 14], dtype=torch.long, device=last_position.device
+            )
+            angle_1 = torch.tensor(
+                [6, 8, 14, 16], dtype=torch.long, device=last_position.device
+            )
+            target_psi = compute_dihedral(target_position[:, angle_1].unsqueeze(0))
+            target_phi = compute_dihedral(target_position[:, angle_2].unsqueeze(0))
 
-            psi = compute_dihedral(last_position[:, self.angle_1].unsqueeze(0))
-            phi = compute_dihedral(last_position[:, self.angle_2].unsqueeze(0))
+            psi = compute_dihedral(last_position[:, angle_1].unsqueeze(0))
+            phi = compute_dihedral(last_position[:, angle_2].unsqueeze(0))
 
             hit = (torch.abs(psi - target_psi) < 0.75) & (
                 torch.abs(phi - target_phi) < 0.75

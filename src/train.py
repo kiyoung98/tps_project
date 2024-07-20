@@ -37,7 +37,6 @@ parser.add_argument(
 parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
 parser.add_argument("--num_steps", default=1000, type=int, help="Length of paths")
-parser.add_argument("--feat_aug", default="dist", type=str)
 parser.add_argument(
     "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
 )
@@ -51,8 +50,6 @@ parser.add_argument(
 parser.add_argument(
     "--temperature", default=300, type=float, help="Temperature for evaluation"
 )
-parser.add_argument("--reward", default="dist", type=str)
-parser.add_argument("--heavy_only", action="store_true")
 
 # Training Config
 parser.add_argument("--start_temperature", default=600, type=float)
@@ -72,12 +69,6 @@ parser.add_argument(
     type=float,
     help="Learning rate of bias potential or force",
 )
-parser.add_argument(
-    "--buffer",
-    default="",
-    type=str,
-)
-parser.add_argument("--prioritized_exp", default=1, type=float)
 parser.add_argument(
     "--buffer_size",
     default=2048,
