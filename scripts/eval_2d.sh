@@ -1,1 +1,0 @@
-CUDA_VISIBLE_DEVICES=0 python src/2d_system.py --type "eval" --model_path "results/2d/0627-012013/train/2/policies/400.pt" --num_samples 10
