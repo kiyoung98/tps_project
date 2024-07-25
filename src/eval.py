@@ -21,28 +21,20 @@ parser.add_argument("--project", default="alanine_eval", type=str)
 parser.add_argument("--save_dir", default="results", type=str)
 
 # Policy Config
-parser.add_argument("--force", action="store_true", help="Network predicts force")
+parser.add_argument("--force", action="store_true")
 parser.add_argument("--log_z", default="-8", type=float)
 
 # Sampling Config
 parser.add_argument("--unbiased", action="store_true")
 parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
-parser.add_argument("--num_steps", default=1000, type=int, help="Length of paths")
+parser.add_argument("--num_steps", default=1000, type=int)
 parser.add_argument("--dist_feat", action="store_true")
-parser.add_argument(
-    "--bias_scale", default=0.01, type=float, help="Scale factor of bias"
-)
-parser.add_argument("--timestep", default=1, type=float, help="Timestep of integrator")
-parser.add_argument(
-    "--sigma", default=0.05, type=float, help="Control reward of arrival"
-)
-parser.add_argument(
-    "--num_samples", default=64, type=int, help="Number of paths to sample"
-)
-parser.add_argument(
-    "--temperature", default=300, type=float, help="Temperature for evaluation"
-)
+parser.add_argument("--bias_scale", default=0.01, type=float)
+parser.add_argument("--timestep", default=1, type=float)
+parser.add_argument("--sigma", default=0.05, type=float)
+parser.add_argument("--num_samples", default=64, type=int)
+parser.add_argument("--temperature", default=300, type=float)
 
 args = parser.parse_args()
 
