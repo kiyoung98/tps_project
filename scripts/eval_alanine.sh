@@ -1,1 +1,1 @@
-python src/eval.py --model_path models/alanine/pot.pt
+python src/eval.py --model_path models/alanine/pot.pt --dist_feat

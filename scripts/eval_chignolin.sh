@@ -1,1 +1,1 @@
-python src/eval.py --model_path models/chignolin/pot.pt --project chignolin --molecule chignolin --start_state unfolded --end_state folded --wandb --sigma 0.2 --num_steps 10000
+python src/eval.py --model_path models/chignolin/pot.pt --project chignolin --molecule chignolin --start_state unfolded --end_state folded --wandb --sigma 0.2 --num_steps 10000 --dist_feat
