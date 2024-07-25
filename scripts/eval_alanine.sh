@@ -1,6 +1,1 @@
-current_date="date"
-for seed in {0..7}; do
-  CUDA_VISIBLE_DEVICES=$seed python src/eval.py --date $current_date --seed $seed --wandb &
-done
-
-wait
+python src/eval.py --model_path models/alanine/pot.pt

@@ -21,14 +21,7 @@ class Logger:
         self.metric = Metric(args, md)
 
         if args.type == "eval":
-            self.save_dir = os.path.join(
-                args.save_dir,
-                args.project,
-                args.date,
-                args.type,
-                args.best,
-                str(args.seed),
-            )
+            self.save_dir = args.save_dir
         else:
             self.save_dir = os.path.join(
                 args.save_dir, args.project, args.date, args.type, str(args.seed)

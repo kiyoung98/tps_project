@@ -1,4 +1,3 @@
-import os
 import wandb
 import torch
 import argparse
@@ -11,18 +10,15 @@ from utils.logging import Logger
 parser = argparse.ArgumentParser()
 
 # System Config
-parser.add_argument("--seed", default=0, type=int)
 parser.add_argument("--type", default="eval", type=str)
-parser.add_argument("--best", default="epd", type=str)
 parser.add_argument("--device", default="cuda", type=str)
 parser.add_argument("--molecule", default="alanine", type=str)
 
 # Logger Config
 parser.add_argument("--wandb", action="store_true")
 parser.add_argument("--model_path", default="", type=str)
-parser.add_argument("--project", default="alanine", type=str)
+parser.add_argument("--project", default="alanine_eval", type=str)
 parser.add_argument("--save_dir", default="results", type=str)
-parser.add_argument("--date", default="date", type=str, help="Date of the training")
 
 # Policy Config
 parser.add_argument("--force", action="store_true", help="Network predicts force")
@@ -52,7 +48,7 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     if args.wandb:
-        wandb.init(project=args.project + "_eval", config=args)
+        wandb.init(project=args.project, config=args)
 
     md = getattr(dynamics, args.molecule.title())(args, args.start_state)
     logger = Logger(args, md)
@@ -60,21 +56,7 @@ if __name__ == "__main__":
     logger.info(f"Initialize {args.num_samples} MDs starting at {args.start_state}")
     mds = MDs(args)
     agent = FlowNetAgent(args, md, mds)
-
-    if not args.unbiased:
-        model_path = (
-            args.model_path
-            if args.model_path
-            else os.path.join(
-                args.save_dir,
-                args.project,
-                args.date,
-                "train",
-                str(args.seed),
-                f"{args.best}_policy.pt",
-            )
-        )
-        agent.policy.load_state_dict(torch.load(model_path))
+    agent.policy.load_state_dict(torch.load(args.model_path))
 
     logger.info(f"Start Evaulation")
     log = agent.sample(args, mds, args.temperature)
