@@ -1,4 +1,8 @@
-# [Collective Variable Free Transition Path Sampling with Generative Flow Networks](https://arxiv.org/abs/2405.19961v2)
+# TPS-GFN: Collective Variable Free Transition Path Sampling with Generative Flow Network
+
+![Alt Text](figures/traj.png)
+
+This repository contains the code and instructions to reproduce the results of the paper.
 
 ## Installation
 
