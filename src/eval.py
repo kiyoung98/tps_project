@@ -25,7 +25,6 @@ parser.add_argument("--force", action="store_true")
 parser.add_argument("--log_z", default="-8", type=float)
 
 # Sampling Config
-parser.add_argument("--unbiased", action="store_true")
 parser.add_argument("--start_state", default="c5", type=str)
 parser.add_argument("--end_state", default="c7ax", type=str)
 parser.add_argument("--num_steps", default=1000, type=int)

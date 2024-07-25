@@ -28,24 +28,12 @@
 
 ## Usage
 
-- **Training**: Run the following command to start training:
-    ```
-    bash scripts/train_alanine.sh
-    ```
-
-- **Evaluation**: Run the following command to perform evaluation:
+- **Reproduce**: Run the following command to reproduce the results in table 1:
     ```
     bash scripts/eval_alanine.sh
     ```
 
-## Reproduce
-
-- **Table**: Run the following command to reproduce the table:
+- **Training**: Run the following command to start training:
     ```
-    bash scripts/reproduce_table.sh
-    ```
-
-- **Visualization**: Run the following command to reproduce the figure:
-    ```
-    bash scripts/reproduce_figure.sh
+    bash scripts/train_alanine.sh
     ```
