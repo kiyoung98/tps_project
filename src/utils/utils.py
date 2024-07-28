@@ -78,18 +78,24 @@ def chignolin_h_bond(positions):
 
 
 def poly_handed(positions):
-    c1 = positions[:, :, 16]
-    c2 = positions[:, :, 18]
-    c3 = positions[:, :, 30]
-    c4 = positions[:, :, 44]
+    # ids = [6, 16, 18, 20, 30, 32, 34, 44, 46]
+    ids = [16, 18, 30, 44]
+    h = 0
 
-    ab = c2 - c1
-    cd = c4 - c3
-    ef = (c3 + c4) / 2 - (c1 + c2) / 2
-    h = ef * torch.cross(ab, cd, dim=-1)
-    h = h.sum(dim=-1) / (
-        torch.norm(ab, dim=-1) * torch.norm(cd, dim=-1) * torch.norm(ef, dim=-1)
-    )
+    for i in range(len(ids) - 3):
+        c1 = positions[:, :, ids[i]]
+        c2 = positions[:, :, ids[i + 1]]
+        c3 = positions[:, :, ids[i + 2]]
+        c4 = positions[:, :, ids[i + 3]]
+
+        ab = c2 - c1
+        cd = c4 - c3
+        ef = (c3 + c4) / 2 - (c1 + c2) / 2
+        h_i = ef * torch.cross(ab, cd, dim=-1)
+        h_i = h_i.sum(dim=-1) / (
+            torch.norm(ab, dim=-1) * torch.norm(cd, dim=-1) * torch.norm(ef, dim=-1)
+        )
+        h += h_i
     return h
 
 
