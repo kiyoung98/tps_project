@@ -52,7 +52,7 @@ parser.add_argument(
 parser.add_argument("--start_temperature", default=4800, type=float)
 parser.add_argument("--end_temperature", default=1200, type=float)
 parser.add_argument(
-    "--num_rollouts", default=100, type=int, help="Number of rollouts (or sampling)"
+    "--num_rollouts", default=1000, type=int, help="Number of rollouts (or sampling)"
 )
 parser.add_argument(
     "--log_z_lr", default=1e-2, type=float, help="Learning rate of estimator for log Z"
