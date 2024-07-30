@@ -392,7 +392,7 @@ class FlowNetAgent:
         self.policy = NeuralBias(args)
         self.replay = ReplayBuffer(args)
 
-    def sample(self, std):
+    def sample(self, std, training=True):
         positions = torch.zeros(
             (args.num_samples, args.num_steps + 1, 2),
             device=args.device,
@@ -423,8 +423,8 @@ class FlowNetAgent:
 
         for s in range(args.num_steps):
             noise = noises[:, s]
-            # bias = self.policy(position.detach()).squeeze().detach()
-            bias = torch.zeros_like(noise)
+            bias = self.policy(position.detach()).squeeze().detach()
+            # bias = torch.zeros_like(noise)
             potential, force = system(position)
             mean = position + force * args.timestep
             position = position + (force + bias) * args.timestep + std * noise
@@ -441,8 +441,8 @@ class FlowNetAgent:
         log_target_reward, last_idx = log_target_reward.max(1)
         log_reward = log_md_reward.mean((1, 2)) + log_target_reward
 
-        # if training:
-        #     self.replay.add((positions.detach(), actions.detach(), log_reward.detach()))
+        if training:
+            self.replay.add((positions.detach(), actions.detach(), log_reward.detach()))
 
         log = {
             "positions": positions,
@@ -508,7 +508,12 @@ if __name__ == "__main__":
     logger = Logger(args)
 
     for rollout in range(args.num_rollouts):
+        args.num_samples = 512
         log = agent.sample(train_stds[rollout])
+        # logger.log(agent.policy, rollout, **log)
+
+        args.num_samples = 64
+        log = agent.sample(std, training=False)
         logger.log(agent.policy, rollout, **log)
 
         loss = 0
