@@ -107,8 +107,6 @@ class FlowNetAgent:
         log = {
             "positions": positions,
             "potentials": potentials,
-            "log_md_reward": log_md_reward,
-            "log_target_reward": log_target_reward,
             "unbiased_md_ll": log_md.sum((2, 3)).mean(1),
             "last_idx": last_idx,
             "last_position": positions[torch.arange(args.num_samples), last_idx],

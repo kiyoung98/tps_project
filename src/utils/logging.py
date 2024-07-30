@@ -73,8 +73,6 @@ class Logger:
         rollout,
         positions,
         potentials,
-        log_md_reward,
-        log_target_reward,
         unbiased_md_ll,
         last_idx,
         last_position,
@@ -148,29 +146,20 @@ class Logger:
             wandb.log(log, step=rollout)
 
         self.logger.info(f"log_z: {policy.log_z.item()}")
-        self.logger.info(f"ll: {ll}")
-        self.logger.info(f"epd: {epd}")
+        self.logger.info(f"ll: {ll} ± {std_ll}")
+        self.logger.info(f"epd: {epd} ± {std_pd}")
         self.logger.info(f"thp: {thp}")
-        self.logger.info(f"etp: {etp}")
-        self.logger.info(f"efp: {efp}")
-        self.logger.info(f"epcd: {epcd}")
-        self.logger.info(f"len: {len}")
-        self.logger.info(f"std_ll: {std_ll}")
-        self.logger.info(f"std_pd: {std_pd}")
-        self.logger.info(f"std_etp: {std_etp}")
-        self.logger.info(f"std_efp: {std_efp}")
-        self.logger.info(f"std_pcd: {std_pcd}")
-        self.logger.info(f"std_len: {std_len}")
+        self.logger.info(f"etp: {etp} ± {std_etp}")
+        self.logger.info(f"efp: {efp} ± {std_efp}")
+        self.logger.info(f"epcd: {epcd} ± {std_pcd}")
+        self.logger.info(f"len: {len} ± {std_len}")
 
         if self.molecule == "chignolin":
-            self.logger.info(f"eat36: {eat36}")
-            self.logger.info(f"eat38: {eat38}")
-            self.logger.info(f"std_at36: {std_at36}")
-            self.logger.info(f"std_at38: {std_at38}")
+            self.logger.info(f"eat36: {eat36} ± {std_at36}")
+            self.logger.info(f"eat38: {eat38} ± {std_at38}")
 
         elif self.molecule == "poly":
-            self.logger.info(f"eh: {eh}")
-            self.logger.info(f"std_h: {std_h}")
+            self.logger.info(f"eh: {eh} ± {std_h}")
 
         if rollout % self.save_freq == 0:
             torch.save(policy.state_dict(), f"{self.save_dir}/policies/{rollout}.pt")
