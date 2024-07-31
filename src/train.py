@@ -2,6 +2,7 @@ import wandb
 import torch
 import argparse
 
+import numpy as np
 from tqdm import tqdm
 from dynamics.mds import MDs
 from dynamics import dynamics
@@ -79,6 +80,8 @@ if __name__ == "__main__":
         args.start_temperature, args.end_temperature, args.num_rollouts
     )
 
+    losses = []
+
     logger.info("Start training")
     for rollout in range(args.num_rollouts):
         print(f"Rollout: {rollout}")
@@ -91,8 +94,12 @@ if __name__ == "__main__":
             loss += agent.train(args)
         loss = loss / args.trains_per_rollout
 
+        losses.append(loss)
+
         logger.info(f"loss: {loss}")
         if args.wandb:
             wandb.log({"loss": loss}, step=rollout)
+
+    np.save(f"{logger.save_dir}/losses.npy", losses)
 
     logger.info("Finish training")

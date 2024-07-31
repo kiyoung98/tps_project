@@ -20,6 +20,13 @@ class Metric:
         self.molecule = args.molecule
         self.normal = Normal(0, self.std)
 
+    def rmsd(self, last_position, target_position):
+        aligned_target_position = kabsch(target_position, last_position)
+        diff = last_position - aligned_target_position
+        rmsd = torch.sqrt((diff**2).sum(-1).mean(-1))
+        mean_rmsd, std_rmsd = rmsd.mean().item(), rmsd.std().item()
+        return mean_rmsd, std_rmsd
+
     def pairwise_distance(self, last_position, target_position):
         last_pd = pairwise_dist(last_position)
         target_pd = pairwise_dist(target_position)

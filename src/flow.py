@@ -46,11 +46,17 @@ class FlowNetAgent:
             (args.num_samples, args.num_steps + 1), device=args.device
         )
 
+        biased_forces = torch.zeros(
+            (args.num_samples, args.num_steps + 1, self.num_particles, 3),
+            device=args.device,
+        )
+
         position, velocity, force, potential = mds.report()
 
         positions[:, 0] = position
         velocities[:, 0] = velocity
         forces[:, 0] = force
+        biased_forces[:, 0] = force
         potentials[:, 0] = potential
 
         mds.set_temperature(temperature)
@@ -73,6 +79,7 @@ class FlowNetAgent:
             potentials[:, s] = potential - (bias * next_position).sum(
                 (1, 2)
             )  # Subtract bias to get unbiased potential
+            biased_forces[:, s] = force
 
             position = next_position
         mds.reset()
@@ -81,7 +88,13 @@ class FlowNetAgent:
             self.a * velocities[:, :-1]
             + self.a * args.timestep * forces[:, :-1] / self.m
         )
+        biased_means = (
+            self.a * velocities[:, :-1]
+            + self.a * args.timestep * biased_forces[:, :-1] / self.m
+        )
+
         log_md = self.normal.log_prob(velocities[:, 1:] - means)
+        log_biased_md = self.normal.log_prob(velocities[:, 1:] - biased_means)
         log_md_reward = log_md.mean((1, 2, 3))
 
         target_pd = pairwise_dist(self.target_position)
@@ -108,6 +121,7 @@ class FlowNetAgent:
             "positions": positions,
             "potentials": potentials,
             "unbiased_md_ll": log_md.sum((2, 3)).mean(1),
+            "biased_md_ll": log_biased_md.sum((2, 3)).mean(1),
             "last_idx": last_idx,
             "last_position": positions[torch.arange(args.num_samples), last_idx],
             "target_position": self.target_position,

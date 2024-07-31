@@ -74,6 +74,7 @@ class Logger:
         positions,
         potentials,
         unbiased_md_ll,
+        biased_md_ll,
         last_idx,
         last_position,
         target_position,
@@ -92,7 +93,11 @@ class Logger:
             h = poly_handed(positions)
             eh, std_h = h.mean().item(), h.std().item()
 
+        ll_ratio = biased_md_ll - unbiased_md_ll
+
+        rmsd, std_rmsd = self.metric.rmsd(last_position, target_position)
         ll, std_ll = unbiased_md_ll.mean().item(), unbiased_md_ll.std().item()
+        llr, std_llr = ll_ratio.mean().item(), ll_ratio.std().item()
         epd, std_pd = self.metric.pairwise_distance(last_position, target_position)
         epcd, std_pcd = self.metric.pairwise_coulomb_distance(
             last_position, target_position
@@ -113,6 +118,8 @@ class Logger:
             log = {
                 "log_z": policy.log_z.item(),
                 "ll": ll,
+                "llr": llr,
+                "rmsd": rmsd,
                 "epd": epd,
                 "thp": thp,
                 "etp": etp,
@@ -120,6 +127,8 @@ class Logger:
                 "epcd": epcd,
                 "len": len,
                 "std_ll": std_ll,
+                "std_llr": std_llr,
+                "std_rmsd": std_rmsd,
                 "std_pd": std_pd,
                 "std_pcd": std_pcd,
                 "std_etp": std_etp,
@@ -147,6 +156,8 @@ class Logger:
 
         self.logger.info(f"log_z: {policy.log_z.item()}")
         self.logger.info(f"ll: {ll} ± {std_ll}")
+        self.logger.info(f"llr: {llr} ± {std_llr}")
+        self.logger.info(f"rmsd: {rmsd} ± {std_rmsd}")
         self.logger.info(f"epd: {epd} ± {std_pd}")
         self.logger.info(f"thp: {thp}")
         self.logger.info(f"etp: {etp} ± {std_etp}")
