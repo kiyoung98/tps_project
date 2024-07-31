@@ -83,6 +83,8 @@ if __name__ == "__main__":
 
     losses = []
     runtimes = []
+    rmsds = []
+    rmsd_stds = []
     total_start = time.time()
 
     logger.info("Start training")
@@ -91,7 +93,7 @@ if __name__ == "__main__":
         start = time.time()
 
         log = agent.sample(args, mds, temperatures[rollout])
-        logger.log(agent.policy, rollout, **log)
+        log = logger.log(agent.policy, rollout, **log)
 
         loss = 0
         for _ in tqdm(range(args.trains_per_rollout), desc="Training"):
@@ -101,6 +103,8 @@ if __name__ == "__main__":
 
         losses.append(loss)
         runtimes.append(runtime)
+        rmsds.append(log["rmsd"])
+        rmsd_stds.append(log["std_rmsd"])
 
         logger.info(f"loss: {loss}")
         logger.info(f"runtime: {runtime}")
@@ -115,5 +119,7 @@ if __name__ == "__main__":
     logger.info(f"runtime per rollout: {np.mean(runtimes)}")
 
     np.save(f"{logger.save_dir}/losses.npy", losses)
+    np.save(f"{logger.save_dir}/rmsds.npy", rmsds)
+    np.save(f"{logger.save_dir}/rmsd_stds.npy", rmsd_stds)
 
     logger.info("Finish training")

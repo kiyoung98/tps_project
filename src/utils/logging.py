@@ -114,44 +114,44 @@ class Logger:
                 self.best_epd = epd
                 torch.save(policy.state_dict(), f"{self.save_dir}/epd_policy.pt")
 
-        if self.wandb:
-            log = {
-                "log_z": policy.log_z.item(),
-                "ll": ll,
-                "llr": llr,
-                "rmsd": rmsd,
-                "epd": epd,
-                "thp": thp,
-                "etp": etp,
-                "efp": efp,
-                "epcd": epcd,
-                "len": len,
-                "std_ll": std_ll,
-                "std_llr": std_llr,
-                "std_rmsd": std_rmsd,
-                "std_pd": std_pd,
-                "std_pcd": std_pcd,
-                "std_etp": std_etp,
-                "std_efp": std_efp,
-                "std_len": std_len,
+        log = {
+            "log_z": policy.log_z.item(),
+            "ll": ll,
+            "llr": llr,
+            "rmsd": rmsd,
+            "epd": epd,
+            "thp": thp,
+            "etp": etp,
+            "efp": efp,
+            "epcd": epcd,
+            "len": len,
+            "std_ll": std_ll,
+            "std_llr": std_llr,
+            "std_rmsd": std_rmsd,
+            "std_pd": std_pd,
+            "std_pcd": std_pcd,
+            "std_etp": std_etp,
+            "std_efp": std_efp,
+            "std_len": std_len,
+        }
+
+        if self.molecule == "chignolin":
+            cv_log = {
+                "eat36": eat36,
+                "eat38": eat38,
+                "std_at36": std_at36,
+                "std_at38": std_at38,
             }
+            log.update(cv_log)
 
-            if self.molecule == "chignolin":
-                cv_log = {
-                    "eat36": eat36,
-                    "eat38": eat38,
-                    "std_at36": std_at36,
-                    "std_at38": std_at38,
-                }
-                log.update(cv_log)
+        elif self.molecule == "poly":
+            cv_log = {
+                "eh": eh,
+                "std_h": std_h,
+            }
+            log.update(cv_log)
 
-            elif self.molecule == "poly":
-                cv_log = {
-                    "eh": eh,
-                    "std_h": std_h,
-                }
-                log.update(cv_log)
-
+        if self.wandb:
             wandb.log(log, step=rollout)
 
         self.logger.info(f"log_z: {policy.log_z.item()}")
@@ -214,3 +214,4 @@ class Logger:
             plot_3D_view(
                 self.save_dir, self.start_file, positions, potentials, last_idx
             )
+        return log

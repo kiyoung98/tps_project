@@ -1,3 +1,4 @@
+import time
 import wandb
 import torch
 import argparse
@@ -50,6 +51,10 @@ if __name__ == "__main__":
     agent.policy.load_state_dict(torch.load(args.model_path))
 
     logger.info(f"Start Evaulation")
+    start = time.time()
     log = agent.sample(args, mds, args.temperature)
+    runtime = time.time() - start
+    if args.wandb:
+        wandb.log({"runtime": runtime})
     logger.log(agent.policy, 0, **log)
     logger.info(f"Finish Evaluation")
