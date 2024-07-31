@@ -1,3 +1,4 @@
+import time
 import wandb
 import torch
 import argparse
@@ -81,10 +82,13 @@ if __name__ == "__main__":
     )
 
     losses = []
+    runtimes = []
+    total_start = time.time()
 
     logger.info("Start training")
     for rollout in range(args.num_rollouts):
         print(f"Rollout: {rollout}")
+        start = time.time()
 
         log = agent.sample(args, mds, temperatures[rollout])
         logger.log(agent.policy, rollout, **log)
@@ -93,12 +97,22 @@ if __name__ == "__main__":
         for _ in tqdm(range(args.trains_per_rollout), desc="Training"):
             loss += agent.train(args)
         loss = loss / args.trains_per_rollout
+        runtime = time.time() - start
 
         losses.append(loss)
+        runtimes.append(runtime)
 
         logger.info(f"loss: {loss}")
+        logger.info(f"runtime: {runtime}")
         if args.wandb:
             wandb.log({"loss": loss}, step=rollout)
+            wandb.log({"runtime": runtime}, step=rollout)
+    if args.wandb:
+        wandb.log({"total_runtime": time.time() - total_start})
+        wandb.log({"runtime_per_rollout": np.mean(runtimes)})
+
+    logger.info(f"total runtime: {time.time() - total_start}")
+    logger.info(f"runtime per rollout: {np.mean(runtimes)}")
 
     np.save(f"{logger.save_dir}/losses.npy", losses)
 
