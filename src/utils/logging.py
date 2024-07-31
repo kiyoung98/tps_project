@@ -189,12 +189,11 @@ class Logger:
             fig_pot = plot_potentials(self.save_dir, rollout, potentials, last_idx)
 
             if self.wandb:
-                log = {"potentials": wandb.Image(fig_pot)}
-
                 fig_etp = plot_etps(self.save_dir, rollout, etps, etp_idxs)
                 fig_efp = plot_efps(self.save_dir, rollout, efps, efp_idxs)
 
                 cv_log = {
+                    "potentials": wandb.Image(fig_pot),
                     "paths": wandb.Image(fig_path),
                     "etps": wandb.Image(fig_etp),
                     "efps": wandb.Image(fig_efp),
