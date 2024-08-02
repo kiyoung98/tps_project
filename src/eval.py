@@ -44,7 +44,7 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     if args.wandb:
-        wandb.init(project=args.project, config=args)
+        wandb.init(project=args.project + "_eval", config=args)
 
     md = getattr(dynamics, args.molecule.title())(args, args.start_state)
     logger = Logger(args, md)
