@@ -71,7 +71,8 @@ if __name__ == "__main__":
     start = time.time()
     log = agent.sample(args, mds, args.temperature)
     runtime = time.time() - start
+    logger.log(agent.policy, 0, **log)
+
     if args.wandb:
         wandb.log({"runtime": runtime})
-    logger.log(agent.policy, 0, **log)
     logger.info(f"Finish Evaluation")
