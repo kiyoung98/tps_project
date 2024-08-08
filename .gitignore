@@ -4,3 +4,8 @@ openmmforcefields/
 **/__pycache__/
 .ipynb_checkpoints/
 model/
+epds/
+losses/
+paths/
+runtime/
+notebooks/
